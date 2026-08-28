@@ -16,6 +16,13 @@ export {
 } from "./indexer.js";
 
 export {
+  withRetry,
+  isTransient,
+  DEFAULT_SDK_RETRY,
+  type SdkRetryPolicy,
+} from "./resilient.js";
+
+export {
   liveMarkets,
   liveVenues,
   marketById,

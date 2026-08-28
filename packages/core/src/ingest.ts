@@ -21,6 +21,7 @@ import type { UnifiedMarket } from "@somnia-chain/markets-sdk";
 import { bookMetrics, DEFAULT_NEAR_BAND } from "./book.js";
 import { flowMetrics, freshness, moveMetrics, toPricePoints } from "./history.js";
 import { candles, fills, liveMarkets, oracleQuestion, type MarketRow } from "./queries.js";
+import { withRetry } from "./resilient.js";
 import {
   absent,
   degraded,
@@ -136,13 +137,18 @@ export async function snapshotMarket(
 
   // The authoritative read first. If it fails, downstream numbers may describe a
   // market that is no longer trading, so the snapshot is explicitly ungradeable.
-  const onchain = await sourced(async () => onchainStateOf(await marketOnchain(ctx, market)));
+  // Retried: `getMarketOnchain` goes through the SDK's own unretried transport.
+  const onchain = await sourced(async () =>
+    onchainStateOf(await withRetry(`getMarketOnchain(${identity.marketId.slice(-6)})`, () => marketOnchain(ctx, market))),
+  );
 
   // Book from the MATERIALIZED source. Never from indexer `Order` rows — measured
   // crossed at bid 0.320 / ask 0.270 on a market whose true book was 0.318/0.351.
   const book = await sourced(async () =>
     bookMetrics(
-      await ctx.exchange.fetchOrderBook(identity.yesSymbol, opts.bookDepth ?? 10),
+      await withRetry(`fetchOrderBook(${identity.yesSymbol})`, () =>
+        ctx.exchange.fetchOrderBook(identity.yesSymbol, opts.bookDepth ?? 10),
+      ),
       opts.nearBand ?? DEFAULT_NEAR_BAND,
     ),
   );
@@ -242,7 +248,11 @@ export async function ingestVenue(
 
   const [rows, unified] = await Promise.all([
     liveMarkets(config.indexerUrl, venueId, nowSec),
-    ctx.exchange.loadMarkets(true),
+    // `loadMarkets` is the SDK's registry sweep and runs through its OWN unretried
+    // postGraphql. Left bare it was the single biggest source of failure: the gate
+    // failed 3 runs in 5, every time inside listRegistryMarkets with ETIMEDOUT,
+    // while our own wrapped queries alongside it succeeded.
+    withRetry("loadMarkets", () => ctx.exchange.loadMarkets(true)),
   ]);
 
   const byId = new Map<string, UnifiedMarket>();
