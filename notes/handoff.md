@@ -2,6 +2,30 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 (Stage 1 setup) — repo live, wallet generated, awaiting funding
+
+- GitHub repo created **public**: https://github.com/Sammy949/fathom (pushed, `main`).
+- Bot Kit cloned to `~/dev/dreamdex-bot-kit` (`--depth 1`, HEAD `dccd2fd`) as a **reference
+  sibling**, not a dependency. Its `.env` is written with the throwaway key and
+  `VENUE_ID=0x679795a0…`, `DRY_RUN=true`, `chmod 600`, and its own `.gitignore` covers `.env`.
+- **Decision: vendor the ec-core modules we need** into `fathom/packages/ec/` rather than
+  linking the workspace. `@dreamdex-bot-kit/ec-core` is `private: true`, unpublished, and its
+  `main` points at raw `.ts` that only resolves inside the Bot Kit workspace — a `file:`
+  dependency on it cannot build on Vercel. It's MIT, we need to modify thresholds and add our
+  own risk fields anyway, and one repo means one tsconfig and one deploy. Tradeoff accepted: we
+  own the diff if upstream fixes something. ~1,600 lines total across 10 files; we need roughly
+  6 of them (`config`, `addresses`, `markets`, `orders`, `gotchas`, `settlement`).
+- **Throwaway testnet wallet:** `0x95bF315E823377A0D62A734fC9Dc49a994600d7F`. Shannon testnet
+  only, generated fresh for this build, never reused. Key is in the Bot Kit `.env` (gitignored)
+  and `/tmp/fathom-pk.txt`; move it somewhere durable before `/tmp` clears.
+- **Verified on-chain** (not just from the notes): `binaryModule 0x3ecC694C…` and
+  `oracleHub 0xe40db387…` both have code; collateral `0x70a86D88…` reports `symbol() = "tUSDC"`,
+  `decimals() = 6`, and `faucet(uint256)` is callable. The bundled address map is current.
+- Blocked on funding: wallet needs STT for gas before `ec:doctor` can read balances, and tUSDC
+  before Stage 6. Note `ec:doctor` still clears the Stage 1 gate unfunded — it prints
+  `(not set)` / zero balances but still resolves the venue, lists markets, reads on-chain
+  status and snapshots the book.
+
 ## 2026-08-28 (later) — docs verified against live sources
 
 Full verified integration surface: [dreamdex-surface.md](dreamdex-surface.md). Read it before
