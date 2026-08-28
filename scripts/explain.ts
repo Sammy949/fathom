@@ -16,10 +16,12 @@
 import { createExchange, shutdown } from "@fathom/ec";
 import {
   buildTrace,
+  describeProvider,
   explainAssessment,
   gradeSnapshot,
   guardExplanation,
   ingestVenue,
+  resolveProvider,
   type Assessment,
 } from "@fathom/core";
 
@@ -65,10 +67,23 @@ function wrap(text: string, indent: string, width = 88): string {
 
 async function main(): Promise<void> {
   const ctx = createExchange({ withSigner: false });
+  const provider = offline ? null : resolveProvider();
+
   console.log(`${BOLD}Fathom — Stage 5 decision traces${R}`);
   console.log(
-    `${DIM}${ctx.config.network} · explanation ${offline ? "offline (deterministic narrator)" : "claude-opus-4-8, falls back on failure"}${R}`,
+    `${DIM}${ctx.config.network} · explanation: ${
+      offline
+        ? "offline (deterministic narrator)"
+        : provider
+          ? `${describeProvider(provider)}, falls back on any failure`
+          : "no provider configured — deterministic narrator"
+    }${R}`,
   );
+  if (!offline && !provider) {
+    console.log(
+      `${YEL}  no GROQ_API_KEY in .env — running the fallback narrator. Get a free key at https://console.groq.com/keys${R}`,
+    );
+  }
 
   const { snapshots } = await ingestVenue(ctx, { minIntervalSec: 900 });
   // Three markets is enough to show the range without burning tokens.

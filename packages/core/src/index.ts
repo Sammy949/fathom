@@ -112,3 +112,15 @@ export {
   type GuardFailure,
   type DecisionTrace,
 } from "./explain.js";
+
+export {
+  resolveProvider,
+  callProvider,
+  describeProvider,
+  GROQ_DEFAULT_MODEL,
+  GROQ_BASE_URL,
+  type ProviderConfig,
+  type ProviderKind,
+  type ProviderRequest,
+  type ProviderResult,
+} from "./provider.js";

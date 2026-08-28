@@ -30,6 +30,12 @@
 
 import type { Assessment, Severity, SignalId, Verdict } from "./risk.js";
 import type { MarketSnapshot } from "./snapshot.js";
+import {
+  callProvider,
+  describeProvider,
+  resolveProvider,
+  type ProviderConfig,
+} from "./provider.js";
 
 /** The model's contribution: prose, and nothing else. */
 export interface Explanation {
@@ -90,6 +96,9 @@ const EXPLAIN_TOOL_SCHEMA = {
       },
     },
   },
+  // Every property listed in `required` and `additionalProperties: false` on
+  // every object — both are hard requirements of Groq's strict mode, and
+  // Anthropic's tool schema accepts the same shape. One schema, both providers.
   required: ["headline", "summary", "per_signal"],
   additionalProperties: false,
 };
@@ -110,7 +119,7 @@ A deterministic engine has already measured this market and reached a verdict. Y
 HARD CONSTRAINTS
 - The verdict, the confidence figure, and every measured number are already decided. You cannot change them and you are not asked to.
 - Never predict whether the market resolves YES or NO. Never estimate a probability of any outcome. Never advise buying or selling. If the evidence seems to point somewhere, that is not yours to say.
-- Use only the numbers given to you. Do not compute new ones, do not round in a way that changes meaning, and never introduce a figure that is not in the evidence.
+- NUMBERS MUST BE COPIED VERBATIM. If you cite a figure, copy it exactly as it is written in the finding or evidence you were given. Do NOT convert units (seconds to minutes, points to percent), do NOT rescale, do NOT round, and do NOT compute anything new — not an average, not a ratio, not a difference. An automated check rejects any figure that does not appear verbatim in your inputs, and a rejected explanation is discarded entirely. When a quantity would read better in other units, describe it in words instead ("over half the window", "most of the way to expiry") rather than doing the arithmetic.
 - A signal marked "unknown" was NOT MEASURED. It is not reassuring and it is not alarming — say plainly that it could not be established. Never describe an unmeasured signal as fine.
 - Every claim must trace to a signal you were given.
 
@@ -177,30 +186,52 @@ function allowedNumbers(a: Assessment): Set<string> {
   const out = new Set<string>();
   const add = (v: unknown) => {
     if (typeof v === "number") {
-      out.add(String(v));
-      out.add(v.toFixed(0));
-      out.add(v.toFixed(1));
-      out.add(v.toFixed(2));
-      out.add(v.toFixed(3));
-      // Points and percentages are the same measurement, differently scaled.
-      out.add((v * 100).toFixed(0));
-      out.add((v * 100).toFixed(1));
-      out.add(Math.round(v / 60).toString());
-      out.add(Math.round(v).toString());
+      // Store the magnitude, not the signed value. The prose scanner matches
+      // bare digits, so a netChange of -0.414 rendered as "41.4 points" would
+      // otherwise look fabricated — a live run was rejected for exactly that.
+      // The sign is direction, not a different measurement.
+      const m = Math.abs(v);
+      for (const s of [
+        String(v),
+        String(m),
+        m.toFixed(0),
+        m.toFixed(1),
+        m.toFixed(2),
+        m.toFixed(3),
+        // Points and percentages are the same measurement, differently scaled.
+        (m * 100).toFixed(0),
+        (m * 100).toFixed(1),
+        (m * 100).toFixed(2),
+        // Seconds are routinely restated in minutes and hours.
+        Math.round(m / 60).toString(),
+        (m / 60).toFixed(1),
+        Math.round(m / 3600).toString(),
+        (m / 3600).toFixed(1),
+        Math.round(m).toString(),
+      ]) {
+        out.add(s);
+      }
     } else if (typeof v === "string" && /^\d+$/.test(v)) out.add(v);
   };
   add(a.confidence);
+  // Numbers appearing in any text we handed the model are legitimate for it to
+  // quote back — and to RESCALE, since probability points and percentages are
+  // the same measurement. `basis` carries real distribution figures
+  // ("spreads measured 0.021-0.029 points"), and live runs were rejected twice:
+  // once for citing those figures at all, once for citing them as "2.1" and
+  // "2.9" points. Both times the guard was wrong, not the model.
+  const fromText = (text: string) => {
+    for (const m of text.matchAll(/\d+(?:\.\d+)?/g)) {
+      out.add(m[0]);
+      add(Number(m[0]));
+    }
+  };
   for (const s of a.signals) {
     for (const v of Object.values(s.evidence)) add(v);
-    // Any number already stated in text we handed the model is legitimate for it
-    // to quote back. This includes `basis` — the calibration strings carry real
-    // distribution figures ("median 0.040, p75 0.282"), and a live model run was
-    // rejected for citing exactly those before basis was included here. That was
-    // the guard being wrong, not the model.
-    for (const m of `${s.finding} ${s.basis}`.matchAll(/\d+(?:\.\d+)?/g)) out.add(m[0]);
+    fromText(`${s.finding} ${s.basis}`);
   }
-  for (const r of a.rules) for (const m of r.because.matchAll(/\d+(?:\.\d+)?/g)) out.add(m[0]);
-  for (const c of a.requiredChecks) for (const m of c.matchAll(/\d+(?:\.\d+)?/g)) out.add(m[0]);
+  for (const r of a.rules) fromText(r.because);
+  for (const c of a.requiredChecks) fromText(c);
   return out;
 }
 
@@ -257,6 +288,13 @@ export function guardExplanation(
   // 4. Fabricated numbers. Percent signs and bare integers under 100 are
   //    ordinary prose ("two of seven"), so only flag figures that look like
   //    measurements and appear nowhere in the evidence.
+  //
+  //    Measured false-positive rate before the prompt was tightened: ~1 run in
+  //    3 lost a market to a rescaled-but-real figure (2.6 points cited as
+  //    "2.5", a 0.095 fraction cited as "9.5%"). The fix is on both sides — the
+  //    system prompt now forbids unit conversion outright, and the allowed set
+  //    below admits every rescaling of every input number. A guard that rejects
+  //    honest prose is not a safety feature, it silently downgrades good output.
   const allowed = allowedNumbers(a);
   for (const m of prose.matchAll(/\d+\.\d+/g)) {
     if (!allowed.has(m[0])) {
@@ -344,26 +382,23 @@ export function fallbackExplanation(
 // ── the model call ─────────────────────────────────────────────────────────────
 
 export interface ExplainOptions {
-  /** Default `claude-opus-4-8`. */
-  model?: string;
+  /** Override the resolved provider entirely (tests, explicit routing). */
+  provider?: ProviderConfig;
   /** Skip the model entirely — used by tests and offline demos. */
   offline?: boolean;
-  apiKey?: string;
-  baseUrl?: string;
   timeoutMs?: number;
 }
 
 /**
  * Explain an assessment. Never throws, never returns an empty explanation.
  *
- * Output is forced through a tool call with `tool_choice: {type: "tool"}` rather
- * than asked for as JSON in prose. The model cannot reply with anything but a
- * call to `emit_explanation`, whose schema has no verdict field — so a
- * well-formed response is structurally incapable of overriding the engine.
+ * The provider comes from `.env` (Groq by default) and the schema has no verdict
+ * field, so no provider — however weak the model — can override the engine. That
+ * property lives in the schema, which is why switching providers is safe.
  *
- * Every failure path lands on `fallbackExplanation` with the reason recorded:
- * no API key, unreachable endpoint, malformed output, or a guard rejection. The
- * caller always gets prose, and the trace always says where it came from.
+ * Every failure path lands on `fallbackExplanation` with the reason recorded: no
+ * key configured, unreachable endpoint, malformed output, or a guard rejection.
+ * The caller always gets prose, and the trace always says where it came from.
  */
 export async function explainAssessment(
   s: MarketSnapshot,
@@ -372,51 +407,28 @@ export async function explainAssessment(
 ): Promise<Explanation> {
   if (opts.offline) return fallbackExplanation(s, a, "offline mode requested");
 
-  const apiKey = opts.apiKey ?? process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return fallbackExplanation(s, a, "ANTHROPIC_API_KEY is not set");
-
-  const model = opts.model ?? "claude-opus-4-8";
+  const cfg = opts.provider ?? resolveProvider();
+  if (!cfg) {
+    return fallbackExplanation(
+      s,
+      a,
+      "no LLM provider configured (set GROQ_API_KEY in .env, or run with --offline)",
+    );
+  }
 
   try {
-    // Imported lazily so the package stays usable — and the dashboard stays
-    // buildable — without the SDK present.
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({
-      apiKey,
-      ...(opts.baseUrl ? { baseURL: opts.baseUrl } : {}),
-      timeout: opts.timeoutMs ?? 60_000,
-      maxRetries: 2,
-    });
-
-    const response = await client.messages.create({
-      model,
-      max_tokens: 2_048,
+    const result = await callProvider(cfg, {
       system: SYSTEM,
-      tools: [
-        {
-          name: "emit_explanation",
-          description:
-            "Emit the plain-language explanation of this assessment. This is the only way to respond.",
-          input_schema: EXPLAIN_TOOL_SCHEMA,
-        },
-      ],
-      // Forced: the model has no option to answer in prose, and no field in
-      // which to express a verdict.
-      tool_choice: { type: "tool", name: "emit_explanation" },
-      messages: [
-        {
-          role: "user",
-          content: `${renderAssessment(s, a)}\n\nCall emit_explanation with your reading of these signals. Signal ids you may cite: ${a.signals.map((x) => x.id).join(", ")}.`,
-        },
-      ],
+      user: `${renderAssessment(s, a)}\n\nReturn your reading of these signals. Signal ids you may cite: ${a.signals.map((x) => x.id).join(", ")}.`,
+      schema: EXPLAIN_TOOL_SCHEMA,
+      schemaName: "emit_explanation",
+      schemaDescription:
+        "Emit the plain-language explanation of this assessment. This is the only way to respond.",
+      maxTokens: 2_048,
+      timeoutMs: opts.timeoutMs,
     });
 
-    const block = response.content.find((b) => b.type === "tool_use");
-    if (!block || block.type !== "tool_use") {
-      return fallbackExplanation(s, a, `model returned no tool call (stop_reason ${response.stop_reason})`);
-    }
-
-    const raw = block.input as {
+    const raw = result.output as {
       headline?: unknown;
       summary?: unknown;
       per_signal?: unknown;
@@ -454,15 +466,13 @@ export async function explainAssessment(
       summary,
       perSignal: perSignal as { signalId: SignalId; reading: string }[],
       source: "model",
-      model: response.model,
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      },
+      model: `${cfg.kind}:${result.model}`,
+      usage: result.usage,
     };
   } catch (e) {
     const reason = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-    return fallbackExplanation(s, a, reason);
+    // Label the provider so a failure is diagnosable without leaking the key.
+    return fallbackExplanation(s, a, `${describeProvider(cfg)} — ${reason}`);
   }
 }
 
