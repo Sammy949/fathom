@@ -2,6 +2,37 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 (later) — provider made configurable, Groq is the default
+
+The repo no longer depends on any personal account setup. `.env` chooses the provider;
+`npm run explain -- --offline` works with no key at all.
+
+- **Groq is the default** (`GROQ_API_KEY`, free tier, no card). One adapter covers every
+  OpenAI-compatible endpoint — OpenRouter, Together, Cerebras, DeepSeek, Ollama — so
+  `LLM_BASE_URL` is the only thing that changes. Anthropic kept as explicit opt-in.
+- **Two forcing mechanisms, verified against Groq's docs rather than assumed:** Anthropic uses
+  `tool_choice` with a forced tool; Groq uses `response_format: json_schema` with `strict: true`
+  (constrained decoding), because Groq documents structured outputs and tool use as **mutually
+  exclusive**. Strict mode needs every property in `required` plus `additionalProperties: false`
+  throughout — the existing schema already satisfied both, so one schema serves both paths.
+- **Model choice matters:** default `openai/gpt-oss-120b` supports strict mode.
+  `llama-3.3-70b-versatile` does **not** — it would silently degrade to best-effort JSON and
+  lean on the guards instead of the schema. Check Groq's supported-model table before switching.
+- The safety guarantee is untouched by the swap, which is the point: it lives in the **schema
+  having no verdict field**, not in the provider or the model being good.
+- `.env.example` added (blank values) so the config shape is documented without content.
+
+**Guard false-positive rate, measured rather than assumed.** Ran the gate repeatedly and hit
+~1 run in 3 losing a market to the fabricated-number check — every time on a figure that was
+*real but rescaled*: `-0.414` cited as "41.4 points", `0.026` as "2.6", `0.095` as "9.5%".
+Fixed on both sides: the system prompt now forbids unit conversion outright and tells the model
+to describe magnitudes in words instead, and `allowedNumbers` admits every rescaling (abs value,
+×100, ÷60, ÷3600) of every input figure. 5 further runs: 14 of 15 markets model-explained.
+
+That is the third time the guard was wrong rather than the model. Worth stating plainly in the
+demo: **a guard that rejects honest output is not a safety feature** — it silently downgrades
+good work to the fallback, and you only notice by watching the fallback-reason field.
+
 ## 2026-08-28 — ✅ STAGE 5 COMPLETE — **MANDATORY CUTLINE CLEARED**
 
 Stages 1–5 done. From here everything is upside: Stage 3 (dashboard) and Stage 6 (execution).
@@ -314,7 +345,9 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 2. **Stage 6 (stretch)** — gated `placeLimit` execution. Needs the funding steps below.
 3. Consider surfacing the *provenance* row in the UI — "which of these numbers is fresh" is a
    genuinely unusual thing for a dashboard to show and it is already computed.
-4. **Funding, only needed for Stage 6:** STT gas (faucet needs MetaMask connected at
+4. **Set `GROQ_API_KEY` in `.env`** for model-written explanations (free key at
+   console.groq.com/keys). Everything runs without it via the fallback narrator.
+5. **Funding, only needed for Stage 6:** STT gas (faucet needs MetaMask connected at
    testnet.somnia.network, wallet `0xC3d33eB15B59a092cC5663fAdF5BcAeBa5afF010`) then tUSDC via
    `faucet(uint256)` (10,000 cap per call, needs `PRIVATE_KEY` set in `.env`). Use a second
    MetaMask account rather than one holding anything real.
@@ -326,7 +359,7 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | `npm run calibrate` | Threshold sweep — per-market rows + distributions |
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
 | `npm run explain` | Stage 5 gate — full traces + verdict-integrity + guard proof |
-| `npm run explain -- --offline` | Same, deterministic narrator only (no API calls) |
+| `npm run explain -- --offline` | Same, deterministic narrator only (no key needed) |
 | `npm run test:risk` | 42 assertions over synthetic snapshots, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
 | `npm run typecheck` | Whole workspace |
