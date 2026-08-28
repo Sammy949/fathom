@@ -81,3 +81,23 @@ export {
   type IngestOptions,
   type IngestResult,
 } from "./ingest.js";
+
+export {
+  gradeSnapshot,
+  assess,
+  liquiditySignal,
+  volatilitySignal,
+  stalenessSignal,
+  windowSignal,
+  manipulationSignal,
+  resolutionSignal,
+  venueSignal,
+  THRESHOLDS,
+  DREAMDEX_VENUE_ID,
+  type Assessment,
+  type Signal,
+  type SignalId,
+  type Severity,
+  type Verdict,
+  type RuleHit,
+} from "./risk.js";
