@@ -26,10 +26,47 @@ verdict + explanation. This is defensible; "ask an LLM if the market resolves YE
 | Liquidity risk | Wide spread or insufficient depth to enter/exit reliably |
 | Volatility risk | Sudden probability move without matching depth/volume |
 | Staleness risk | Market data hasn't updated recently enough to trust |
-| Resolution risk | Ambiguous wording, uncertain resolver, unclear settlement |
+| Resolution risk | Oracle binding, void policy, settlement-window lapse (see below) |
 | Manipulation signal | Extreme order-book imbalance, abrupt move, thin-side activity |
+| **Window risk** | Time to expiry against the lock boundary — a short window can lock between snapshot and send |
+| **Venue risk** | Market sits on the pricefeed-test venue rather than the real one |
 
-(Add Event-Contract-specific fields once settlement/resolution mechanics are confirmed from docs.)
+### Resolution risk, corrected
+
+The original framing was **ambiguous wording**. That does not survive contact with the venue:
+every live market asks the same templated question (`"BTC closes at or above its opening
+price"`, `strike: 0`), and the docs explicitly say **do not parse the question text** — its
+wording has been revised repeatedly while the typed `asset` / `intervalSec` fields stayed
+stable. Grading wording would be grading a constant.
+
+What actually varies per market, and what the signal should read instead:
+- **Oracle question binding** — `oracleQuestionId`, and `supersededByQuestionId` on
+  `OracleQuestion` (a superseded question is a real red flag).
+- **Void policy and void risk** — `voidPolicy` on the market row; a market voids to 0.5/0.5
+  when no dependable settlement price lands inside the settlement window.
+- **Settlement-window lapse** — nothing posted after expiry means anyone can call
+  `voidExpired()`. Time past expiry with no answer is a measurable, escalating signal.
+- **Multi-source agreement** — the oracle publishes every source, its value, the median, and
+  how many sources had to agree. Thin agreement is resolution risk with a receipt.
+
+Because resolution is **auditable per market**, the decision trace should link
+`https://prd.oracle.somnia.host/questions/{oracleQuestionId}?view=graph`. That link is the
+strongest single credibility move available to us: the verdict cites a source a judge can open.
+
+### Calibration warning
+
+Wide spreads are the **normal state** on this venue — BTC 15m sat 0.536/0.607, a 7-point
+spread on a 0.57 mid, with a three-level ladder each side at ~200/330/460 shares. Thresholds
+calibrated against a real-money book will grade every market BLOCK and the verdict will say
+nothing. Calibrate against observed testnet distributions, and say so in the trace.
+
+### Data-source constraint (non-negotiable)
+
+Depth, spread and imbalance come from the SDK's materialized book (`fetchOrderBook`) or an
+on-chain read — **never** from indexer `Order` rows. Verified live: those rows show bids at
+0.496 alongside asks at 0.082, all `status: Open`, `filledQuantity: 0`. A book cannot be
+crossed by 40 points; the rows are stale. This is the most likely way the risk engine ships
+confidently wrong numbers.
 
 ## Verdict schema (strict output the LLM must return)
 ```json
@@ -52,16 +89,33 @@ verdict + explanation. This is defensible; "ask an LLM if the market resolves YE
 ## Implementation sequence
 | Stage | Deliverable | Required? |
 |---|---|---|
-| 1 | Clone Bot Kit, run doctor script, find live Event Contract markets, confirm auth on Shannon | Yes |
-| 2 | REST + WebSocket ingestion → normalized market + order-book state | Yes |
+| 1 | Clone Bot Kit, run `ec:doctor`, confirm venue + live markets on Shannon | Yes |
+| 2 | Indexer + on-chain ingestion → normalized market + order-book state | Yes |
 | 3 | Dashboard: market list, detail view, probability chart, liquidity metrics, freshness | Yes |
 | 4 | Deterministic risk metrics + ALLOW/RECHECK/BLOCK state machine | Yes |
 | 5 | Structured agent reasoning + inspectable decision trace | Yes |
-| 6 | Gated `placeOrder` testnet execution + order-status panel | Strongly recommended |
+| 6 | Gated testnet execution (`ec-core` `placeLimit`) + order-status panel | Stretch |
 | 7 | Polish, failure states, demo-data fallback, technical walkthrough | Yes |
 
 **Cut line = after Stage 5.** If time gets tight, Stages 1–5 are still a credible agentic
 analytics product. Stage 6 is the high-value stretch that shows the full execution surface.
+
+Stage 1 gate is `npm run ec:doctor` against Shannon — read-only, sends nothing. Note there is
+no auth step to confirm (private key only, no REST/SIWE for event contracts), so the gate is:
+correct venue resolved, live markets listed, on-chain status readable, book snapshot returned.
+
+## Demo market selection (from live testnet data, 2026-08-28)
+
+Venue: `0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c` (operatorId 2).
+The other active venue (`0x1a1e6821…`, operatorId 4) runs 60s/300s pricefeed-test markets with
+zero volume — **not** demo candidates.
+
+Target the three longest windows on the real venue:
+- **BTC 86400s (24h)** — deepest book, 16 trades. Survives a whole demo session.
+- **BTC 14400s (4h)** — 11 trades, 10 bids vs 3 asks. Visible imbalance, good RECHECK candidate.
+- **ETH 86400s (24h)** — 10 trades, both-sided book. Second asset for contrast.
+
+Avoid 60s/300s outright (expire before a judge finishes reading) and treat 900s as a fallback.
 
 ## Human-approved execution flow (the demo)
 1. Agent identifies a market → 2. shows evidence + verdict → 3. user opens decision trace →
