@@ -2,6 +2,52 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 — ✅ STAGE 1 GATE CLEARED
+
+`npm run ec:doctor` ran clean against Shannon. Venue resolved from env, 8 scoped markets,
+on-chain status read, YES books snapshotted. `PRIVATE_KEY (not set)` is the expected read-only
+path — the gate does not need a key.
+
+```
+venue : 0x679795a0… · source=env · scoped active=8
+ETH-0-28AUG26-1145/tUSDC       Trading  ttl=6m    YES bid=0.053 ask=0.075
+BTC-0-28AUG26-1145/tUSDC       Trading  ttl=6m    YES bid=0.111 ask=0.134
+ETH-0-28AUG26-1200-BDF2/tUSDC  Trading  ttl=21m   YES bid=0.140 ask=0.164
+BTC-0-28AUG26-1200-BDF1/tUSDC  Trading  ttl=21m   YES bid=0.578 ask=0.608
+BTC-0-28AUG26-1200-BC21/tUSDC  Trading  ttl=21m   YES bid=0.231 ask=0.257
+ETH-0-28AUG26-1200-BC22/tUSDC  Trading  ttl=21m   YES bid=0.922 ask=0.943
+ETH-0-29AUG26/tUSDC            Trading  ttl=741m  YES bid=0.318 ask=0.351
+BTC-0-29AUG26/tUSDC            Trading  ttl=741m  YES bid=0.144 ask=0.169
+```
+
+Matches what I measured on the indexer beforehand — venue id, market count and book shape all
+line up, so nothing moved between verification and the run.
+
+**First run failed with `ETIMEDOUT`; it is transient, not misconfiguration.** Root cause: the
+SDK's `postGraphql` does exactly one `fetch` with **no retry**, so any single hiccup kills the
+whole `loadMarkets()`. Measured ~1 run in 3 failing, with *varying* failure modes (`ETIMEDOUT`
+once, `response was not JSON` later). The indexer is healthy — 15/15 heavy sequential queries
+and 30/30 concurrent all returned 200 with complete JSON. **Stage 2 must wrap every indexer
+read in retry-with-backoff and show a degraded state rather than an empty screen.** Details in
+[dreamdex-surface.md](dreamdex-surface.md).
+
+Secondary: IPv6 is unreachable on this WSL2 box (NAT64 `64:ff9b::8e9:b213`, `ENETUNREACH`), and
+Node 24 races it with a 250ms Happy Eyeballs timeout. Pinning IPv4 cuts warm latency ~850ms →
+~220ms but does **not** fix the flake. Optional:
+`NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"`.
+
+**The stale-book finding is now proven by A/B, not inferred.** Same two markets, seconds apart:
+indexer `Order` rows gave ETH 24h bid 0.320 / ask **0.270** — a crossed book, impossible — while
+the materialized book gave 0.318 / 0.351. The indexer's bid was roughly right and its ask stale
+by 8 points. A risk engine reading those rows computes a negative spread and grades a healthy
+market as manipulated.
+
+**Symbol format decoded** (undocumented):
+`ASSET-STRIKE-DDMMMYY[-HHMM][-IDSUFFIX]/COLLATERAL`. `STRIKE` is `0` because these settle
+against their own opening price. The `-BDF1` / `-BC21` suffix is the low bytes of `marketId`,
+appended when two windows share a wall-clock expiry (15m and 4h series both land on 12:00).
+Don't parse it — use the typed fields.
+
 ## 2026-08-28 (Stage 1 setup) — repo live, wallet generated, awaiting funding
 
 - GitHub repo created **public**: https://github.com/Sammy949/fathom (pushed, `main`).
@@ -99,14 +145,14 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. Clone the Bot Kit, `npm install`, `cp .env.example .env`, set `PRIVATE_KEY` +
-   `NETWORK=testnet`, keep `VENUE_ID=0x679795a0…`.
-2. Fund the wallet: STT for gas from testnet.somnia.network, then TestUSDC via
-   `faucet(uint256)` on `0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E`.
-3. `npm run ec:doctor` — the Stage 1 gate. Confirm resolved venue, live markets, on-chain
-   status, and a YES book snapshot. Read-only, sends nothing.
-4. Re-verify `VENUE_ID` off a live market row at the start of each session — the ids move.
-5. Then Stage 2 per the implementation sequence.
+1. **Stage 2** — indexer + on-chain ingestion into normalized market + order-book state.
+   Non-negotiables baked in from Stage 1: retry-with-backoff on every indexer read, book from
+   `fetchOrderBook` never from `Order` rows, key state by `marketId` not pool address.
+2. Vendor the ~6 `ec-core` modules into `fathom/packages/ec/` with attribution.
+3. Re-verify `VENUE_ID` off a live market row at the start of each session — the ids move.
+4. **Deferred until Stage 6 only:** STT gas (faucet needs MetaMask connected at
+   testnet.somnia.network) and tUSDC collateral (`faucet(uint256)`, 10,000 cap per call, needs
+   `PRIVATE_KEY` set). Nothing in Stages 2–5 reads a balance or signs anything.
 
 ## Links
 - Hackathon: https://dorahacks.io/hackathon/event-contracts/detail

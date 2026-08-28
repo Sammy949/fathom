@@ -240,20 +240,71 @@ Sharp edges that will cost us time:
 
 ## Data-source trap we hit while verifying
 
-The indexer's `Order` rows with `status: "Open"` are **not** a usable order book. Queried live
-on BTC 4h: bids resting at 0.496 / 0.486 / 0.475 alongside asks at 0.082 / 0.075 / 0.066, all
-`status: Open`, `filledQuantity: 0`. A book cannot be crossed by 40 points — those rows are
-stale relative to the chain.
+The indexer's `Order` rows with `status: "Open"` are **not** a usable order book. **Proven by
+A/B, not inferred**: queried the indexer and the SDK's materialized book on the same two
+markets seconds apart (2026-08-28 ~11:45 WAT).
 
-So the depth, spread and imbalance metrics must come from the SDK's materialized book
-(`fetchOrderBook`, which hydrates an indexer snapshot then replays chain logs) or from an
-on-chain read. **Not** from indexer `Order` rows. This is the single most likely way the risk
-engine ships confidently wrong numbers.
+| Market | Indexer `Order` rows | Materialized book (`ec:doctor`) |
+|---|---|---|
+| BTC 24h | bid 0.138 / ask 0.161 | bid 0.144 / ask 0.169 — roughly agrees |
+| ETH 24h | bid 0.320 / **ask 0.270** | bid 0.318 / ask 0.351 |
+
+The ETH row set is a **crossed book** — its ask sits 5 points *below its own bid*, which cannot
+exist. The bid happens to be about right; the ask is stale by 8 points. Ground truth is 0.351.
+
+A risk engine reading those rows computes a **negative spread** and grades a perfectly healthy
+market as manipulated. Depth, spread and imbalance must come from `fetchOrderBook` (which
+hydrates an indexer snapshot then replays chain logs) or a direct on-chain read. This is the
+single most likely way the risk engine ships confidently wrong numbers.
 
 Also: `tickSize`, `lotSize` and `minQuantity` are **null** on every binary market row —
 unlike spot. They are not discoverable through the SDK and come from config
 (`MM_TICK` / `MM_LOT`). Testnet measured down to 1 raw unit (no practical lot constraint);
 mainnet is 1e15 for both.
+
+## The indexer has no retries — wrap every read
+
+`postGraphql` in `graphqlBoundary.js` does **exactly one `fetch`** and converts any failure
+into an `IndexerError`. No retry, no backoff. One transient hiccup anywhere kills the whole
+`loadMarkets()` call, and every SDK read funnels through it.
+
+Measured on 2026-08-28: roughly **1 run in 3 fails**, and the failure mode varies — one run
+died on `ETIMEDOUT`, another on `response was not JSON` from the same script minutes later.
+The indexer itself is healthy: 15/15 sequential heavy queries (400 rows, 110KB) and 30/30
+concurrent requests all returned HTTP 200 with complete JSON. So it is transient
+network/edge flakiness amplified by having no retry, not an overloaded backend.
+
+**Requirement for Stage 2:** every indexer read goes through our own retry-with-backoff
+wrapper, and the dashboard needs a visible stale/degraded state rather than an empty screen.
+Per the docs' own retry guidance: timeouts, `5xx`, `rpc_unavailable` and connection errors are
+retryable; `4xx` validation errors are terminal. Exponential backoff with jitter, ~500ms base
+capped near 30s, and re-check a receipt before re-broadcasting.
+
+Contributing factor worth knowing on WSL2: `dev.smk.somnia.host` resolves to both an IPv4
+address and a NAT64 IPv6 one (`64:ff9b::8e9:b213`). IPv6 is unreachable here (`ENETUNREACH` in
+~50ms) and Node 24 races both with a 250ms Happy Eyeballs timeout. Pinning IPv4 cuts warm
+latency from ~850ms to ~220ms but does **not** fix the flake (12/12 succeeded either way), so
+the retry wrapper is the actual fix. To pin anyway:
+`NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"`.
+
+## Symbol format (undocumented)
+
+Not in the docs; read off live `ec:doctor` output:
+
+```
+ASSET-STRIKE-DDMMMYY[-HHMM][-IDSUFFIX]/COLLATERAL
+
+BTC-0-29AUG26/tUSDC             ← 24h window, no time segment
+BTC-0-28AUG26-1145/tUSDC        ← intraday window
+BTC-0-28AUG26-1200-BDF1/tUSDC   ← id suffix disambiguates
+ETH-0-28AUG26-1200-BC22/tUSDC
+```
+
+`STRIKE` is `0` because these markets settle against their own opening price, not a fixed
+level. The trailing `-BDF1` / `-BC21` / `-BC22` is the **low bytes of `marketId`**
+(`0x…bdf1`, `0x…bc21`), appended when two windows share a wall-clock expiry — the 15m and 4h
+series both land on 12:00. Do not parse the symbol for anything load-bearing; use the typed
+`asset` / `intervalSec` / `expiry` / `marketId` fields.
 
 ## Useful indexer tables
 
