@@ -101,3 +101,14 @@ export {
   type Verdict,
   type RuleHit,
 } from "./risk.js";
+
+export {
+  explainAssessment,
+  fallbackExplanation,
+  guardExplanation,
+  buildTrace,
+  type Explanation,
+  type ExplainOptions,
+  type GuardFailure,
+  type DecisionTrace,
+} from "./explain.js";
