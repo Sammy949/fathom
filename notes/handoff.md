@@ -2,6 +2,64 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 — ✅ STAGE 4 COMPLETE (deterministic risk engine)
+
+Took Stage 4 before Stage 3 so the dashboard renders real verdicts from day one.
+
+`npm run calibrate` · `npm run grade` · `npm run test:risk` (42 assertions) — all pass.
+`npm run typecheck` clean. 11 commits.
+
+**Two threshold corrections the calibration sweep forced, both counter-intuitive:**
+
+1. **Spread-over-mid is unusable at the tails.** A market at mid 0.019 with a 0.021 spread
+   scores **113%**; mid 0.033 scores 65%; identical absolute spreads on mid 0.4 score 7%.
+   Normalizing by mid makes cheap markets look catastrophic purely because the denominator is
+   small. A binary payoff is fixed at 0/1, so **absolute probability points are the meaningful
+   measure** and now lead. The ratio only catches the unplayable tail (spread ≈ mid, where a
+   round trip costs the entire possible payout).
+2. **Flow skew leads, depth imbalance corroborates** — inverting the textbook arrangement.
+   Imbalance measured **exactly 0.000** on every symmetrically-quoted market (the maker ladder
+   is symmetric by construction; it only moves once a side is partly consumed). A metric that is
+   constant across a venue cannot discriminate. Skew ranged the full −1.00 to +1.00, the widest
+   of anything measured.
+
+Calibrated cut points, each justified by a measured distribution in `risk.ts`:
+spread elevated 0.035 / severe 0.06 (venue normal is 0.021–0.029); depth 200/50 shares
+(median 990); move 0.15/0.25 points (observed max 0.130 — so a ~10-point step is *normal* here);
+staleness 0.35/0.6 of window (median 0.040, max 0.557); skew 0.6/0.9.
+
+**Added two signals absent from the original spec**, both event-contract-specific: **window**
+(a market can lock between snapshot and action — time left is a real risk, not a display
+detail) and **venue** (one active venue runs zero-volume pricefeed tests; grading those as
+tradable would be the most embarrassing possible failure).
+
+**Three bugs the gates caught, all of them the kind that ship silently:**
+
+- **ALLOW was issued to a market with volatility *and* order flow unmeasured** — a clean bill
+  of health over two blind spots. Now *any* unmeasured signal withholds ALLOW. Costs us ALLOW on
+  markets with <3 price buckets; correct trade, because ALLOW means `may_execute` and should
+  mean we actually looked at everything.
+- **One-sided flow alone reached BLOCK.** That is ordinary momentum, and blocking on it makes
+  BLOCK meaningless. Severe now requires flow *and* resting depth to agree — which is also the
+  only arrangement where the otherwise-constant imbalance metric earns its place.
+- **Locked/Resolved markets emitted advice about position sizing and waiting for fills.**
+  Nonsense on an untradable market, and filler in a trace is what makes it read as generated.
+  They now advise redeeming.
+
+**Why fixtures and not just live markets:** two consecutive `grade` runs gave
+"ALLOW 5 / RECHECK 3 / BLOCK 2" then "ALLOW 6 / RECHECK 4 / BLOCK 0" from *identical code* — the
+BLOCK cases were two markets that happened to be Locked at that moment. A gate that can only
+test what the venue is currently doing cannot prove the dangerous paths work. `test-risk.ts`
+constructs crossed books, superseded oracles, voided markets, lapsed settlement and wrong-venue
+markets directly. Several we may never see live before Sep 8, and those are exactly the ones a
+judge might ask about.
+
+Design invariants now asserted, not just intended: ALLOW never co-occurs with an unmeasured
+signal; only ALLOW permits execution; a crossed book reads `unknown` (a broken *read*, not a
+risky market); confidence tracks observational completeness and never expresses a view on
+whether the market resolves YES; every signal carries a `basis` string stating its calibration
+justification.
+
 ## 2026-08-28 — ✅ STAGE 2 COMPLETE (ingestion)
 
 `npm run snapshot` — **8 consecutive runs, 8 passes, 8 gradeable snapshots each.**
@@ -198,17 +256,28 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. **Stage 3 or 4.** Stage 4 (deterministic risk metrics + ALLOW/RECHECK/BLOCK) is the more
-   valuable next move: `MarketSnapshot` already carries every input it needs, and building the
-   engine before the UI means the dashboard renders real verdicts from day one rather than
-   placeholder chrome. Stage 3 then designs around actual output.
-2. Threshold calibration is the real work in Stage 4 — see the calibration numbers above.
-   Imbalance is dead on this venue (always 0.000); `flow.skew` is the live manipulation input.
-3. Re-verify `VENUE_ID` at session start — `npm run snapshot` prints every live venue and marks
-   the configured one, so this is now automatic.
+1. **Stage 5** (the mandatory cutline) — structured agent reasoning + inspectable decision trace.
+   `Assessment` already carries `signals[]`, `rules[]`, `requiredChecks[]` and per-signal
+   `evidence` + `basis`, so the trace is essentially already computed. Stage 5 is the LLM
+   *explaining* it, with a hard constraint: the model may not alter verdict, confidence or any
+   number. Use `claude-opus-4-8`; `ANTHROPIC_API_KEY` is already in the environment.
+2. **Stage 3** (dashboard) after that, designed around real verdict output.
+3. Consider whether `venue` / `resolution` / `liquidity` reading constant on healthy markets is
+   worth surfacing differently in the UI — they only move in the failure cases, which is correct
+   behaviour but makes them look like dead weight in a live demo.
 4. **Deferred until Stage 6 only:** STT gas (faucet needs MetaMask connected at
    testnet.somnia.network) and tUSDC collateral (`faucet(uint256)`, 10,000 cap per call, needs
    `PRIVATE_KEY` set). Nothing in Stages 2–5 reads a balance or signs anything.
+
+## Commands
+| Command | What it does |
+|---|---|
+| `npm run snapshot` | Stage 2 gate — ingest + provenance, lists live venues |
+| `npm run calibrate` | Threshold sweep — per-market rows + distributions |
+| `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
+| `npm run test:risk` | 42 assertions over synthetic snapshots, no network |
+| `npm run retry:test` | Proves retry distinguishes transient from terminal |
+| `npm run typecheck` | Whole workspace |
 
 ## Links
 - Hackathon: https://dorahacks.io/hackathon/event-contracts/detail
