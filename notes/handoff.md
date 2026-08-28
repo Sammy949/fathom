@@ -15,16 +15,29 @@ Running log of state + decisions + next actions. Newest at top.
   own risk fields anyway, and one repo means one tsconfig and one deploy. Tradeoff accepted: we
   own the diff if upstream fixes something. ~1,600 lines total across 10 files; we need roughly
   6 of them (`config`, `addresses`, `markets`, `orders`, `gotchas`, `settlement`).
-- **Throwaway testnet wallet:** `0x95bF315E823377A0D62A734fC9Dc49a994600d7F`. Shannon testnet
-  only, generated fresh for this build, never reused. Key is in the Bot Kit `.env` (gitignored)
-  and `/tmp/fathom-pk.txt`; move it somewhere durable before `/tmp` clears.
+- **Build wallet: `0xC3d33eB15B59a092cC5663fAdF5BcAeBa5afF010`** (MetaMask, Somnia testnet).
+  Confirmed fresh on-chain — nonce 0 and zero balance on Shannon, Somnia mainnet, and Base, so
+  nothing is at risk from testnet use. The earlier throwaway key was **discarded**: the STT
+  faucet at testnet.somnia.network requires a **connected wallet** (no paste-an-address path),
+  so a bare keypair cannot be funded. Key material deleted.
+- `PRIVATE_KEY` in the Bot Kit `.env` is deliberately **left blank**. `ec:doctor` is read-only
+  and runs fine without it. Fill it in only at Stage 6, and only if that MetaMask account holds
+  nothing on any mainnet — otherwise use a second MetaMask account for Shannon.
+- **Faucet mechanics, measured** (details in [dreamdex-surface.md](dreamdex-surface.md)):
+  tUSDC `faucet(uint256)` caps at **exactly 10,000 tUSDC per call** — `10000000001` raw reverts
+  with `FaucetCapExceeded()` (selector `0x37583762`), found by binary-searching `eth_call` since
+  no cap getter is exposed. Call repeatedly for more. `faucet()` costs ~1.38M gas ≈ 0.0083 STT
+  at 6 gwei; an order is ~200k ≈ 0.0012 STT. One STT drip covers hundreds of operations.
+- **Two live Shannon RPCs**, both verified `chainId 50312`, heights ~20 apart:
+  `dream-rpc.somnia.network` (Somnia's wallet-facing one, use in MetaMask) and
+  `api.infra.testnet.somnia.network` (bot-kit default, keep in `.env`).
 - **Verified on-chain** (not just from the notes): `binaryModule 0x3ecC694C…` and
-  `oracleHub 0xe40db387…` both have code; collateral `0x70a86D88…` reports `symbol() = "tUSDC"`,
-  `decimals() = 6`, and `faucet(uint256)` is callable. The bundled address map is current.
-- Blocked on funding: wallet needs STT for gas before `ec:doctor` can read balances, and tUSDC
-  before Stage 6. Note `ec:doctor` still clears the Stage 1 gate unfunded — it prints
-  `(not set)` / zero balances but still resolves the venue, lists markets, reads on-chain
-  status and snapshots the book.
+  `oracleHub 0xe40db387…` both have code; collateral `0x70a86D88…` reports `name() = "Test
+  USDC"`, `symbol() = "tUSDC"`, `decimals() = 6`. The bundled address map is current.
+- Blocked on the **STT faucet** — needs the MetaMask wallet connected at
+  testnet.somnia.network. Alternatives if rate-limited: Stakely, thirdweb, Google Cloud
+  (`cloud.google.com/application/web3/faucet/somnia/shannon`), or Somnia Discord `#dev-chat`.
+  `ec:doctor` clears the Stage 1 gate unfunded regardless.
 
 ## 2026-08-28 (later) — docs verified against live sources
 

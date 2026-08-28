@@ -73,6 +73,43 @@ Protocol core is CREATE3-deterministic and identical on both chains (`binaryModu
 a contract call, not a swap. The docs' "acquire USDso by swapping on a live market" advice is
 the spot/mainnet path.
 
+### Two Shannon RPCs, both live
+
+The SDK/bot-kit default is `https://api.infra.testnet.somnia.network`; Somnia's docs hand out
+`https://dream-rpc.somnia.network` for MetaMask. Both verified on 2026-08-28 — same
+`chainId 50312`, block heights within ~20 of each other. Either works; keep the infra one in
+`.env` so we match the bot kit, and use the dream-rpc one for the wallet.
+
+MetaMask network parameters (verified against a live chain read, not just the docs):
+
+| Field | Value |
+|---|---|
+| Network name | Somnia Testnet (Shannon) |
+| RPC URL | `https://dream-rpc.somnia.network` |
+| Chain ID | `50312` |
+| Currency symbol | `STT` |
+| Decimals | 18 |
+| Explorer | `https://shannon-explorer.somnia.network/` |
+
+### Faucet mechanics, measured
+
+**STT (gas)** — `https://testnet.somnia.network/` requires a **connected wallet**; there is no
+paste-an-address path, which is why a throwaway key alone can't be funded. Alternatives listed
+in Somnia's docs: Stakely (`stakely.io/faucet/somnia-testnet-stt`), thirdweb, Google Cloud
+(`cloud.google.com/application/web3/faucet/somnia/shannon`), or a manual ask in the Somnia
+Discord `#dev-chat` / dev Telegram.
+
+**tUSDC (collateral)** — `faucet(uint256)` on the token, public, no wallet connection needed.
+Probed the cap by binary search on `eth_call`: **10,000 tUSDC (`10000000000` raw) per call is
+the exact ceiling** — `10000000001` reverts with `FaucetCapExceeded()` (selector `0x37583762`).
+No cap getter is exposed (`faucetCap()`, `cap()`, `owner()` all revert). Call it repeatedly for
+more. `name() = "Test USDC"`, `symbol() = "tUSDC"`, `decimals() = 6`, current
+`totalSupply() ≈ 1.046e15` raw (~1.05bn tUSDC).
+
+Gas costs at the observed 6 gwei: `faucet()` estimates **1,379,707 gas ≈ 0.0083 STT** (it is
+surprisingly expensive for a mint), a plain transfer 21k ≈ 0.00013 STT, an approve ≈ 0.0003
+STT, an order ~200k ≈ 0.0012 STT. Any normal faucet drip covers hundreds of operations.
+
 ## Venue scoping — the thing that silently returns zero markets
 
 One deployment hosts several venues and their markets sit side by side in the indexer.
