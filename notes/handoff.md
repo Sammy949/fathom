@@ -2,6 +2,59 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 — ✅ STAGE 2 COMPLETE (ingestion)
+
+`npm run snapshot` — **8 consecutive runs, 8 passes, 8 gradeable snapshots each.**
+`npm run retry:test` — all checks pass. `npm run typecheck` clean. 7 commits pushed.
+
+Shipped:
+
+```
+packages/ec/      5 vendored ec-core modules (read path only) + VENDORED.md
+packages/core/
+  indexer.ts      retry-wrapped GraphQL for OUR queries
+  resilient.ts    retry-wrapped SDK calls (loadMarkets, getMarketOnchain)
+  queries.ts      market/candle/fill/oracle queries, marketId-scoped
+  book.ts         spread, depth, near-touch imbalance, executable size
+  history.ts      price points, move, flow, freshness
+  snapshot.ts     MarketSnapshot + provenance
+  ingest.ts       assembles it all
+scripts/          snapshot.ts (gate), retry-test.ts (retry proof)
+```
+
+**The bug worth remembering: I only retried half the reads.** `indexer.ts` wrapped the queries
+we write, but `loadMarkets()` and `getMarketOnchain()` go through the SDK's *own* unretried
+`postGraphql`. The gate failed **3 runs in 5**, every time inside
+`loadMarkets → listRegistryMarkets → postGraphql` with `ETIMEDOUT`, while our wrapped queries in
+the same pass succeeded. A resilient snapshot layer fed by fragile entry points looks robust
+right up until the demo. `resilient.ts` now wraps every SDK call on the ingestion path; 2/5 → 8/8.
+
+Note `withRetry` walks the `cause` chain and inspects `AggregateError.errors` — the SDK buries the
+real reason two levels down (`IndexerError` → `TypeError: fetch failed` → `AggregateError` with
+`code: ETIMEDOUT`), and Happy Eyeballs reports one error per attempted address.
+
+**Live venue reading confirms the earlier measurements.** 8 markets, all `Trading`, spreads
+2.5–2.9 points (4.9%–13.0% of mid), ladders ~990 shares near the touch on both sides. Fresh
+findings from the run:
+
+- **Mint-a-pair is real and visible** — 100–300 shares on three markets arrived via two opposite
+  side *buyers* crossing with no seller, the pool minting the pair. Worth surfacing in the UI;
+  it is genuinely unusual market structure and shows we understand the venue.
+- **Candle sparsity is worse than assumed.** BTC 24h: 6 candles across 10 hours with a **4-hour
+  gap**. Confirms no interpolation, and `moveMetrics` reports `insufficient` below 3 samples
+  rather than a confident zero — which fires on most intraday markets.
+- **Staleness varies hugely.** 24h markets traded 63s–4m ago; 4h markets 64–73m ago (~27–30% of
+  their window). Vindicates expressing age relative to window length rather than in absolute
+  seconds.
+- **Imbalance reads exactly 0.000 on every market** — the ladder is symmetric (990 shares each
+  side). So imbalance alone will not separate markets on this venue; the manipulation signal has
+  to lean on `flow.skew` (taker direction), which does vary: −1.00 on one-sided markets, +0.32
+  and +0.10 on the two 24h ones.
+
+Two `.npmrc` notes: the configured registry (`registry.npmmirror.com`) took 15s+ per request and
+`ETIMEDOUT` mid-install, so `.npmrc` pins `registry.npmjs.org` with longer timeouts and
+`maxsockets=3`. It is gitignored as environment-specific.
+
 ## 2026-08-28 — ✅ STAGE 1 GATE CLEARED
 
 `npm run ec:doctor` ran clean against Shannon. Venue resolved from env, 8 scoped markets,
@@ -145,11 +198,14 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. **Stage 2** — indexer + on-chain ingestion into normalized market + order-book state.
-   Non-negotiables baked in from Stage 1: retry-with-backoff on every indexer read, book from
-   `fetchOrderBook` never from `Order` rows, key state by `marketId` not pool address.
-2. Vendor the ~6 `ec-core` modules into `fathom/packages/ec/` with attribution.
-3. Re-verify `VENUE_ID` off a live market row at the start of each session — the ids move.
+1. **Stage 3 or 4.** Stage 4 (deterministic risk metrics + ALLOW/RECHECK/BLOCK) is the more
+   valuable next move: `MarketSnapshot` already carries every input it needs, and building the
+   engine before the UI means the dashboard renders real verdicts from day one rather than
+   placeholder chrome. Stage 3 then designs around actual output.
+2. Threshold calibration is the real work in Stage 4 — see the calibration numbers above.
+   Imbalance is dead on this venue (always 0.000); `flow.skew` is the live manipulation input.
+3. Re-verify `VENUE_ID` at session start — `npm run snapshot` prints every live venue and marks
+   the configured one, so this is now automatic.
 4. **Deferred until Stage 6 only:** STT gas (faucet needs MetaMask connected at
    testnet.somnia.network) and tUSDC collateral (`faucet(uint256)`, 10,000 cap per call, needs
    `PRIVATE_KEY` set). Nothing in Stages 2–5 reads a balance or signs anything.
