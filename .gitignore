@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+.vercel/
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+*.key
+keystore/
+
+# Logs / caches
+*.log
+npm-debug.log*
+.turbo/
+.eslintcache
+coverage/
+.tsbuildinfo
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
