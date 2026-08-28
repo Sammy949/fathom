@@ -2,6 +2,57 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-28 — ✅ STAGE 5 COMPLETE — **MANDATORY CUTLINE CLEARED**
+
+Stages 1–5 done. From here everything is upside: Stage 3 (dashboard) and Stage 6 (execution).
+
+`npm run explain` — 3 markets explained by the model, verdict integrity PASS, all 5 guard
+checks PASS. `npm run explain -- --offline` also passes (deterministic narrator).
+`npm run test:risk` 42 assertions, `npm run grade`, `npm run typecheck` all clean. 14 commits.
+
+**The design decision that matters: the model structurally cannot change the verdict.** Its
+output schema has **no verdict, confidence, or numeric field** — it returns prose keyed to
+signal ids, forced through `tool_choice: {type: "tool"}` so it cannot answer any other way.
+There is no field it could write a verdict into.
+
+That is deliberately stronger than "ask the model for a verdict and check it afterwards" — that
+design leaves a disagreement to resolve, and someone has to decide who wins. Here the question
+cannot arise. Worth saying exactly this way in the demo; it is the defensible core of the
+product.
+
+**Four guards on top**, because plausible-sounding wrong prose is the most damaging output this
+thing can emit:
+1. Every claim must cite a signal id that exists in the assessment.
+2. Prose is scanned for verdict words contradicting the computed verdict ("safe to trade" under
+   a BLOCK is rejected even though the verdict field is untouched).
+3. Numbers in prose are checked against the evidence — catches fabrication.
+4. Outcome predictions rejected outright. Plus: unmeasured signals described as "healthy" are
+   caught — `unknown` must never read as reassuring.
+
+**Fallback is a real fallback.** Any failure (no key, unreachable endpoint, malformed output,
+guard rejection) lands on a deterministic narrator built from the same signals, with the reason
+recorded in the trace. Degrades to plainer language — never to a wrong verdict, never to a blank
+panel.
+
+**The gate caught a real bug in my own guard.** A live run was rejected for citing `0.040` and
+`0.282` — which are *genuine* venue distribution figures, from the `basis` calibration strings I
+handed the model myself. The guard was wrong, not the model. `allowedNumbers` now includes
+`basis` and `requiredChecks` text. Exactly why the guard needs its own adversarial test rather
+than just existing.
+
+**Note on the endpoint:** the explanation layer talks to whatever provider `.env` points it at
+and reports the served model name in the trace. Provider config lives in `.env` only — never in
+the repo or these notes.
+
+Sample model output, unedited, on a market the engine graded RECHECK:
+
+> *"Six of seven signals came back clean: correct venue, oracle question 46023 live and
+> auditable, a 3.0-point spread on a 0.486 mid with 990 shares on the thinner side… The one
+> exception is staleness — 2021 seconds since the last fill, 0.561 of the 3600-second window,
+> at the top of the 0.040-median / 0.557-max range measured here."*
+
+Every number there traces to a measured field. That is the whole point.
+
 ## 2026-08-28 — ✅ STAGE 4 COMPLETE (deterministic risk engine)
 
 Took Stage 4 before Stage 3 so the dashboard renders real verdicts from day one.
@@ -256,18 +307,17 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. **Stage 5** (the mandatory cutline) — structured agent reasoning + inspectable decision trace.
-   `Assessment` already carries `signals[]`, `rules[]`, `requiredChecks[]` and per-signal
-   `evidence` + `basis`, so the trace is essentially already computed. Stage 5 is the LLM
-   *explaining* it, with a hard constraint: the model may not alter verdict, confidence or any
-   number. Use `claude-opus-4-8`; `ANTHROPIC_API_KEY` is already in the environment.
-2. **Stage 3** (dashboard) after that, designed around real verdict output.
-3. Consider whether `venue` / `resolution` / `liquidity` reading constant on healthy markets is
-   worth surfacing differently in the UI — they only move in the failure cases, which is correct
-   behaviour but makes them look like dead weight in a live demo.
-4. **Deferred until Stage 6 only:** STT gas (faucet needs MetaMask connected at
-   testnet.somnia.network) and tUSDC collateral (`faucet(uint256)`, 10,000 cap per call, needs
-   `PRIVATE_KEY` set). Nothing in Stages 2–5 reads a balance or signs anything.
+1. **Stage 3 — the dashboard.** Everything it needs exists: `DecisionTrace` carries signals with
+   measured value + calibration basis + plain reading, the rule path, per-field provenance, and
+   the oracle receipt URL. Design around real output, not placeholder chrome. UX/Design is 20% of
+   the score and the anti-slop law applies — decide a real signature first.
+2. **Stage 6 (stretch)** — gated `placeLimit` execution. Needs the funding steps below.
+3. Consider surfacing the *provenance* row in the UI — "which of these numbers is fresh" is a
+   genuinely unusual thing for a dashboard to show and it is already computed.
+4. **Funding, only needed for Stage 6:** STT gas (faucet needs MetaMask connected at
+   testnet.somnia.network, wallet `0xC3d33eB15B59a092cC5663fAdF5BcAeBa5afF010`) then tUSDC via
+   `faucet(uint256)` (10,000 cap per call, needs `PRIVATE_KEY` set in `.env`). Use a second
+   MetaMask account rather than one holding anything real.
 
 ## Commands
 | Command | What it does |
@@ -275,6 +325,8 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | `npm run snapshot` | Stage 2 gate — ingest + provenance, lists live venues |
 | `npm run calibrate` | Threshold sweep — per-market rows + distributions |
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
+| `npm run explain` | Stage 5 gate — full traces + verdict-integrity + guard proof |
+| `npm run explain -- --offline` | Same, deterministic narrator only (no API calls) |
 | `npm run test:risk` | 42 assertions over synthetic snapshots, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
 | `npm run typecheck` | Whole workspace |
