@@ -122,6 +122,28 @@ const withTimeout = (ms: number) => {
   return { signal: ac.signal, done: () => clearTimeout(timer) };
 };
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * How long a 429 says to wait, in ms.
+ *
+ * Groq is unusually helpful here: the body carries "Please try again in 4.965s"
+ * and the standard `retry-after` header. Honouring it turns a hard failure into
+ * a short pause. Free-tier TPM is 8,000 and three markets bill ~12,000, so
+ * without this two of three panels fall back to the narrator — correct
+ * behaviour, but it undersells the product in a demo.
+ */
+function retryAfterMs(body: string, headers: Headers): number | null {
+  const header = headers.get("retry-after");
+  if (header) {
+    const secs = Number(header);
+    if (Number.isFinite(secs)) return Math.ceil(secs * 1000);
+  }
+  const m = body.match(/try again in ([\d.]+)s/i);
+  if (m?.[1]) return Math.ceil(Number(m[1]) * 1000);
+  return null;
+}
+
 /**
  * Groq / any OpenAI-compatible endpoint, via `response_format: json_schema`.
  *
@@ -129,42 +151,77 @@ const withTimeout = (ms: number) => {
  * dependency to shape one POST body would be the larger cost. It also means the
  * same code path works against every OpenAI-compatible provider without a
  * per-provider client.
+ *
+ * Retries twice, on two different conditions:
+ *   429 — wait exactly as long as the provider asks (Groq states it in the body
+ *         and in `retry-after`), then try again.
+ *   transport failure — `TypeError: fetch failed`, ETIMEDOUT and friends. Same
+ *         WSL/IPv6 flakiness that made the indexer reads unreliable; measured
+ *         here as roughly 1 market in 3 on some runs.
+ *
+ * Everything else fails immediately. A 400 is our schema being wrong and no
+ * number of attempts will fix it, so burning retries would only delay the real
+ * error.
  */
 async function callOpenAICompatible(
   cfg: ProviderConfig,
   req: ProviderRequest,
+  attempt = 0,
 ): Promise<ProviderResult> {
+  const maxAttempts = 3;
   const { signal, done } = withTimeout(req.timeoutMs ?? 60_000);
   try {
-    const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${cfg.apiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: cfg.model,
-        max_completion_tokens: req.maxTokens ?? 2_048,
-        messages: [
-          { role: "system", content: req.system },
-          { role: "user", content: req.user },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: req.schemaName,
-            // Constrained decoding: the response is schema-valid by
-            // construction rather than by the model choosing to comply.
-            strict: true,
-            schema: req.schema,
-          },
+    let res: Response;
+    try {
+      res = await fetch(`${cfg.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${cfg.apiKey}`,
+          "content-type": "application/json",
         },
-      }),
-      signal,
-    });
+        body: JSON.stringify({
+          model: cfg.model,
+          // Counts against TPM as REQUESTED, not as used — so an inflated
+          // ceiling costs quota on every call. Observed output is ~1,200 tokens.
+          max_completion_tokens: req.maxTokens ?? 1_400,
+          messages: [
+            { role: "system", content: req.system },
+            { role: "user", content: req.user },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: req.schemaName,
+              // Constrained decoding: the response is schema-valid by
+              // construction rather than by the model choosing to comply.
+              strict: true,
+              schema: req.schema,
+            },
+          },
+        }),
+        signal,
+      });
+    } catch (transportError) {
+      if (attempt + 1 < maxAttempts) {
+        done();
+        await sleep(400 * 2 ** attempt + Math.random() * 300);
+        return callOpenAICompatible(cfg, req, attempt + 1);
+      }
+      throw transportError;
+    }
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
+      // A rate limit is a wait, not a failure — and Groq tells us exactly how
+      // long. A second 429 after waiting means the budget is genuinely spent.
+      if (res.status === 429 && attempt + 1 < maxAttempts) {
+        const waitMs = retryAfterMs(body, res.headers);
+        if (waitMs !== null && waitMs <= 30_000) {
+          done();
+          await sleep(waitMs + 250);
+          return callOpenAICompatible(cfg, req, attempt + 1);
+        }
+      }
       // Surface the provider's own message — a 400 here is usually a schema
       // Groq's strict mode rejects, and the detail says which part.
       throw new Error(`HTTP ${res.status}${body ? `: ${body.slice(0, 300)}` : ""}`);
