@@ -2,6 +2,42 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-08-29 — Stage 3 scaffolded; three fixes from reading real output
+
+`apps/web` is up: Next.js 16.2.6, React 19, Tailwind 4.3.3, bun, initialized from Samuel's own
+shadcn preset (`b2JeaLOcVO`, style `base-rhea`). Primary is a real burnt orange —
+`oklch(0.553 0.195 38.402)` light, `oklch(0.47 0.157 37.304)` dark — darker and redder than the
+default amber. **It is the Base UI distribution, not Radix**: triggers take `render={<Button/>}`,
+there is no `asChild`, so Radix-based shadcn blocks need porting rather than dropping in. Tailwind
+v4 is CSS-first, so the theme lives in `app/globals.css` and there is no `tailwind.config.js`.
+`components/ui` is deliberately empty — components get added per need, so nothing ships as a raw
+default. The preset's font stack (Inter body, DM Sans headings) is **not** final; both are on the
+anti-slop rejected list. Geist Mono stays.
+
+**Three fixes, all found by reading actual output rather than assuming it was fine:**
+
+1. **`windowElapsedElevated` was dead code.** Declared at 0.8, never read — only the severe check
+   was in the condition — so a live market reading "35 min of trading left, 85% of the window
+   elapsed" graded `ok`. Both paths now fire; 3 new fixtures, and an existing fixture corrected
+   (99% elapsed is BLOCK, not RECHECK). 46 assertions.
+2. **The discrimination check was testing variety, not an invariant.** It failed twice on healthy
+   code: once when the venue rolled a generation where every market had never traded (one verdict
+   *was* correct), then again when two genuinely different signal shapes both mapped to RECHECK
+   (also correct — three verdicts, many shapes land in the middle). Now checks what actually
+   matters: severities vary across markets, and the severity→verdict mapping holds in both
+   directions.
+3. **Groq was falling back on 2 of 3 markets every run.** `max_completion_tokens` counts against
+   TPM as *requested*, not used — a 2,048 ceiling billed ~12,000 against a free-tier 8,000 limit
+   when real output is ~1,200. Lowered to 1,400, added a 429 retry that waits exactly as long as
+   Groq asks (it states the delay in the body and `retry-after`), and a transport retry for
+   `TypeError: fetch failed` (same WSL flakiness as Stage 2). **3 consecutive runs, 3 of 3
+   markets model-explained.** Was 1 of 3.
+
+**Design direction is still open** — that is the next decision, not the next build. Memory from
+Samuel's other projects gives the durable constraints: Geist + Geist Mono with `.font-data`
+(tabular-nums) on every figure and `.label-caps` for micro-labels; amber/red for warnings only,
+never decorative; shadcn primitives art-directed hard, never raw; no fabricated numbers.
+
 ## 2026-08-28 (later) — provider made configurable, Groq is the default
 
 The repo no longer depends on any personal account setup. `.env` chooses the provider;
@@ -338,7 +374,11 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. **Stage 3 — the dashboard.** Everything it needs exists: `DecisionTrace` carries signals with
+1. **Decide the design direction** — the only thing blocking the dashboard build. Open questions:
+   which reference system (audit-document / lab-report, Debrief's Editorial Technical adapted to
+   orange, or a `styles.refero.design` reference); whether to replace the preset's Inter + DM Sans
+   with Geist + a distinctive display face; and whether "depth" is a real signature or twee.
+2. **Then Stage 3 — the dashboard.** Everything it needs exists: `DecisionTrace` carries signals with
    measured value + calibration basis + plain reading, the rule path, per-field provenance, and
    the oracle receipt URL. Design around real output, not placeholder chrome. UX/Design is 20% of
    the score and the anti-slop law applies — decide a real signature first.
