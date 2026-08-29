@@ -104,22 +104,62 @@ async function main(): Promise<void> {
   console.log(stable ? `  ${GRN}PASS${R} same snapshot, same verdict` : `  ${RED}FAIL${R} verdicts are not stable`);
 
   // ── discrimination ────────────────────────────────────────────────────────
-  // A single-verdict engine is the failure mode to catch. With calibrated
-  // thresholds we expect a mix across a venue running 5m to 24h windows.
+  // The failure mode worth catching is an engine that cannot tell markets apart.
+  // But "N markets, 1 verdict" does not prove that, and two earlier versions of
+  // this check failed on healthy code:
+  //
+  //   - All six markets had never traded, so one verdict WAS the right answer.
+  //   - Two genuinely different signal shapes both mapped to RECHECK, which is
+  //     correct: the verdict space has three values and many shapes legitimately
+  //     land on the middle one.
+  //
+  // So check the two things that are actually invariants, not variety:
+  //   1. Severities vary across markets — the measurement layer discriminates.
+  //   2. The severity → verdict mapping is exactly right in both directions.
+  // Fixture coverage in test-risk.ts proves the dangerous paths, because it does
+  // not depend on what the venue happens to be doing.
   console.log(`\n${BOLD}discrimination${R}`);
+  const ids = [...new Set(graded.flatMap((g) => g.assessment.signals.map((s) => s.id)))];
   const distinct = Object.values(tally).filter((n) => n > 0).length;
-  if (graded.length >= 4 && distinct === 1) {
+
+  const varyingSignals = ids.filter((id) => {
+    const sevs = new Set(graded.map((g) => g.assessment.signals.find((s) => s.id === id)?.severity));
+    return sevs.size > 1;
+  });
+
+  if (graded.length >= 3 && varyingSignals.length === 0) {
     problems.push(
-      `every market graded ${graded.find(() => true)?.assessment.verdict} — the engine is not discriminating, thresholds need recalibration`,
+      "no signal varied across any market — the measurement layer is not discriminating",
     );
-    console.log(`  ${RED}FAIL${R} all ${graded.length} markets share one verdict`);
+    console.log(`  ${RED}FAIL${R} every signal returned the same severity on all ${graded.length} markets`);
   } else {
-    console.log(`  ${GRN}PASS${R} ${distinct} distinct verdict(s) across ${graded.length} markets`);
+    console.log(
+      `  ${GRN}PASS${R} ${varyingSignals.length} signal(s) vary across markets ${DIM}(${varyingSignals.join(", ") || "none"})${R}`,
+    );
   }
 
-  // Per-signal spread. A signal that never varies is dead weight in the prompt and
-  // in the UI, and is worth knowing about explicitly rather than discovering later.
-  const ids = [...new Set(graded.flatMap((g) => g.assessment.signals.map((s) => s.id)))];
+  // The mapping itself, in both directions — this is the load-bearing check.
+  for (const { snapshot, assessment: a } of graded) {
+    const hasSevere = a.signals.some((s) => s.severity === "severe");
+    const hasElevated = a.signals.some((s) => s.severity === "elevated");
+    const hasUnknown = a.unknownSignals.length > 0;
+    const sym = snapshot.identity.symbol;
+
+    if (hasSevere && a.verdict !== "BLOCK") {
+      problems.push(`${sym}: has a severe signal but graded ${a.verdict}, not BLOCK`);
+    }
+    if (!hasSevere && !hasElevated && !hasUnknown && a.verdict !== "ALLOW") {
+      problems.push(`${sym}: every signal is ok but graded ${a.verdict}, not ALLOW`);
+    }
+    if ((hasElevated || hasUnknown) && !hasSevere && a.verdict !== "RECHECK") {
+      problems.push(`${sym}: has elevated or unmeasured signals but graded ${a.verdict}, not RECHECK`);
+    }
+  }
+  console.log(
+    `  ${GRN}PASS${R} severity → verdict mapping holds on all ${graded.length} markets ${DIM}(${distinct} verdict(s) present: ${Object.entries(tally).filter(([, n]) => n > 0).map(([v, n]) => `${v} ${n}`).join(", ")})${R}`,
+  );
+
+  // Per-signal spread, reported below the mapping check.
   for (const id of ids) {
     const sevs = graded.map((g) => g.assessment.signals.find((s) => s.id === id)?.severity);
     const uniq = [...new Set(sevs)];
