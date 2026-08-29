@@ -27,3 +27,7 @@ Thumbs.db
 
 # Local registry override (npmmirror is slow here) — environment-specific
 .npmrc
+
+# Next.js app (its own .gitignore covers node_modules/.next; lockfile is committed)
+apps/web/.next/
+apps/web/node_modules/
