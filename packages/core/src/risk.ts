@@ -453,7 +453,21 @@ export function windowSignal(fresh: Freshness | null, windowSec: number | null):
       evidence,
     };
   }
-  if (left <= THRESHOLDS.secToExpiryElevated || (elapsed ?? 0) >= THRESHOLDS.windowElapsedSevere) {
+  // Two independent ways a window becomes risky, and BOTH have to be checked:
+  // an absolute shortage of time, or a large fraction of the window already
+  // spent. A live run graded "35 min of trading left, 85% of the window elapsed"
+  // as ok because only the SEVERE elapsed threshold was wired in and
+  // `windowElapsedElevated` sat unused — declared at 0.8 and never read. 85% is
+  // past the point where the calibration says to look closer.
+  if ((elapsed ?? 0) >= THRESHOLDS.windowElapsedSevere) {
+    return {
+      ...base,
+      severity: "severe",
+      finding: `${(((elapsed ?? 0) * 100)).toFixed(0)}% of the window has elapsed with ${human} left — the market can lock before an order lands.`,
+      evidence,
+    };
+  }
+  if (left <= THRESHOLDS.secToExpiryElevated || (elapsed ?? 0) >= THRESHOLDS.windowElapsedElevated) {
     return {
       ...base,
       severity: "elevated",

@@ -270,6 +270,14 @@ expect(
   "BLOCK",
 );
 
+// 99% elapsed is not "advanced", it is effectively over — the market can lock
+// between the snapshot and the send, which is the whole reason this signal exists.
+expect(
+  "window 99% elapsed → BLOCK",
+  verdictOf(snapshot({ fresh: healthyFresh({ secToExpiry: 280, windowElapsed: 0.99 }) })),
+  "BLOCK",
+);
+
 expect(
   "locked market → BLOCK",
   verdictOf(snapshot({ onchain: tradingOnchain({ status: 2, statusName: "Locked", tradable: false }) })),
@@ -346,9 +354,10 @@ expect(
   "RECHECK",
 );
 
+// Elevated: the window is well advanced but there is still room to act.
 expect(
-  "near window close → RECHECK",
-  verdictOf(snapshot({ fresh: healthyFresh({ secToExpiry: 280, windowElapsed: 0.99 }) })),
+  "window 85% elapsed → RECHECK",
+  verdictOf(snapshot({ fresh: healthyFresh({ secToExpiry: 2_100, windowElapsed: 0.85 }) })),
   "RECHECK",
 );
 
@@ -487,6 +496,27 @@ expect(
   windowSignal(healthyFresh({ secToExpiry: -10 }), 86_400).severity,
   "severe",
 );
+// The bug: `windowElapsedElevated` was declared at 0.8 and never read, so only
+// the SEVERE elapsed check was wired in. A live run graded "35 min left, 85% of
+// the window elapsed" as ok. Both the absolute and the fractional path now fire.
+expect(
+  "85% of window elapsed → elevated, not ok",
+  windowSignal(healthyFresh({ secToExpiry: 2100, windowElapsed: 0.85 }), 14_400).severity,
+  "elevated",
+);
+
+expect(
+  "95% of window elapsed → severe",
+  windowSignal(healthyFresh({ secToExpiry: 700, windowElapsed: 0.95 }), 14_400).severity,
+  "severe",
+);
+
+expect(
+  "60% elapsed with hours left stays ok",
+  windowSignal(healthyFresh({ secToExpiry: 5_600, windowElapsed: 0.6 }), 14_400).severity,
+  "ok",
+);
+
 expect(
   "flow: 2 fills is too few to judge",
   manipulationSignal(healthyFlow({ count: 2, skew: 1 }), healthyBook()).severity,
