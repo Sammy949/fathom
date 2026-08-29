@@ -16,7 +16,7 @@
 // unified verbs don't cover (on-chain status, faucet, outcome balances).
 
 import { SomniaMarkets } from "@somnia-chain/markets-sdk";
-import { loadConfig, loadEnv, makeChain, type EcConfig } from "./config.js";
+import { loadConfig, loadEnv, makeChain, type EcConfig } from "./config";
 
 export interface EcContext {
   exchange: SomniaMarkets;

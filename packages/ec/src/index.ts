@@ -6,7 +6,7 @@
  * modules (orders / settlement / claim / inventory) are deliberately absent.
  */
 
-export { createExchange, shutdown, assertTxOk, type EcContext } from "./exchange.js";
+export { createExchange, shutdown, assertTxOk, type EcContext } from "./exchange";
 export {
   loadConfig,
   envNum,
@@ -16,8 +16,8 @@ export {
   type EcAddresses,
   type Network,
   type PriceFeedConfig,
-} from "./config.js";
-export { DEPLOYMENTS, type NetworkDeployment, type Address } from "./addresses.js";
+} from "./config";
+export { DEPLOYMENTS, type NetworkDeployment, type Address } from "./addresses";
 export {
   activeMarkets,
   marketOnchain,
@@ -35,13 +35,13 @@ export {
   MARKET_STATUS,
   type EcSnapshot,
   type VenueScope,
-} from "./markets.js";
+} from "./markets";
 export {
   assertProbability,
   clampProbability,
   assertTradable,
   noPrice,
-} from "./gotchas.js";
+} from "./gotchas";
 
 // Re-export the SDK's converters + core types so callers have one import surface.
 export {

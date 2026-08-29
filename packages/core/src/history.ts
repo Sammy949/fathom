@@ -21,7 +21,7 @@
  *    over.
  */
 
-import type { CandleRow, FillRow } from "./queries.js";
+import type { CandleRow, FillRow } from "./queries";
 
 /** A candle in human units, oldest-first ordering applied by the caller. */
 export interface PricePoint {

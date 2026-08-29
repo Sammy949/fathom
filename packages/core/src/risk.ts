@@ -27,9 +27,9 @@
  *    rather than folded into a ratio band.
  */
 
-import type { BookMetrics } from "./book.js";
-import type { FlowMetrics, Freshness, MoveMetrics } from "./history.js";
-import type { MarketSnapshot, ResolutionState } from "./snapshot.js";
+import type { BookMetrics } from "./book";
+import type { FlowMetrics, Freshness, MoveMetrics } from "./history";
+import type { MarketSnapshot, ResolutionState } from "./snapshot";
 
 /**
  * How bad one dimension looks.

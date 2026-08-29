@@ -11,7 +11,7 @@
 // on-chain (or filling at a price you didn't mean).
 
 import type { MarketOnchain } from "@somnia-chain/markets-sdk";
-import { MARKET_STATUS } from "./markets.js";
+import { MARKET_STATUS } from "./markets";
 
 /**
  * Prices are YES probabilities in (0,1) — NOT dollars, NOT 0-100. "buy YES at

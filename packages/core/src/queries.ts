@@ -27,7 +27,7 @@
  *    materialized `fetchOrderBook` (see book.ts).
  */
 
-import { query, queryOrNull, type RetryPolicy } from "./indexer.js";
+import { query, queryOrNull, type RetryPolicy } from "./indexer";
 
 /** A binary market row, typed fields only — never parse the question text. */
 export interface MarketRow {

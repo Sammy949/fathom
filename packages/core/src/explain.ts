@@ -28,14 +28,14 @@
  * blank panel. The LLM is the polish, not the substance.
  */
 
-import type { Assessment, Severity, SignalId, Verdict } from "./risk.js";
-import type { MarketSnapshot } from "./snapshot.js";
+import type { Assessment, Severity, SignalId, Verdict } from "./risk";
+import type { MarketSnapshot } from "./snapshot";
 import {
   callProvider,
   describeProvider,
   resolveProvider,
   type ProviderConfig,
-} from "./provider.js";
+} from "./provider";
 
 /** The model's contribution: prose, and nothing else. */
 export interface Explanation {

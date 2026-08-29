@@ -13,14 +13,14 @@ export {
   IndexerRejected,
   DEFAULT_RETRY,
   type RetryPolicy,
-} from "./indexer.js";
+} from "./indexer";
 
 export {
   withRetry,
   isTransient,
   DEFAULT_SDK_RETRY,
   type SdkRetryPolicy,
-} from "./resilient.js";
+} from "./resilient";
 
 export {
   liveMarkets,
@@ -33,7 +33,7 @@ export {
   type CandleRow,
   type FillRow,
   type OracleQuestionRow,
-} from "./queries.js";
+} from "./queries";
 
 export {
   bookMetrics,
@@ -41,7 +41,7 @@ export {
   DEFAULT_NEAR_BAND,
   type BookMetrics,
   type BookSide,
-} from "./book.js";
+} from "./book";
 
 export {
   toPricePoints,
@@ -53,7 +53,7 @@ export {
   type MoveMetrics,
   type FlowMetrics,
   type Freshness,
-} from "./history.js";
+} from "./history";
 
 export {
   MARKET_STATUS,
@@ -72,7 +72,7 @@ export {
   type Provenance,
   type Sourced,
   type MarketStatusName,
-} from "./snapshot.js";
+} from "./snapshot";
 
 export {
   ingestVenue,
@@ -80,7 +80,7 @@ export {
   candleIntervalFor,
   type IngestOptions,
   type IngestResult,
-} from "./ingest.js";
+} from "./ingest";
 
 export {
   gradeSnapshot,
@@ -100,7 +100,7 @@ export {
   type Severity,
   type Verdict,
   type RuleHit,
-} from "./risk.js";
+} from "./risk";
 
 export {
   explainAssessment,
@@ -111,7 +111,7 @@ export {
   type ExplainOptions,
   type GuardFailure,
   type DecisionTrace,
-} from "./explain.js";
+} from "./explain";
 
 export {
   resolveProvider,
@@ -123,4 +123,4 @@ export {
   type ProviderKind,
   type ProviderRequest,
   type ProviderResult,
-} from "./provider.js";
+} from "./provider";

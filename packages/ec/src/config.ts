@@ -18,13 +18,13 @@
 
 import { defineChain, type Chain } from "viem";
 import { SOMNIA_TESTNET_PRICE_FEED, type PriceFeedConfig } from "@somnia-chain/markets-sdk";
-import { DEPLOYMENTS, type Address, type EcAddresses } from "./addresses.js";
+import { DEPLOYMENTS, type Address, type EcAddresses } from "./addresses";
 import { config as dotenv } from "dotenv";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 export type Network = "testnet" | "mainnet";
-export type { EcAddresses, Address } from "./addresses.js";
+export type { EcAddresses, Address } from "./addresses";
 export type { PriceFeedConfig } from "@somnia-chain/markets-sdk";
 
 let envLoaded = false;

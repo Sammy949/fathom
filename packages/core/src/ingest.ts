@@ -18,10 +18,10 @@ import type { EcContext } from "@fathom/ec";
 import { marketOnchain, outcomeSymbols } from "@fathom/ec";
 import type { UnifiedMarket } from "@somnia-chain/markets-sdk";
 
-import { bookMetrics, DEFAULT_NEAR_BAND } from "./book.js";
-import { flowMetrics, freshness, moveMetrics, toPricePoints } from "./history.js";
-import { candles, fills, liveMarkets, oracleQuestion, type MarketRow } from "./queries.js";
-import { withRetry } from "./resilient.js";
+import { bookMetrics, DEFAULT_NEAR_BAND } from "./book";
+import { flowMetrics, freshness, moveMetrics, toPricePoints } from "./history";
+import { candles, fills, liveMarkets, oracleQuestion, type MarketRow } from "./queries";
+import { withRetry } from "./resilient";
 import {
   absent,
   degraded,
@@ -33,7 +33,7 @@ import {
   type MarketIdentity,
   type OnchainState,
   type Sourced,
-} from "./snapshot.js";
+} from "./snapshot";
 
 /** Reason text from an unknown thrown value, without leaking a stack into the UI. */
 const reasonOf = (e: unknown): string =>

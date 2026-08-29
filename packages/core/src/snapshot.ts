@@ -20,9 +20,9 @@
  *    the current market. Pool-keyed state silently mixes generations.
  */
 
-import type { BookMetrics } from "./book.js";
-import type { FlowMetrics, Freshness, MoveMetrics, PricePoint } from "./history.js";
-import type { MarketRow, OracleQuestionRow } from "./queries.js";
+import type { BookMetrics } from "./book";
+import type { FlowMetrics, Freshness, MoveMetrics, PricePoint } from "./history";
+import type { MarketRow, OracleQuestionRow } from "./queries";
 
 /** On-chain market status. Only `Trading` accepts orders; `Locked` allows cancels. */
 export const MARKET_STATUS = {

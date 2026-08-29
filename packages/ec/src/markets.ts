@@ -13,8 +13,8 @@
 
 import type { MarketOnchain, UnifiedMarket } from "@somnia-chain/markets-sdk";
 import type { Hex } from "viem";
-import type { EcContext } from "./exchange.js";
-// FATHOM: dropped an unused `import type { EcConfig } from "./config.js"` that
+import type { EcContext } from "./exchange";
+// FATHOM: dropped an unused `import type { EcConfig } from "./config"` that
 // upstream leaves in place. It is dead there too; it only surfaces here because
 // @fathom/core typechecks with noUnusedLocals.
 
