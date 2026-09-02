@@ -1,8 +1,8 @@
 {
   "note": "Frozen evidence for the stuck-market BLOCK case. Locked on-chain, unresolved, past the voidable instant, while the indexer still reported Trading. voidExpired() is permissionless, so this state is not reproducible by re-reading — grade the fixture, never the live market.",
-  "capturedAtMs": 1788309852077,
-  "capturedAtSec": 1788309852,
-  "capturedAtIso": "2026-09-02T00:44:12.077Z",
+  "capturedAtMs": 1788310747405,
+  "capturedAtSec": 1788310747,
+  "capturedAtIso": "2026-09-02T00:59:07.405Z",
   "network": "testnet",
   "chainId": 50312,
   "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
@@ -22,7 +22,7 @@
     "backing": "1503000000",
     "voidableFromSec": 1787929500,
     "statusName": "Locked",
-    "lapsedPastVoidableSec": 380352,
+    "lapsedPastVoidableSec": 381247,
     "poolFinalized": false,
     "poolBooksEmpty": false,
     "marketNonce": "164"
@@ -36,6 +36,24 @@
   "restingOrders": {
     "bids": [],
     "asks": []
+  },
+  "depth": {
+    "orders": 0,
+    "bidShares": 0,
+    "askShares": 0,
+    "totalShares": 0,
+    "owners": 0,
+    "topOwnerShare": 0,
+    "concentration": 0,
+    "medianTtlSec": null,
+    "minTtlSec": null,
+    "maxTtlSec": null,
+    "firmShares": 0,
+    "pullableShares": 0,
+    "unverifiedShares": 0,
+    "phantomShares": 0,
+    "byOwner": [],
+    "readAt": 1788310747405
   },
   "raw": {
     "row": {
@@ -119,7 +137,7 @@
       "strike": "0",
       "question": "BTC closes at or above its opening price"
     },
-    "assembledAt": 1788309852077,
+    "assembledAt": 1788310747405,
     "onchain": {
       "value": {
         "status": 2,
@@ -135,7 +153,7 @@
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858064
+        "readAt": 1788310752836
       }
     },
     "book": {
@@ -154,13 +172,37 @@
           "nearNotional": 0
         },
         "crossed": false,
-        "assembledAt": 1788309858064,
+        "assembledAt": 1788310752835,
         "nearBand": 0.05,
         "unusable": "empty"
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858064
+        "readAt": 1788310752835
+      }
+    },
+    "depth": {
+      "value": {
+        "orders": 0,
+        "bidShares": 0,
+        "askShares": 0,
+        "totalShares": 0,
+        "owners": 0,
+        "topOwnerShare": 0,
+        "concentration": 0,
+        "medianTtlSec": null,
+        "minTtlSec": null,
+        "maxTtlSec": null,
+        "firmShares": 0,
+        "pullableShares": 0,
+        "unverifiedShares": 0,
+        "phantomShares": 0,
+        "byOwner": [],
+        "readAt": 1788310747405
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788310752836
       }
     },
     "prices": {
@@ -177,14 +219,14 @@
       ],
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858064
+        "readAt": 1788310752836
       }
     },
     "move": {
       "value": null,
       "provenance": {
         "state": "degraded",
-        "readAt": 1788309858064,
+        "readAt": 1788310752836,
         "reason": "captured fixture: move is derived on replay from `prices`"
       }
     },
@@ -195,25 +237,25 @@
         "takerSellShares": 3,
         "skew": -1,
         "mintedShares": 3,
-        "ageSec": 381130,
+        "ageSec": 382025,
         "vwap": 0.38999999999999996
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858065
+        "readAt": 1788310752836
       }
     },
     "freshness": {
       "value": {
-        "lastTradeAgeSec": 381130,
-        "ageVsWindow": 423.47777777777776,
+        "lastTradeAgeSec": 382025,
+        "ageVsWindow": 424.47222222222223,
         "windowElapsed": 1,
-        "secToExpiry": -380652,
+        "secToExpiry": -381547,
         "neverTraded": false
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858065
+        "readAt": 1788310752836
       }
     },
     "resolution": {
@@ -224,13 +266,13 @@
         "oracleResolvedAtSec": null,
         "reuseCount": 1,
         "oracleExplorerUrl": "https://prd.oracle.somnia.host/questions/46023?view=graph",
-        "pastExpirySec": 380652,
+        "pastExpirySec": 381547,
         "settlementWindowSec": 300,
-        "lapsedSec": 380352
+        "lapsedSec": 381247
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788309858065
+        "readAt": 1788310752836
       }
     },
     "row": {
@@ -261,7 +303,7 @@
   },
   "verdictAtCapture": {
     "verdict": "BLOCK",
-    "confidence": 0.71,
+    "confidence": 0.63,
     "action": "do_not_execute",
     "rules": [
       {
@@ -285,6 +327,10 @@
       {
         "id": "liquidity",
         "severity": "severe"
+      },
+      {
+        "id": "depth",
+        "severity": "unknown"
       },
       {
         "id": "volatility",

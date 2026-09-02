@@ -120,6 +120,7 @@ export {
   venueSignal,
   humanDuration,
   THRESHOLDS,
+  SIGNAL_IDS,
   DREAMDEX_VENUE_ID,
   type Assessment,
   type Signal,
@@ -143,6 +144,7 @@ export {
 export {
   resolveProvider,
   callProvider,
+  retryAfterMsFrom,
   describeProvider,
   GROQ_DEFAULT_MODEL,
   GROQ_BASE_URL,

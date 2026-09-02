@@ -28,7 +28,7 @@
  * blank panel. The LLM is the polish, not the substance.
  */
 
-import type { Assessment, Severity, SignalId, Verdict } from "./risk";
+import { SIGNAL_IDS, type Assessment, type Severity, type SignalId, type Verdict } from "./risk";
 import type { MarketSnapshot } from "./snapshot";
 import {
   callProvider,
@@ -75,15 +75,12 @@ const EXPLAIN_TOOL_SCHEMA = {
         properties: {
           signal_id: {
             type: "string" as const,
-            enum: [
-              "venue",
-              "resolution",
-              "liquidity",
-              "volatility",
-              "staleness",
-              "window",
-              "manipulation",
-            ],
+            // Derived, never hand-copied. A duplicated list here went out of sync
+            // the moment `depth` was added: Groq's strict decoding rejected every
+            // response, all three markets silently fell back to the deterministic
+            // narrator, and the gate still passed because the fallback works as
+            // designed. Only the fallback-reason field showed it.
+            enum: [...SIGNAL_IDS],
           },
           reading: {
             type: "string" as const,
@@ -150,7 +147,14 @@ function renderAssessment(s: MarketSnapshot, a: Assessment): string {
       .map(([k, v]) => `${k}=${v}`)
       .join(", ");
     if (ev) lines.push(`  evidence: ${ev}`);
-    lines.push(`  threshold basis: ${sig.basis}`);
+    // Threshold basis only where a threshold actually fired. On an `ok` signal
+    // the finding already says "in line with this venue" and the calibration
+    // detail is dead weight — eight bases cost ~430 input tokens against an
+    // 8,000/minute free-tier ceiling, which is the difference between two and
+    // three markets getting a model explanation. The guard's `allowedNumbers`
+    // still admits every figure in every basis, so trimming the prompt cannot
+    // turn a legitimate citation into a fabricated-number rejection.
+    if (sig.severity !== "ok") lines.push(`  threshold basis: ${sig.basis}`);
   }
 
   lines.push("", "RULES THAT FIRED, IN ORDER:");

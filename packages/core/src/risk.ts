@@ -56,15 +56,29 @@ export interface Signal {
   basis: string;
 }
 
-export type SignalId =
-  | "liquidity"
-  | "depth"
-  | "volatility"
-  | "staleness"
-  | "window"
-  | "manipulation"
-  | "resolution"
-  | "venue";
+/**
+ * Every signal id, in the order the engine evaluates them.
+ *
+ * THE SINGLE SOURCE OF TRUTH, and it has to be, because the explanation layer's
+ * JSON schema constrains `signal_id` to an enum. That enum was a hand-copied
+ * duplicate of this list, and adding `depth` silently broke the model path
+ * everywhere: Groq's strict decoding rejected the response, every market fell
+ * back to the deterministic narrator, and the Stage 5 gate still reported PASS
+ * because the fallback is meant to work. The only visible trace was the
+ * fallback-reason field. Deriving both from here makes that drift impossible.
+ */
+export const SIGNAL_IDS = [
+  "venue",
+  "resolution",
+  "liquidity",
+  "depth",
+  "volatility",
+  "staleness",
+  "window",
+  "manipulation",
+] as const;
+
+export type SignalId = (typeof SIGNAL_IDS)[number];
 
 /**
  * Calibrated cut points. Every number here is justified by a measured
@@ -394,7 +408,6 @@ export function depthSignal(d: DepthMetrics | null): Signal {
     phantomShares: Number(d.phantomShares.toFixed(2)),
     topOwner: d.byOwner[0]?.owner ?? null,
     topOwnerClass: d.byOwner[0]?.class ?? null,
-    topOwnerReason: d.byOwner[0]?.reason ?? null,
   };
 
   if (d.orders === 0) {

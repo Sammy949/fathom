@@ -31,13 +31,15 @@ const MIN_INTERVAL_SEC = 900
 /**
  * How many markets get a model-written explanation per read.
  *
- * Groq's free tier is 8,000 TPM and each explanation costs ~1,900 in + ~1,200
- * out. Explaining every market on the board would rate-limit most of them into
- * the fallback narrator — correct behaviour, but it reads as the model failing
- * rather than as a budget choice. So the detail view explains on demand and the
- * list does not explain at all.
+ * TWO, because two is what the free tier actually fits. Measured: the prompt runs
+ * ~2,000 input tokens and Groq bills `max_completion_tokens` as REQUESTED, so a
+ * call costs ~4,000 against an 8,000/minute ceiling. Three calls guarantee that
+ * the third gets a 429 and lands on the fallback narrator — which is correct
+ * behaviour and reads as the model failing rather than as a budget choice.
+ *
+ * So the list explains nothing at all, and the detail view explains on demand.
  */
-const EXPLAIN_BUDGET = 3
+const EXPLAIN_BUDGET = 2
 
 export interface MarketRow {
   marketId: string

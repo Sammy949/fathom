@@ -129,20 +129,30 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
  *
  * Groq is unusually helpful here: the body carries "Please try again in 4.965s"
  * and the standard `retry-after` header. Honouring it turns a hard failure into
- * a short pause. Free-tier TPM is 8,000 and three markets bill ~12,000, so
- * without this two of three panels fall back to the narrator — correct
- * behaviour, but it undersells the product in a demo.
+ * a short pause rather than a fallback.
+ *
+ * IT ALSO SAYS "412.5ms", and that is why the unit is matched explicitly. The
+ * original pattern was `/try again in ([\d.]+)s/i`, whose trailing `s` happily
+ * matched the `s` of `ms` — so a 0.4-SECOND wait was read as 412 seconds, blew
+ * past the cap, and the retry was skipped entirely. The market fell back to the
+ * narrator because the parser inflated the wait by a thousand.
  */
-function retryAfterMs(body: string, headers: Headers): number | null {
-  const header = headers.get("retry-after");
-  if (header) {
-    const secs = Number(header);
+export function retryAfterMsFrom(body: string, retryAfterHeader: string | null): number | null {
+  if (retryAfterHeader) {
+    const secs = Number(retryAfterHeader);
     if (Number.isFinite(secs)) return Math.ceil(secs * 1000);
   }
-  const m = body.match(/try again in ([\d.]+)s/i);
-  if (m?.[1]) return Math.ceil(Number(m[1]) * 1000);
+  const m = body.match(/try again in\s*([\d.]+)\s*(ms|s)\b/i);
+  if (m?.[1]) {
+    const value = Number(m[1]);
+    if (!Number.isFinite(value)) return null;
+    return Math.ceil(m[2]?.toLowerCase() === "ms" ? value : value * 1000);
+  }
   return null;
 }
+
+const retryAfterMs = (body: string, headers: Headers): number | null =>
+  retryAfterMsFrom(body, headers.get("retry-after"));
 
 /**
  * Groq / any OpenAI-compatible endpoint, via `response_format: json_schema`.
@@ -216,7 +226,12 @@ async function callOpenAICompatible(
       // long. A second 429 after waiting means the budget is genuinely spent.
       if (res.status === 429 && attempt + 1 < maxAttempts) {
         const waitMs = retryAfterMs(body, res.headers);
-        if (waitMs !== null && waitMs <= 30_000) {
+        // Cap at 45s, not 30s. The TPM window is a minute, so any wait shorter
+        // than one is legitimately worth taking — and a 30s cap rejected the
+        // real-world case by 400ms: Groq asked for 30.405s once the eighth
+        // signal grew the prompt, the retry was skipped, and the market fell
+        // back to the narrator for the sake of four hundred milliseconds.
+        if (waitMs !== null && waitMs <= 45_000) {
           done();
           await sleep(waitMs + 250);
           return callOpenAICompatible(cfg, req, attempt + 1);

@@ -22,6 +22,7 @@ import {
   IndexerUnavailable,
   query,
   queryOrNull,
+  retryAfterMsFrom,
 } from "@fathom/core";
 
 const R = "\x1b[0m";
@@ -119,6 +120,41 @@ async function main(): Promise<void> {
   const backoffElapsed = Date.now() - t2;
   // Two sleeps between three attempts, full-jitter so only a floor is meaningful.
   check("waits between attempts", backoffElapsed > 200, `${backoffElapsed}ms across ${slow.attempts} attempts`);
+
+  // 6. The provider's 429 wait parser. No network — pure string handling, and it
+  // was silently wrong: the pattern's trailing `s` matched the `s` of `ms`, so
+  // Groq's "try again in 412.5ms" was read as 412 SECONDS, exceeded the wait cap
+  // and skipped the retry altogether. A market fell back to the deterministic
+  // narrator because a unit was misread by a factor of a thousand, and the gate
+  // still passed because the fallback works. That is the fifth time in this build
+  // that the retry-or-guard logic was the broken part rather than the thing it
+  // was checking, so it gets its own assertions.
+  console.log(`\n${BOLD}429 wait parsing${R}`);
+  check(
+    "milliseconds parse as milliseconds",
+    retryAfterMsFrom("Rate limit reached. Please try again in 412.5ms.", null) === 413,
+    String(retryAfterMsFrom("Rate limit reached. Please try again in 412.5ms.", null)),
+  );
+  check(
+    "seconds parse as seconds",
+    retryAfterMsFrom("Please try again in 30.405s.", null) === 30_405,
+    String(retryAfterMsFrom("Please try again in 30.405s.", null)),
+  );
+  check(
+    "the retry-after header wins and is in seconds",
+    retryAfterMsFrom("Please try again in 9.5s.", "2") === 2_000,
+    String(retryAfterMsFrom("Please try again in 9.5s.", "2")),
+  );
+  check(
+    "no stated wait yields null rather than a guess",
+    retryAfterMsFrom("Rate limit reached for model.", null) === null,
+  );
+  // 30.405s is the value that actually occurred once the eighth signal grew the
+  // prompt, and a 30s cap rejected it by 405ms.
+  check(
+    "a sub-minute wait is inside the 45s cap",
+    (retryAfterMsFrom("Please try again in 30.405s.", null) ?? Infinity) <= 45_000,
+  );
 
   console.log(`\n${BOLD}result${R}`);
   console.log(failures === 0 ? `  ${GRN}PASS${R} — retry behaves as Stage 2 requires` : `  ${RED}${failures} check(s) failed${R}`);
