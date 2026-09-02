@@ -19,6 +19,7 @@ import { marketOnchain, outcomeSymbols } from "@fathom/ec";
 import type { UnifiedMarket } from "@somnia-chain/markets-sdk";
 
 import { bookMetrics, DEFAULT_NEAR_BAND } from "./book";
+import { binaryMarketAbi, publicClient } from "./chain";
 import { flowMetrics, freshness, moveMetrics, toPricePoints } from "./history";
 import { candles, fills, liveMarkets, oracleQuestion, type MarketRow } from "./queries";
 import { withRetry } from "./resilient";
@@ -89,7 +90,10 @@ function identityOf(
   };
 }
 
-function onchainStateOf(oc: Awaited<ReturnType<typeof marketOnchain>>): OnchainState {
+function onchainStateOf(
+  oc: Awaited<ReturnType<typeof marketOnchain>>,
+  settlementWindowSec: number | null,
+): OnchainState {
   if (!oc) throw new Error("market is not binary, or has no on-chain snapshot");
   return {
     status: oc.status,
@@ -101,6 +105,7 @@ function onchainStateOf(oc: Awaited<ReturnType<typeof marketOnchain>>): OnchainS
     finalized: oc.finalized,
     expirySec: Number(oc.expiry),
     backing: oc.backing.toString(),
+    settlementWindowSec,
   };
 }
 
@@ -138,9 +143,34 @@ export async function snapshotMarket(
   // The authoritative read first. If it fails, downstream numbers may describe a
   // market that is no longer trading, so the snapshot is explicitly ungradeable.
   // Retried: `getMarketOnchain` goes through the SDK's own unretried transport.
-  const onchain = await sourced(async () =>
-    onchainStateOf(await withRetry(`getMarketOnchain(${identity.marketId.slice(-6)})`, () => marketOnchain(ctx, market))),
-  );
+  //
+  // One extra `eth_call` rides along for `settlementWindow()`, which neither the
+  // indexer nor `MarketOnchain` carries. Without it the engine can say a market
+  // is past expiry but not whether `voidExpired()` is callable, and those are
+  // different verdicts — so it is read rather than assumed. A failure here leaves
+  // it null and the resolution signal degrades to "late" instead of "voidable".
+  const onchain = await sourced(async () => {
+    const oc = await withRetry(`getMarketOnchain(${identity.marketId.slice(-6)})`, () =>
+      marketOnchain(ctx, market),
+    );
+    let settlementWindowSec: number | null = null;
+    if (oc) {
+      try {
+        settlementWindowSec = Number(
+          await withRetry(`settlementWindow(${identity.marketId.slice(-6)})`, () =>
+            publicClient(config).readContract({
+              address: oc.marketAddress,
+              abi: binaryMarketAbi,
+              functionName: "settlementWindow",
+            }),
+          ),
+        );
+      } catch {
+        settlementWindowSec = null;
+      }
+    }
+    return onchainStateOf(oc, settlementWindowSec);
+  });
 
   // Book from the MATERIALIZED source. Never from indexer `Order` rows — measured
   // crossed at bid 0.320 / ask 0.270 on a market whose true book was 0.318/0.351.
@@ -206,7 +236,7 @@ export async function snapshotMarket(
     // Returns null on a degraded read rather than throwing, so distinguish
     // "no oracle row" from "could not reach the indexer".
     const oracle = await oracleQuestion(config.indexerUrl, row.oracleQuestionId);
-    return ok(resolutionState(row, oracle, nowSec));
+    return ok(resolutionState(row, oracle, nowSec, onchain.value?.settlementWindowSec ?? null));
   })();
 
   return { identity, assembledAt, onchain, book, prices, move, flow, freshness: fresh, resolution, row };

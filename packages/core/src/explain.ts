@@ -202,11 +202,18 @@ function allowedNumbers(a: Assessment): Set<string> {
         (m * 100).toFixed(0),
         (m * 100).toFixed(1),
         (m * 100).toFixed(2),
-        // Seconds are routinely restated in minutes and hours.
+        // Seconds are routinely restated in minutes, hours and DAYS. Days were
+        // missing until the resolution signal began reporting a four-day lapse:
+        // the model restating 379487s as "4.4 days" would have been rejected for
+        // a figure the finding itself handed it. That is the fourth time this
+        // guard, rather than the model, was the thing that was wrong.
         Math.round(m / 60).toString(),
         (m / 60).toFixed(1),
         Math.round(m / 3600).toString(),
         (m / 3600).toFixed(1),
+        Math.round(m / 86400).toString(),
+        (m / 86400).toFixed(1),
+        (m / 86400).toFixed(2),
         Math.round(m).toString(),
       ]) {
         out.add(s);

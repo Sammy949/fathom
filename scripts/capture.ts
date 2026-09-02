@@ -180,7 +180,9 @@ async function main(): Promise<void> {
   try {
     const unified = Object.values(await withRetry("loadMarkets", () => ctx.exchange.loadMarkets(true)));
     const hit = unified.find(
-      (m) => String(m.info.marketId).toLowerCase() === marketId.toLowerCase(),
+      (m) =>
+        m.info.marketType === "BINARY" &&
+        String(m.info.marketId).toLowerCase() === marketId.toLowerCase(),
     );
     if (!hit) throw new Error("market absent from the registry sweep (locked markets can be)");
     const yes = hit.outcomes?.[0]?.symbol ?? `${hit.symbol}#YES`;
@@ -228,6 +230,7 @@ async function main(): Promise<void> {
       finalized: params.finalized,
       expirySec: chain.expirySec,
       backing: chain.backing.toString(),
+      settlementWindowSec: chain.settlementWindowSec,
     }),
     book,
     prices: ok(prices),
@@ -242,7 +245,7 @@ async function main(): Promise<void> {
         nowSec,
       }),
     ),
-    resolution: ok(resolutionState(row, oracle, nowSec)),
+    resolution: ok(resolutionState(row, oracle, nowSec, chain.settlementWindowSec)),
     row,
   };
 

@@ -12,7 +12,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && npm run typecheck:scripts",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json",
     "snapshot": "tsx scripts/snapshot.ts",
     "capture": "tsx scripts/capture.ts",
     "retry:test": "tsx scripts/retry-test.ts",

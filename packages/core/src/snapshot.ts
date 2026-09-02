@@ -128,6 +128,13 @@ export interface OnchainState {
   finalized: boolean;
   expirySec: number;
   backing: string;
+  /**
+   * Seconds after `expiry` the oracle still holds to post an answer. Read from
+   * the market contract because the indexer has no field for it, and it is the
+   * difference between two genuinely different states: inside the window a
+   * market is merely LATE, past it anyone may call `voidExpired()`.
+   */
+  settlementWindowSec: number | null;
 }
 
 /**
@@ -152,10 +159,21 @@ export interface ResolutionState {
    * available to the decision trace: a verdict that cites a link a judge can open.
    */
   oracleExplorerUrl: string | null;
+  /** Seconds past `expiry` with no answer posted. Late, but not yet voidable. */
+  pastExpirySec: number | null;
   /**
-   * Seconds past expiry with no oracle answer posted. Escalating resolution risk:
-   * once the settlement window lapses, anyone may call `voidExpired()` and both
-   * sides redeem at 0.5.
+   * The settlement window read off the market contract, or null when we could not
+   * read it. Null is why `lapsedSec` may be null on a market that IS past expiry.
+   */
+  settlementWindowSec: number | null;
+  /**
+   * Seconds past `expiry + settlementWindow` — i.e. how long `voidExpired()` has
+   * been callable by ANYONE, with both sides then redeeming at 0.5.
+   *
+   * Measured from the voidable instant, NOT from expiry. Those are different
+   * states and conflating them overstates the risk on a market that is merely a
+   * minute late: the oracle still holds the window and settlement is the expected
+   * outcome. Null while inside the window or once an answer lands.
    */
   lapsedSec: number | null;
 }
@@ -187,15 +205,29 @@ export function oracleExplorerUrl(oracleQuestionId: string | null | undefined): 
   return `https://prd.oracle.somnia.host/questions/${oracleQuestionId}?view=graph`;
 }
 
-/** Resolution inputs assembled from the market row plus its oracle question. */
+/**
+ * Resolution inputs assembled from the market row plus its oracle question.
+ *
+ * `settlementWindowSec` comes from the market CONTRACT — the indexer has no field
+ * for it. Without it we can say a market is past expiry but not whether it is
+ * voidable, so `lapsedSec` stays null rather than guessing a window length. A
+ * fabricated window would turn a market that is 30 seconds late into a BLOCK.
+ */
 export function resolutionState(
   row: MarketRow,
   oracle: OracleQuestionRow | null,
   nowSec = Math.floor(Date.now() / 1000),
+  settlementWindowSec: number | null = null,
 ): ResolutionState {
   const expiry = Number(row.expiry ?? 0);
   const resolvedAt = oracle?.resolvedAt ? Number(oracle.resolvedAt) : null;
-  const pastExpiry = expiry > 0 && nowSec > expiry;
+  // Only counts while nothing has been posted. Once an answer lands, the window
+  // closed normally and there is no lapse risk left.
+  const unanswered = expiry > 0 && nowSec > expiry && !resolvedAt;
+  const pastExpirySec = unanswered ? nowSec - expiry : null;
+  const voidableFrom = settlementWindowSec === null ? null : expiry + settlementWindowSec;
+  const lapsedSec =
+    unanswered && voidableFrom !== null && nowSec > voidableFrom ? nowSec - voidableFrom : null;
 
   return {
     oracleQuestionId: row.oracleQuestionId,
@@ -204,9 +236,9 @@ export function resolutionState(
     oracleResolvedAtSec: resolvedAt,
     reuseCount: oracle?.reuseCount ?? null,
     oracleExplorerUrl: oracleExplorerUrl(row.oracleQuestionId),
-    // Only counts as lapsed while nothing has been posted. Once an answer lands,
-    // the settlement window closed normally and there is no lapse risk left.
-    lapsedSec: pastExpiry && !resolvedAt ? nowSec - expiry : null,
+    pastExpirySec,
+    settlementWindowSec,
+    lapsedSec,
   };
 }
 

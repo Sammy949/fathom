@@ -1,8 +1,8 @@
 {
   "note": "Frozen evidence for the stuck-market BLOCK case. Locked on-chain, unresolved, past the voidable instant, while the indexer still reported Trading. voidExpired() is permissionless, so this state is not reproducible by re-reading — grade the fixture, never the live market.",
-  "capturedAtMs": 1788308987899,
-  "capturedAtSec": 1788308987,
-  "capturedAtIso": "2026-09-02T00:29:47.899Z",
+  "capturedAtMs": 1788309852077,
+  "capturedAtSec": 1788309852,
+  "capturedAtIso": "2026-09-02T00:44:12.077Z",
   "network": "testnet",
   "chainId": 50312,
   "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
@@ -22,7 +22,7 @@
     "backing": "1503000000",
     "voidableFromSec": 1787929500,
     "statusName": "Locked",
-    "lapsedPastVoidableSec": 379487,
+    "lapsedPastVoidableSec": 380352,
     "poolFinalized": false,
     "poolBooksEmpty": false,
     "marketNonce": "164"
@@ -119,7 +119,7 @@
       "strike": "0",
       "question": "BTC closes at or above its opening price"
     },
-    "assembledAt": 1788308987899,
+    "assembledAt": 1788309852077,
     "onchain": {
       "value": {
         "status": 2,
@@ -130,11 +130,12 @@
         "winningOutcome": 0,
         "finalized": false,
         "expirySec": 1787929200,
-        "backing": "1503000000"
+        "backing": "1503000000",
+        "settlementWindowSec": 300
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993732
+        "readAt": 1788309858064
       }
     },
     "book": {
@@ -153,13 +154,13 @@
           "nearNotional": 0
         },
         "crossed": false,
-        "assembledAt": 1788308993731,
+        "assembledAt": 1788309858064,
         "nearBand": 0.05,
         "unusable": "empty"
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993731
+        "readAt": 1788309858064
       }
     },
     "prices": {
@@ -176,14 +177,14 @@
       ],
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993732
+        "readAt": 1788309858064
       }
     },
     "move": {
       "value": null,
       "provenance": {
         "state": "degraded",
-        "readAt": 1788308993732,
+        "readAt": 1788309858064,
         "reason": "captured fixture: move is derived on replay from `prices`"
       }
     },
@@ -194,25 +195,25 @@
         "takerSellShares": 3,
         "skew": -1,
         "mintedShares": 3,
-        "ageSec": 380265,
+        "ageSec": 381130,
         "vwap": 0.38999999999999996
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993732
+        "readAt": 1788309858065
       }
     },
     "freshness": {
       "value": {
-        "lastTradeAgeSec": 380265,
-        "ageVsWindow": 422.51666666666665,
+        "lastTradeAgeSec": 381130,
+        "ageVsWindow": 423.47777777777776,
         "windowElapsed": 1,
-        "secToExpiry": -379787,
+        "secToExpiry": -380652,
         "neverTraded": false
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993732
+        "readAt": 1788309858065
       }
     },
     "resolution": {
@@ -223,11 +224,13 @@
         "oracleResolvedAtSec": null,
         "reuseCount": 1,
         "oracleExplorerUrl": "https://prd.oracle.somnia.host/questions/46023?view=graph",
-        "lapsedSec": 379787
+        "pastExpirySec": 380652,
+        "settlementWindowSec": 300,
+        "lapsedSec": 380352
       },
       "provenance": {
         "state": "ok",
-        "readAt": 1788308993732
+        "readAt": 1788309858065
       }
     },
     "row": {
@@ -267,7 +270,7 @@
       },
       {
         "rule": "cannot-settle",
-        "because": "Expired 6330 min ago with no oracle answer posted; if the settlement window lapses anyone can void it to 0.5 a side."
+        "because": "The settlement window closed 4d 10h ago with no oracle answer posted. `voidExpired()` is callable by anyone right now, which redeems both sides at 0.5 whatever the price says."
       }
     ],
     "severities": [

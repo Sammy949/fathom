@@ -105,6 +105,7 @@ export {
   manipulationSignal,
   resolutionSignal,
   venueSignal,
+  humanDuration,
   THRESHOLDS,
   DREAMDEX_VENUE_ID,
   type Assessment,

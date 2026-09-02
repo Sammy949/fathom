@@ -17,7 +17,7 @@
  */
 
 import { createExchange, shutdown } from "@fathom/ec";
-import { executableShares, ingestVenue, type MarketSnapshot } from "@fathom/core";
+import { executableShares, ingestVenue } from "@fathom/core";
 
 const R = "\x1b[0m";
 const DIM = "\x1b[2m";

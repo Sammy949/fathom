@@ -116,6 +116,9 @@ const healthyResolution = (o: Partial<ResolutionState> = {}): ResolutionState =>
   oracleResolvedAtSec: null,
   reuseCount: 0,
   oracleExplorerUrl: "https://prd.oracle.somnia.host/questions/45835?view=graph",
+  pastExpirySec: null,
+  // The real venue's series all carry 300s. Measured on market 0x…c067.
+  settlementWindowSec: 300,
   lapsedSec: null,
   ...o,
 });
@@ -130,6 +133,7 @@ const tradingOnchain = (o: Partial<OnchainState> = {}): OnchainState => ({
   finalized: false,
   expirySec: Math.floor(Date.now() / 1000) + 37_800,
   backing: "1000000000",
+  settlementWindowSec: 300,
   ...o,
 });
 
@@ -215,10 +219,39 @@ expect(
   "BLOCK",
 );
 
+// THREE STATES, not one escalating number. Measuring the lapse from `expiry`
+// conflated "the oracle is a minute late" with "anyone can void this now", which
+// are different verdicts — the first is normal and the second is terminal.
 expect(
-  "settlement lapsed >15min → BLOCK",
-  verdictOf(snapshot({ resolution: healthyResolution({ lapsedSec: 1_200 }) })),
+  "past expiry, inside the settlement window → RECHECK, not BLOCK",
+  verdictOf(snapshot({ resolution: healthyResolution({ pastExpirySec: 120 }) })),
+  "RECHECK",
+);
+
+expect(
+  "past expiry, inside the window → elevated",
+  resolutionSignal(healthyResolution({ pastExpirySec: 120 })).severity,
+  "elevated",
+);
+
+expect(
+  "settlement window lapsed at all → BLOCK",
+  verdictOf(snapshot({ resolution: healthyResolution({ pastExpirySec: 400, lapsedSec: 100 }) })),
   "BLOCK",
+);
+
+// The stuck market on our own venue: 4d 9h past voidable. The finding has to
+// render that as days — "6328 min ago" was the old output and no reader parses it.
+expect(
+  "four-day lapse renders in days, not minutes",
+  /\b4d 9h ago\b/.test(resolutionSignal(healthyResolution({ pastExpirySec: 379_787, lapsedSec: 379_487 })).finding),
+  true,
+);
+
+expect(
+  "unreadable settlement window cannot assert voidable",
+  resolutionSignal(healthyResolution({ pastExpirySec: 400, settlementWindowSec: null })).severity,
+  "elevated",
 );
 
 expect(

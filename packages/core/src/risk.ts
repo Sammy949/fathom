@@ -154,6 +154,30 @@ export const DREAMDEX_VENUE_ID =
   "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c";
 
 const pts = (v: number) => `${(v * 100).toFixed(1)} points`;
+
+/**
+ * A duration in the largest unit that stays readable.
+ *
+ * Exists because the old code rendered every lapse in minutes, and the stuck
+ * market on our own venue came out as "expired 6328 min ago". That is a correct
+ * number that no human reads as four and a half days, and a trace full of
+ * figures nobody can parse is what makes an engine look machine-generated
+ * however sound its arithmetic.
+ */
+export function humanDuration(sec: number): string {
+  const s = Math.max(0, Math.round(sec));
+  if (s < 90) return `${s}s`;
+  if (s < 5_400) return `${Math.round(s / 60)} min`;
+  if (s < 172_800) {
+    const h = Math.floor(s / 3_600);
+    const m = Math.round((s % 3_600) / 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  const d = Math.floor(s / 86_400);
+  const h = Math.round((s % 86_400) / 3_600);
+  return h > 0 ? `${d}d ${h}h` : `${d}d`;
+}
+
 const worst = (a: Severity, b: Severity): Severity => {
   const rank: Record<Severity, number> = { ok: 0, unknown: 1, elevated: 2, severe: 3 };
   return rank[a] >= rank[b] ? a : b;
@@ -612,7 +636,8 @@ export function resolutionSignal(res: ResolutionState | null): Signal {
     id: "resolution" as const,
     label: "Resolution",
     basis:
-      "Oracle binding, supersession, void state and settlement-window lapse. Question wording is templated and identical " +
+      "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` " +
+      "(the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical " +
       "across markets, and the docs warn against parsing it, so it carries no signal.",
   };
 
@@ -630,6 +655,8 @@ export function resolutionSignal(res: ResolutionState | null): Signal {
     supersededBy: res.supersededByQuestionId,
     oracleVoided: res.oracleVoided,
     reuseCount: res.reuseCount,
+    pastExpirySec: res.pastExpirySec,
+    settlementWindowSec: res.settlementWindowSec,
     lapsedSec: res.lapsedSec,
     auditUrl: res.oracleExplorerUrl,
   };
@@ -658,14 +685,34 @@ export function resolutionSignal(res: ResolutionState | null): Signal {
       evidence,
     };
   }
+
+  // THREE DISTINCT STATES, not one escalating number. The old code measured the
+  // lapse from `expiry` and described it in the conditional future ("if the
+  // settlement window lapses anyone can void it"), which understates the case
+  // that matters: on the stuck market we captured, the window had lapsed FOUR
+  // DAYS earlier and `voidExpired()` was callable at that moment, by anyone.
   if (res.lapsedSec !== null) {
-    // Past expiry with nothing posted: anyone may call voidExpired(), and the
-    // longer it lapses the likelier that is.
-    const mins = Math.round(res.lapsedSec / 60);
     return {
       ...base,
-      severity: res.lapsedSec > 900 ? "severe" : "elevated",
-      finding: `Expired ${mins} min ago with no oracle answer posted; if the settlement window lapses anyone can void it to 0.5 a side.`,
+      severity: "severe",
+      finding:
+        `The settlement window closed ${humanDuration(res.lapsedSec)} ago with no oracle answer posted. ` +
+        `\`voidExpired()\` is callable by anyone right now, which redeems both sides at 0.5 whatever the price says.`,
+      evidence,
+    };
+  }
+  if (res.pastExpirySec !== null) {
+    // Late, not voidable. The oracle still holds the window, so settlement is
+    // still the expected outcome — grading this severe would BLOCK every market
+    // in the seconds after it locks.
+    const window =
+      res.settlementWindowSec === null
+        ? "the settlement window length could not be read"
+        : `${humanDuration(res.settlementWindowSec)} of settlement window`;
+    return {
+      ...base,
+      severity: "elevated",
+      finding: `Expired ${humanDuration(res.pastExpirySec)} ago with no answer posted yet, inside ${window}.`,
       evidence,
     };
   }
