@@ -577,6 +577,12 @@ export interface DecisionTrace {
   rules: { rule: string; because: string }[];
   requiredChecks: string[];
   unmeasured: SignalId[];
+  /**
+   * Closes that actually printed, oldest first. Sparse by nature: buckets are emitted
+   * per trade, so a gap in `t` means no trade occurred, never a missing reading.
+   * Consumers must not interpolate across one.
+   */
+  prices: { t: number; close: number; volume: number }[];
   /** LLM contribution, clearly separated from the computed part. */
   explanation: Explanation;
   /** The public settlement receipt, when the market has an oracle question. */
@@ -612,6 +618,30 @@ export function buildTrace(
     rules: a.rules,
     requiredChecks: a.requiredChecks,
     unmeasured: a.unknownSignals,
+    /**
+     * The price series, thinned but never interpolated.
+     *
+     * Carried so the UI can plot what actually printed. Two rules travel with it and
+     * both are load-bearing:
+     *
+     * 1. GAPS ARE REAL AND MUST SURVIVE. Candle buckets here are emitted per trade,
+     *    not per interval, so a market that did not trade for two hours has no points
+     *    for two hours. Measured on BTC 24h: 51 points over 15.4h with a 150-minute
+     *    hole, 16% of the whole span. Anything that draws a line across that hole is
+     *    inventing prices, which is the one thing this product exists not to do.
+     * 2. FEWER THAN `MIN_SAMPLES_FOR_MOVE` POINTS IS NOT A CHART. `moveMetrics`
+     *    already refuses to compute a move below three samples and reports
+     *    `insufficient` instead of a confident zero. The UI has to make the same
+     *    call, so the series is passed through as-is and the renderer decides.
+     *
+     * Capped at 200 points, which is the query limit anyway, so a long-running market
+     * cannot bloat the payload the API route serves.
+     */
+    prices: (s.prices.value ?? []).slice(-200).map((p) => ({
+      t: p.t,
+      close: Number(p.close.toFixed(3)),
+      volume: Number(p.volume.toFixed(2)),
+    })),
     explanation,
     oracleAuditUrl: s.resolution.value?.oracleExplorerUrl ?? null,
     provenance: (

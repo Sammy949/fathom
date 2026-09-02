@@ -7,9 +7,9 @@ import {
   SignalTable,
 } from "@/components/decision-trace"
 import { GateLadder } from "@/components/gate-ladder"
+import { PriceTrace } from "@/components/price-trace"
 import { ProvenanceSheet } from "@/components/provenance"
 import { SiteNav } from "@/components/site-nav"
-import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
 import { duration, NO_READING, pct, points, prob, shares, shortId, windowLabel } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
@@ -101,11 +101,11 @@ export default async function MarketPage({
           {trace.symbol} · {shortId(row.marketId)}
         </p>
 
-        <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
           <div>
             <VerdictMark verdict={trace.verdict} size="lg" />
           </div>
-          <div className="flex items-end gap-8">
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-8">
             <div>
               <p className="label-caps mb-1">confidence</p>
               <p className="font-data text-2xl leading-none">{trace.confidence.toFixed(2)}</p>
@@ -113,13 +113,14 @@ export default async function MarketPage({
                 how completely the market could be observed
               </p>
             </div>
-            <Sounding
-              signals={trace.signals.map((s) => ({
-                id: s.id,
-                label: s.label,
-                severity: s.severity,
-              }))}
-              confidence={trace.confidence}
+            {/* The sounding used to sit here. It was a third encoding of information
+                the gate ladder and the signal table both carry further down, in the
+                one slot where a trader looks for the market's own price history and
+                never found it. */}
+            <PriceTrace
+              points={trace.prices}
+              intervalSec={row.intervalSec}
+              insufficientNote={trace.signals.find((s) => s.id === "volatility")?.finding}
             />
           </div>
         </div>
