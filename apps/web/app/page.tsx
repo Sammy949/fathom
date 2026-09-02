@@ -1,5 +1,5 @@
 import { MarketList } from "@/components/market-list"
-import { ReadAge } from "@/components/read-age"
+import { SiteNav } from "@/components/site-nav"
 import { shortId } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
@@ -22,74 +22,69 @@ export default async function Home() {
   }, {})
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
-      {/* Masthead. An exhibit header, not a marketing hero: what this is, what it
-          measured, and when. No eyebrow pill, no CTA pair. */}
-      <header className="mb-12">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="font-display text-3xl leading-none">Fathom</h1>
-          <span className="label-caps">DreamDEX event contracts · Somnia testnet</span>
-        </div>
-        <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
-          Every verdict below is computed in code from measured order-book, trade, oracle and
-          per-order chain state. A language model writes the explanations and cannot change a
-          verdict: its output schema has no field for one.
-        </p>
+    <>
+      <SiteNav
+        venueId={read.venueId}
+        network="Somnia testnet"
+        assembledAt={read.assembledAt}
+      />
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
+        {/* The opening statement, not a marketing hero. Split into a headline and
+            one line of deck rather than a 35-word paragraph: the claim is short
+            enough to be a sentence, and identity, venue and read age now live in
+            the nav instead of being said twice. */}
+        <header className="mb-12">
+          <h1 className="font-display max-w-2xl text-3xl leading-tight">
+            Every verdict here is computed in code.
+          </h1>
+          <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
+            A language model writes the explanations and cannot change a verdict: its output
+            schema has no field for one.
+          </p>
 
-        <dl className="mt-6 flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t pt-4">
-          <div className="flex items-baseline gap-2">
-            <dt className="label-caps">assessed</dt>
-            <dd className="font-data text-sm">{read.rows.length}</dd>
-          </div>
-          {(["ALLOW", "RECHECK", "BLOCK"] as const).map((v) => (
-            <div key={v} className="flex items-baseline gap-2">
-              <dt className="label-caps">{v.toLowerCase()}</dt>
-              <dd className="font-data text-sm">{tally[v] ?? 0}</dd>
+          <dl className="mt-8 flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t pt-4">
+            <div className="flex items-baseline gap-2">
+              <dt className="label-caps">assessed</dt>
+              <dd className="font-data text-sm">{read.rows.length}</dd>
             </div>
-          ))}
-          <div className="flex items-baseline gap-2">
-            <dt className="label-caps">read</dt>
-            <dd className="font-data text-muted-foreground text-sm">
-              <ReadAge at={read.assembledAt} />
-            </dd>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <dt className="label-caps">venue</dt>
-            <dd className="font-data text-muted-foreground text-sm">{shortId(read.venueId)}</dd>
-          </div>
-        </dl>
-      </header>
-
-      <MarketList rows={read.rows} />
-
-      {/* Ingest failures are shown, not swallowed. A market the indexer listed
-          but that could not be snapshotted is a fact about the read. */}
-      {read.failures.length > 0 ? (
-        <section className="mt-10 border-t pt-6">
-          <h2 className="section-mark mb-3">Not assessed</h2>
-          <ul className="space-y-1.5">
-            {read.failures.map((f) => (
-              <li key={f.marketId} className="font-data text-muted-foreground text-xs">
-                {shortId(f.marketId)} · {f.reason}
-              </li>
+            {(["ALLOW", "RECHECK", "BLOCK"] as const).map((v) => (
+              <div key={v} className="flex items-baseline gap-2">
+                <dt className="label-caps">{v.toLowerCase()}</dt>
+                <dd className="font-data text-sm">{tally[v] ?? 0}</dd>
+              </div>
             ))}
-          </ul>
-        </section>
-      ) : null}
+          </dl>
+        </header>
 
-      <footer className="text-muted-foreground mt-16 max-w-3xl border-t pt-6 text-xs leading-relaxed">
-        <p>
+        <MarketList rows={read.rows} />
+
+        {/* Ingest failures are shown, not swallowed. A market the indexer listed
+            but that could not be snapshotted is a fact about the read. */}
+        {read.failures.length > 0 ? (
+          <section className="mt-16">
+            <h2 className="section-mark mb-3">Not assessed</h2>
+            <ul className="space-y-1.5">
+              {read.failures.map((f) => (
+                <li key={f.marketId} className="font-data text-muted-foreground text-xs">
+                  {shortId(f.marketId)} · {f.reason}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {/* One note, not two. The previous pair said the same thing twice: that
+            thresholds are venue-calibrated, and that severity is ink rather than a
+            traffic light. Both are true; the second only restated the first in
+            different words, and a reader who has scrolled the table does not need
+            the premise explained again. Rules dropped in favour of a gap. */}
+        <footer className="text-muted-foreground mt-20 max-w-2xl text-xs leading-relaxed">
           Thresholds are calibrated to this venue&apos;s measured distributions, not to real-money
           market intuitions. Spreads of 2 to 3 probability points are normal here, and so is a
           resting book that expires in twenty seconds. Confidence measures how completely a market
-          could be observed; it is never a probability of any outcome.
-        </p>
-        <p className="mt-3">
-          Severity reads as ink, not as a traffic light. A signal with nothing to report is left
-          unmarked, because green would say a thing this engine refuses to say about a reading it
-          could not take.
-        </p>
-      </footer>
-    </main>
+          could be observed, never how likely an outcome is.
+        </footer>
+      </main>
+    </>
   )
 }

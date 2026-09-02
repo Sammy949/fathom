@@ -15,6 +15,14 @@
  * decorative status dot.
  */
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { ago } from "@/lib/format"
 
 const STATE_LABEL: Record<string, string> = {
@@ -69,31 +77,63 @@ export function Provenance({
   entries: { field: string; state: string; readAt: number; reason?: string }[]
 }) {
   return (
-    <div>
-      <h3 className="section-mark mb-3">Provenance</h3>
-      <dl className="space-y-1.5">
-        {entries.map((e) => (
-          <div key={e.field} className="flex items-start gap-2 text-xs leading-4">
-            <StateMark state={e.state} />
-            <dt className="font-data w-20 shrink-0">{e.field}</dt>
-            <dd className="text-muted-foreground min-w-0 flex-1">
-              <span style={e.state === "ok" ? undefined : { color: STATE_INK[e.state] }}>
-                {STATE_LABEL[e.state] ?? e.state}
-              </span>
-              {/* No opacity step on either of these. Both sat around 3:1 at 12px,
-                  and the reason line is the most important string in this strip when
-                  it exists: it is why a read failed. Rank comes from position and
-                  size, not from fading text under the legibility floor. */}
-              <span> · {ago(e.readAt)}</span>
-              {e.reason ? (
-                <span className="block truncate" title={e.reason}>
-                  {e.reason}
-                </span>
-              ) : null}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <dl className="divide-y border-t">
+      {entries.map((e) => (
+        <div key={e.field} className="flex items-start gap-2 py-2 text-xs leading-4">
+          <StateMark state={e.state} />
+          <dt className="font-data w-20 shrink-0">{e.field}</dt>
+          <dd className="text-muted-foreground min-w-0 flex-1">
+            <span style={e.state === "ok" ? undefined : { color: STATE_INK[e.state] }}>
+              {STATE_LABEL[e.state] ?? e.state}
+            </span>
+            {/* No opacity step on either of these. Both sat around 3:1 at 12px,
+                and the reason line is the most important string in this strip when
+                it exists: it is why a read failed. Rank comes from position and
+                size, not from fading text under the legibility floor. */}
+            <span> · {ago(e.readAt)}</span>
+            {e.reason ? <span className="block">{e.reason}</span> : null}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/**
+ * Provenance in a sheet, which is where it belongs.
+ *
+ * It used to sit in a 14rem sticky rail on the right of the detail page: content
+ * flung to the far edge with a dead gulf in the middle, and a strip of per-field
+ * read times competing with the argument for attention. Per-field freshness is
+ * machinery a reader consults deliberately, so it is one click out of flow, with
+ * the count of degraded reads on the trigger because THAT is the part worth
+ * knowing without opening anything.
+ */
+export function ProvenanceSheet({
+  entries,
+}: {
+  entries: { field: string; state: string; readAt: number; reason?: string }[]
+}) {
+  const degraded = entries.filter((e) => e.state === "degraded").length
+
+  return (
+    <Sheet>
+      <SheetTrigger className="label-caps hover:text-foreground focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-1 focus-visible:outline-none">
+        provenance · {entries.length} reads
+        {degraded > 0 ? `, ${degraded} unreachable` : ""}
+      </SheetTrigger>
+      <SheetContent className="overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="font-display">Provenance</SheetTitle>
+          <SheetDescription>
+            Where every field came from and when. A source we could not reach is marked as
+            unreachable rather than rendered as a zero.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="px-4 pb-4">
+          <Provenance entries={entries} />
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

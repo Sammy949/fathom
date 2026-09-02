@@ -30,7 +30,7 @@ import type { MarketRow } from "@/lib/venue"
 
 /** One grid template, declared once, so heads and rows cannot drift apart. */
 const COLS =
-  "grid grid-cols-[1fr_auto] gap-4 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_4.5rem_4.5rem_auto]"
+  "grid grid-cols-[1fr_auto] gap-4 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_5rem_4.5rem_auto]"
 
 export function MarketList({ rows }: { rows: MarketRow[] }) {
   if (rows.length === 0) {
@@ -44,12 +44,13 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
 
   return (
     <div>
-      {/* Column heads. Mono micro-labels, not a styled table header. */}
+      {/* Column heads. Mono micro-labels, not a styled table header. `quote life`
+          is one word now because two wrapped into the sounding column below it. */}
       <div className={`${COLS} text-muted-foreground items-end border-b pb-2`}>
         <span className="label-caps">market</span>
         <span className="label-caps hidden text-right sm:block">mid</span>
         <span className="label-caps hidden text-right sm:block">spread</span>
-        <span className="label-caps hidden text-right sm:block">quote life</span>
+        <span className="label-caps hidden text-right sm:block">quote</span>
         <span className="label-caps hidden text-right sm:block">expires</span>
         <span className="label-caps text-right">verdict</span>
       </div>
@@ -58,38 +59,27 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
         {rows.map((r) => (
           <li key={r.marketId} className="border-b">
             <Link
-              href={`/m/${r.marketId}`}
+              href={`/m/${shortId(r.marketId)}`}
               className={`${COLS} group items-center py-4 outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40`}
             >
-              {/* Identity. Asset and window are the typed fields; the symbol is
-                  display-only and never parsed. */}
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display text-lg leading-none group-hover:text-primary">
-                    {r.asset ?? NO_READING}
+              {/* Identity, at triage weight. The full symbol and the market id used
+                  to sit here in a second line; both are reference for a market you
+                  have already picked, not information that helps you pick one, so
+                  they moved to the detail header. What survives is what a reader
+                  chooses by: which asset, over what window, and how much of the
+                  read is missing. */}
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5">
+                <span className="font-display text-lg leading-none group-hover:text-primary">
+                  {r.asset ?? NO_READING}
+                </span>
+                <span className="font-data text-muted-foreground text-xs">
+                  {windowLabel(r.intervalSec)}
+                </span>
+                {r.unmeasured > 0 ? (
+                  <span className="text-xs" style={{ color: "var(--ink-unknown)" }}>
+                    {r.unmeasured} unmeasured
                   </span>
-                  {/* The window is a FIGURE, so it is set as data. `.label-caps` is
-                      scoped to the name of a figure, never its value — the whole
-                      point of four registers is that they do not blur back into
-                      one costume the moment a value looks small. */}
-                  <span className="font-data text-muted-foreground text-xs">
-                    {windowLabel(r.intervalSec)} window
-                  </span>
-                  {/* And this is a FINDING, so it reads as a word, matching
-                      `SeverityLabel` rather than the column heads. */}
-                  {r.unmeasured > 0 ? (
-                    <span className="text-xs" style={{ color: "var(--ink-unknown)" }}>
-                      {r.unmeasured} no reading
-                    </span>
-                  ) : null}
-                </div>
-                <p className="text-muted-foreground font-data mt-1 truncate text-xs">
-                  {r.symbol}
-                  {/* The id is a string someone may actually need to read off the
-                      screen and match against a block explorer, so it is not set at
-                      half the surrounding tone. */}
-                  <span> · {shortId(r.marketId)}</span>
-                </p>
+                ) : null}
               </div>
 
               {/* Figures. Right-aligned and tabular so they scan as a column. */}

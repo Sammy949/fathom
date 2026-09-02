@@ -1,12 +1,17 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { DecisionTraceView } from "@/components/decision-trace"
-import { Provenance } from "@/components/provenance"
-import { ReadAge } from "@/components/read-age"
+import {
+  ExplanationSource,
+  RequiredChecks,
+  RulePath,
+  SignalTable,
+} from "@/components/decision-trace"
+import { ProvenanceSheet } from "@/components/provenance"
+import { SiteNav } from "@/components/site-nav"
 import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
-import { duration, NO_READING, pct, points, prob, shares, windowLabel } from "@/lib/format"
+import { duration, NO_READING, pct, points, prob, shares, shortId, windowLabel } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
 // Per-request for the same reason as the index — see app/page.tsx.
@@ -18,9 +23,31 @@ export default async function MarketPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+
   const read = await getVenueRead()
-  const trace = read.traces[id]
-  const row = read.rows.find((r) => r.marketId === id)
+
+  /**
+   * Accepts the SHORT id, and still accepts the full one.
+   *
+   * A market id is a bytes32, so the route used to read
+   * `/m/0x0000000000000000000000000000000000000000000000000000000000010fad`:
+   * 66 characters of which 61 are zero padding, unreadable in a browser bar and
+   * impossible to say out loud. The venue's own symbols suffix markets by their low
+   * bytes for exactly this reason, so the links now carry the same six characters
+   * (`/m/010fad`) and the page resolves by suffix.
+   *
+   * Resolution is strict about ambiguity rather than picking the first hit: a suffix
+   * that matches two live markets resolves to neither, because guessing which market
+   * a trader meant is precisely the class of quiet wrong answer this product exists
+   * to avoid. Full ids keep working, so any link already shared still opens.
+   */
+  const wanted = id.toLowerCase()
+  const matches = read.rows.filter((r) => {
+    const full = r.marketId.toLowerCase()
+    return full === wanted || full.endsWith(wanted)
+  })
+  const row = matches.length === 1 ? matches[0] : undefined
+  const trace = row ? read.traces[row.marketId] : undefined
   if (!trace || !row) notFound()
 
   // Figures come off the signals' own evidence, so the header and the trace below
@@ -47,13 +74,15 @@ export default async function MarketPage({
   })()
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
-      <Link
-        href="/"
-        className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-      >
-        ← all markets
-      </Link>
+    <>
+      <SiteNav venueId={read.venueId} network="Somnia testnet" assembledAt={trace.assembledAt} />
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
+        <Link
+          href="/"
+          className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+        >
+          ← all markets
+        </Link>
 
       {/* ── the finding ──────────────────────────────────────────────────── */}
       <header className="mt-6 border-b pb-8">
@@ -64,7 +93,13 @@ export default async function MarketPage({
             {windowLabel(row.intervalSec)} window
           </span>
         </div>
-        <p className="text-muted-foreground font-data mt-1.5 text-xs">{trace.symbol}</p>
+        {/* The reference strings, together, and only here. They came off the list
+            row: a symbol nobody parses and a 66-character id are identity for a
+            market you have already chosen, not information that helps you choose
+            one. This is where a reader looks them up. */}
+        <p className="text-muted-foreground font-data mt-1.5 text-xs">
+          {trace.symbol} · {shortId(row.marketId)}
+        </p>
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
           <div>
@@ -175,42 +210,47 @@ export default async function MarketPage({
         </section>
       ) : null}
 
-      {/* ── trace + provenance ──────────────────────────────────────────── */}
-      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_14rem]">
-        <DecisionTraceView trace={trace} />
+        {/* ── the audit spine ──────────────────────────────────────────────────
+            ORDER IS THE ARGUMENT, and it used to run backwards. The page opened
+            with the verdict, then eight signals and forty evidence fields, and
+            only then reached the rule path and "before acting" — so the two blocks
+            a trader can actually act on sat furthest from the top. The spec's own
+            flow is: show the verdict, say what must be true before acting, say why,
+            then produce the evidence. That is the order now, shortest and most
+            consequential first.
 
-        <aside className="space-y-8 lg:sticky lg:top-8 lg:self-start">
-          <Provenance entries={trace.provenance} />
+            Everything sits in one column at full measure. The 14rem sticky rail
+            that used to hold provenance was content flung to the far edge with a
+            gulf in the middle; provenance is machinery, so it moved into a sheet at
+            the foot of the page. */}
+        <div className="mt-10 space-y-12">
+          <RequiredChecks trace={trace} />
 
-          <div>
-            <h3 className="section-mark mb-2">Read</h3>
-            <p className="font-data text-muted-foreground text-xs">
-              <ReadAge at={trace.assembledAt} />
-            </p>
-          </div>
-
+          {/* Two facts that qualify the verdict and belong beside the checks
+              rather than in a margin: what could not be measured, and how long ago
+              anything traded. */}
           {trace.unmeasured.length > 0 ? (
-            <div>
-              <h3 className="section-mark mb-2">No reading</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {trace.unmeasured.join(", ")} could not be measured. Unmeasured is not the same as
+            <section>
+              <h2 className="section-mark mb-3">Not measured</h2>
+              <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
+                {trace.unmeasured.join(", ")} could not be read. Unmeasured is not the same as
                 acceptable, which is why this market cannot be cleared for execution.
               </p>
-            </div>
+            </section>
           ) : null}
 
-          {row.lastTradeAgeSec !== null && row.intervalSec ? (
-            <div>
-              <h3 className="section-mark mb-2">Last fill</h3>
-              <p className="font-data text-sm">{duration(row.lastTradeAgeSec)}</p>
-              <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                {pct(row.lastTradeAgeSec / row.intervalSec)} of this market&apos;s own window,
-                the only comparable measure across a venue running 15m to 24h series
-              </p>
-            </div>
-          ) : null}
-        </aside>
-      </div>
-    </main>
+          <RulePath trace={trace} />
+
+          <SignalTable trace={trace} />
+
+          {/* How we know, last: the explanation's provenance, then the per-field
+              read provenance behind a sheet. */}
+          <section className="space-y-4 border-t pt-8">
+            <ExplanationSource trace={trace} />
+            <ProvenanceSheet entries={trace.provenance} />
+          </section>
+        </div>
+      </main>
+    </>
   )
 }
