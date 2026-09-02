@@ -1,0 +1,304 @@
+{
+  "note": "Frozen evidence for the stuck-market BLOCK case. Locked on-chain, unresolved, past the voidable instant, while the indexer still reported Trading. voidExpired() is permissionless, so this state is not reproducible by re-reading — grade the fixture, never the live market.",
+  "capturedAtMs": 1788308987899,
+  "capturedAtSec": 1788308987,
+  "capturedAtIso": "2026-09-02T00:29:47.899Z",
+  "network": "testnet",
+  "chainId": 50312,
+  "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
+  "addresses": {
+    "pool": "0xff52c100d53365365d655af84b2db121fe86f0a3",
+    "market": "0x27f6DE3dbdb1fc0A4E35B6b187A28c25B4B49867",
+    "collateralToken": "0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E",
+    "outcomeToken": "0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9"
+  },
+  "onchain": {
+    "status": 2,
+    "isResolved": false,
+    "isVoided": false,
+    "payoutNumerators": [],
+    "expirySec": 1787929200,
+    "settlementWindowSec": 300,
+    "backing": "1503000000",
+    "voidableFromSec": 1787929500,
+    "statusName": "Locked",
+    "lapsedPastVoidableSec": 379487,
+    "poolFinalized": false,
+    "poolBooksEmpty": false,
+    "marketNonce": "164"
+  },
+  "indexerClaimed": {
+    "clobStatus": "Trading",
+    "finalized": false,
+    "voided": false,
+    "disagreesWithChain": true
+  },
+  "restingOrders": {
+    "bids": [],
+    "asks": []
+  },
+  "raw": {
+    "row": {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
+      "asset": "BTC",
+      "intervalSec": "900",
+      "strike": "0",
+      "expiry": "1787929200",
+      "tradingStart": "1787928300",
+      "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+      "operatorId": 2,
+      "poolAddress": "0xff52c100d53365365d655af84b2db121fe86f0a3",
+      "nonce": "164",
+      "yesTokenId": "6883501404973408465357960310150512946542646297589014806655206395257856",
+      "noTokenId": "6883501404973408465357960310150512946542646297589014806655206395257857",
+      "collateral": "0x70a86d8842fb63c4ad2b7cdddf530ebf1bb25d8e",
+      "clobStatus": "Trading",
+      "finalized": false,
+      "voided": false,
+      "winningOutcome": null,
+      "lastPrice": "390000",
+      "lastTradeAt": "1787928722",
+      "tradeCount": "1",
+      "cumulativeQuoteVolume": "1170000",
+      "oracleQuestionId": "46023",
+      "question": "BTC closes at or above its opening price"
+    },
+    "oracle": {
+      "oracleQuestionId": "46023",
+      "questionKey": "0x1496b4edc5f16e5165f50ab41754fa92d442bc429778d9b58374ef49f892719d",
+      "resolvedAt": null,
+      "voided": null,
+      "supersededByQuestionId": null,
+      "reuseCount": 1,
+      "bindCount": 2
+    },
+    "candles": [
+      {
+        "bucketStart": "1787928720",
+        "openPrice": "390000",
+        "high": "390000",
+        "low": "390000",
+        "closePrice": "390000",
+        "baseVolume": "3000000",
+        "quoteVolume": "1170000",
+        "tradeCount": 1
+      }
+    ],
+    "fills": [
+      {
+        "timestamp": "1787928722",
+        "fillPrice": "390000",
+        "quantity": "3000000",
+        "quoteQuantity": "1170000",
+        "takerIsBid": false,
+        "takerSide": "BUY_NO",
+        "makerSide": "BUY_YES",
+        "kind": "MINT_A_PAIR",
+        "blockNumber": "473557470",
+        "logIndex": 31,
+        "txHash": "0x44686bbf78d1e2159906a1aef505a642461bd108805c57777b99d89d4d2a0efe"
+      }
+    ]
+  },
+  "snapshot": {
+    "identity": {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
+      "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+      "operatorId": 2,
+      "asset": "BTC",
+      "intervalSec": 900,
+      "symbol": "BTC-0-164/captured",
+      "yesSymbol": "BTC#YES",
+      "noSymbol": "BTC#NO",
+      "poolAddress": "0xff52c100d53365365d655af84b2db121fe86f0a3",
+      "nonce": "164",
+      "collateral": "0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E",
+      "collateralDecimals": 6,
+      "tradingStartSec": 1787928300,
+      "expirySec": 1787929200,
+      "strike": "0",
+      "question": "BTC closes at or above its opening price"
+    },
+    "assembledAt": 1788308987899,
+    "onchain": {
+      "value": {
+        "status": 2,
+        "statusName": "Locked",
+        "tradable": false,
+        "isResolved": false,
+        "isVoided": false,
+        "winningOutcome": 0,
+        "finalized": false,
+        "expirySec": 1787929200,
+        "backing": "1503000000"
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993732
+      }
+    },
+    "book": {
+      "value": {
+        "symbol": "BTC-0-28AUG26-1500-C067/tUSDC#YES",
+        "bid": {
+          "levels": 0,
+          "depthShares": 0,
+          "nearShares": 0,
+          "nearNotional": 0
+        },
+        "ask": {
+          "levels": 0,
+          "depthShares": 0,
+          "nearShares": 0,
+          "nearNotional": 0
+        },
+        "crossed": false,
+        "assembledAt": 1788308993731,
+        "nearBand": 0.05,
+        "unusable": "empty"
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993731
+      }
+    },
+    "prices": {
+      "value": [
+        {
+          "t": 1787928720,
+          "open": 0.39,
+          "high": 0.39,
+          "low": 0.39,
+          "close": 0.39,
+          "volume": 3,
+          "trades": 1
+        }
+      ],
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993732
+      }
+    },
+    "move": {
+      "value": null,
+      "provenance": {
+        "state": "degraded",
+        "readAt": 1788308993732,
+        "reason": "captured fixture: move is derived on replay from `prices`"
+      }
+    },
+    "flow": {
+      "value": {
+        "count": 1,
+        "takerBuyShares": 0,
+        "takerSellShares": 3,
+        "skew": -1,
+        "mintedShares": 3,
+        "ageSec": 380265,
+        "vwap": 0.38999999999999996
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993732
+      }
+    },
+    "freshness": {
+      "value": {
+        "lastTradeAgeSec": 380265,
+        "ageVsWindow": 422.51666666666665,
+        "windowElapsed": 1,
+        "secToExpiry": -379787,
+        "neverTraded": false
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993732
+      }
+    },
+    "resolution": {
+      "value": {
+        "oracleQuestionId": "46023",
+        "supersededByQuestionId": null,
+        "oracleVoided": null,
+        "oracleResolvedAtSec": null,
+        "reuseCount": 1,
+        "oracleExplorerUrl": "https://prd.oracle.somnia.host/questions/46023?view=graph",
+        "lapsedSec": 379787
+      },
+      "provenance": {
+        "state": "ok",
+        "readAt": 1788308993732
+      }
+    },
+    "row": {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000000c067",
+      "asset": "BTC",
+      "intervalSec": "900",
+      "strike": "0",
+      "expiry": "1787929200",
+      "tradingStart": "1787928300",
+      "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+      "operatorId": 2,
+      "poolAddress": "0xff52c100d53365365d655af84b2db121fe86f0a3",
+      "nonce": "164",
+      "yesTokenId": "6883501404973408465357960310150512946542646297589014806655206395257856",
+      "noTokenId": "6883501404973408465357960310150512946542646297589014806655206395257857",
+      "collateral": "0x70a86d8842fb63c4ad2b7cdddf530ebf1bb25d8e",
+      "clobStatus": "Trading",
+      "finalized": false,
+      "voided": false,
+      "winningOutcome": null,
+      "lastPrice": "390000",
+      "lastTradeAt": "1787928722",
+      "tradeCount": "1",
+      "cumulativeQuoteVolume": "1170000",
+      "oracleQuestionId": "46023",
+      "question": "BTC closes at or above its opening price"
+    }
+  },
+  "verdictAtCapture": {
+    "verdict": "BLOCK",
+    "confidence": 0.71,
+    "action": "do_not_execute",
+    "rules": [
+      {
+        "rule": "not-trading",
+        "because": "On-chain status is Locked, not Trading. Only a market in Trading accepts orders."
+      },
+      {
+        "rule": "cannot-settle",
+        "because": "Expired 6330 min ago with no oracle answer posted; if the settlement window lapses anyone can void it to 0.5 a side."
+      }
+    ],
+    "severities": [
+      {
+        "id": "venue",
+        "severity": "ok"
+      },
+      {
+        "id": "resolution",
+        "severity": "severe"
+      },
+      {
+        "id": "liquidity",
+        "severity": "severe"
+      },
+      {
+        "id": "volatility",
+        "severity": "unknown"
+      },
+      {
+        "id": "staleness",
+        "severity": "severe"
+      },
+      {
+        "id": "window",
+        "severity": "severe"
+      },
+      {
+        "id": "manipulation",
+        "severity": "unknown"
+      }
+    ]
+  }
+}

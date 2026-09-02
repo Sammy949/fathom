@@ -14,6 +14,7 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "snapshot": "tsx scripts/snapshot.ts",
+    "capture": "tsx scripts/capture.ts",
     "retry:test": "tsx scripts/retry-test.ts",
     "calibrate": "tsx scripts/calibrate.ts",
     "grade": "tsx scripts/grade.ts",
