@@ -1,0 +1,150 @@
+/**
+ * TEMPORARY measurement. Not a gate, not committed.
+ *
+ * Question: can a SINGLE `fetchOrderBook` read land in the maker's repost gap and
+ * report an empty or thin book on a market that is actually fine? The engine grades
+ * `unusable: "empty"` and `nearShares <= 50` as SEVERE, and severe is BLOCK, so a
+ * bad-luck read is a false BLOCK.
+ *
+ * Method: poll the same markets once a second and count what the reads actually say.
+ * Also records the book's own `timestamp`, because if the SDK hands back a cached
+ * view then "two consecutive polls" is one observation twice and any two-poll rule
+ * would be theatre.
+ */
+
+import { createExchange, shutdown } from "@fathom/ec";
+import { bookMetrics, ingestVenue } from "@fathom/core";
+
+const R = "\x1b[0m";
+const DIM = "\x1b[2m";
+const BOLD = "\x1b[1m";
+const RED = "\x1b[31m";
+const YEL = "\x1b[33m";
+const GRN = "\x1b[32m";
+
+const DURATION_MS = 90_000;
+const EVERY_MS = 1_000;
+
+interface Read {
+  at: number;
+  bookTs: number;
+  bidLevels: number;
+  askLevels: number;
+  nearMin: number;
+  spread?: number;
+  unusable?: string;
+  error?: string;
+}
+
+async function main(): Promise<void> {
+  const ctx = createExchange({ withSigner: false });
+  console.log(`${BOLD}book read stability probe${R} ${DIM}${ctx.config.network}${R}`);
+
+  const { snapshots } = await ingestVenue(ctx, { minIntervalSec: 900 });
+  // Longest windows first: a market that expires mid-probe would confound the run.
+  const targets = [...snapshots]
+    .sort((a, b) => (b.identity.intervalSec ?? 0) - (a.identity.intervalSec ?? 0))
+    .slice(0, 3)
+    .map((s) => ({ symbol: s.identity.symbol, yes: s.identity.yesSymbol }));
+
+  console.log(`${DIM}probing ${targets.length} market(s) every ${EVERY_MS}ms for ${DURATION_MS / 1000}s${R}`);
+  for (const t of targets) console.log(`  ${t.symbol}`);
+
+  const reads = new Map<string, Read[]>(targets.map((t) => [t.symbol, []]));
+  const t0 = Date.now();
+
+  while (Date.now() - t0 < DURATION_MS) {
+    const tick = Date.now();
+    await Promise.all(
+      targets.map(async (t) => {
+        try {
+          const raw = await ctx.exchange.fetchOrderBook(t.yes, 10);
+          const b = bookMetrics(raw);
+          reads.get(t.symbol)!.push({
+            at: Date.now(),
+            bookTs: raw.timestamp ?? 0,
+            bidLevels: b.bid.levels,
+            askLevels: b.ask.levels,
+            nearMin: Math.min(b.bid.nearShares, b.ask.nearShares),
+            spread: b.spread,
+            unusable: b.unusable,
+          });
+        } catch (e) {
+          reads.get(t.symbol)!.push({
+            at: Date.now(),
+            bookTs: 0,
+            bidLevels: -1,
+            askLevels: -1,
+            nearMin: -1,
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }),
+    );
+    const wait = EVERY_MS - (Date.now() - tick);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  }
+
+  console.log(`\n${BOLD}results${R}`);
+  for (const t of targets) {
+    const rs = reads.get(t.symbol)!;
+    const errors = rs.filter((r) => r.error);
+    const good = rs.filter((r) => !r.error);
+    const empty = good.filter((r) => r.unusable === "empty");
+    const oneSided = good.filter((r) => r.unusable === "one-sided");
+    const crossed = good.filter((r) => r.unusable === "crossed");
+    const severeThin = good.filter((r) => !r.unusable && r.nearMin <= 50);
+    const elevatedThin = good.filter((r) => !r.unusable && r.nearMin > 50 && r.nearMin <= 200);
+    const distinctTs = new Set(good.map((r) => r.bookTs)).size;
+    const nears = good.filter((r) => !r.unusable).map((r) => r.nearMin);
+
+    // The one that matters: would this read alone have produced a severe liquidity
+    // signal, and therefore a BLOCK?
+    const wouldBlock = empty.length + oneSided.length + severeThin.length;
+
+    console.log(`\n  ${BOLD}${t.symbol}${R}`);
+    console.log(`    reads              ${rs.length} (${errors.length} error(s))`);
+    console.log(`    distinct book ts   ${distinctTs} ${DIM}of ${good.length} good reads${R}`);
+    console.log(`    near-touch shares  min ${Math.min(...nears).toFixed(0)} max ${Math.max(...nears).toFixed(0)}`);
+    console.log(`    empty              ${empty.length}`);
+    console.log(`    one-sided          ${oneSided.length}`);
+    console.log(`    crossed            ${crossed.length}`);
+    console.log(`    thin (<=50 severe) ${severeThin.length}`);
+    console.log(`    thin (<=200 elev)  ${elevatedThin.length}`);
+    console.log(
+      `    ${wouldBlock === 0 ? GRN : RED}would have graded SEVERE (=> BLOCK): ${wouldBlock} of ${good.length} reads${R}`,
+    );
+
+    // Longest consecutive stretch of severe-grading reads: the dwell a two-poll
+    // rule would have to outlast.
+    let run = 0;
+    let longest = 0;
+    for (const r of good) {
+      const bad = r.unusable === "empty" || r.unusable === "one-sided" || (!r.unusable && r.nearMin <= 50);
+      run = bad ? run + 1 : 0;
+      longest = Math.max(longest, run);
+    }
+    if (longest > 0) {
+      console.log(`    ${YEL}longest severe run  ${longest} consecutive read(s) ≈ ${(longest * EVERY_MS) / 1000}s${R}`);
+      for (const r of good) {
+        const bad = r.unusable === "empty" || r.unusable === "one-sided" || (!r.unusable && r.nearMin <= 50);
+        if (bad) {
+          console.log(
+            `      ${DIM}+${((r.at - t0) / 1000).toFixed(1)}s  ${r.unusable ?? "thin"}  levels ${r.bidLevels}/${r.askLevels}  nearMin ${r.nearMin.toFixed(0)}${R}`,
+          );
+        }
+      }
+    }
+    if (errors.length) {
+      console.log(`    ${DIM}first error: ${errors[0]?.error?.slice(0, 120)}${R}`);
+    }
+  }
+
+  await shutdown(ctx);
+  process.exit(0);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

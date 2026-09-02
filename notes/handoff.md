@@ -2,6 +2,103 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-09-02 — depth durability, the stuck-market fixture, and the ink-depth restyle
+
+Eight commits. `npm run typecheck` (now covers `scripts/` too), `npm run test:risk`
+(65 assertions, was 42), `npm run retry:test`, `npm run grade`, `npm run explain`
+and `apps/web` production build all pass.
+
+**THE STUCK-MARKET FIXTURE IS CAPTURED AND THE EVIDENCE HELD.** Read on-chain
+2026-09-02 00:27 UTC: market `0x27f6DE3d…` status 2 (Locked), `isResolved` false,
+`isVoided` false, empty payout vector, 1503 tUSDC still backing, voidable since
+2026-08-28T15:05:00Z and **4.4 days uncalled**. The indexer reported
+`clobStatus: "Trading"` for the same market at the same instant. `npm run capture --
+<marketId> [label]` writes the whole evidence set to `fixtures/`; graded BLOCK at
+capture on `not-trading` + `cannot-settle`. `voidExpired()` is permissionless, so
+grade the fixture, never the live market. Stop re-running the capture now that it is
+committed; each run refreshes the timestamps.
+
+**THE FIRM-DEPTH CLAIM MEASURES 0% ON THIS VENUE, AND THAT IS THE FINDING.** The
+asymmetry is real (placement delegates via `placeBinaryOrderFor`, cancellation never
+does and reverts `InvalidOrderOwner()`), but four verified facts cap the bucket at
+zero. Measured on all 10 live markets, twice six minutes apart, identical: 1 owner
+holding 100% of both sides, 6 orders, 1980 shares, TTL 11-28s, 0 past expiry.
+
+1. Every owner is the same 291-byte **beacon proxy**, staticcalling
+   `implementation()` on `0x8815c3f8…` and delegatecalling. Its own bytecode says
+   nothing about what it can do, so a selector scan finding no cancel path would
+   have been a false negative. This is the trap in the original write-up, worse than
+   it anticipated.
+2. The implementation `0x8635C413…` (26,589 bytes) carries `cancelOrder(uint128)`
+   at three PUSH4 sites, none in its dispatch table, i.e. outbound. The owner
+   cancels.
+3. The beacon is upgradeable by `0xd58596620Ee…`, so a proxy owner can never be
+   certified non-pullable.
+4. `cancelExpiredOrders` / `sweepExpiredAtLevel` are permissionless, so firmness
+   dies at `expireTimestampNs`. Firm-UNTIL-EXPIRY, never firm.
+
+So `depthSignal` grades what varies: **phantom depth** (past expiry, still displayed,
+still counted by every aggregated view, skipped by the matcher) at 10% elevated /
+50% severe, and quote TTL below the measured 11-28s floor. Owner concentration is
+reported on every market and deliberately never raises severity, because 1.00
+everywhere is a venue constant and a signal that fires on everything says nothing —
+the `imbalance = 0.000` mistake in a new costume.
+
+**`getBinaryPoolParams()` returns `market` and `collateralToken` in one call.** No
+two-hop `pool -> market -> collateral()` existed in the repo to fix; the correction
+applied to `chain.ts`, which was being written.
+
+**Five bugs, four of them in the checking layer.** The pattern from Stage 2-5 held.
+
+1. `lapsedSec` measured from `expiry`, not `expiry + settlementWindow`. Inside the
+   window a market is LATE and settlement is still expected; past it anyone can
+   void. Ingestion now takes one extra `eth_call` for `settlementWindow()`, which
+   neither the indexer nor `MarketOnchain` carries.
+2. Every lapse rendered in minutes, so the stuck market read "expired 6328 min ago".
+   `humanDuration` now gives "4d 10h", and the tense is present rather than
+   conditional because the call is available right now.
+3. **`scripts/` was never typechecked.** `npm run typecheck` claimed the whole
+   workspace while all six gate scripts were invisible to it. `tsconfig.scripts.json`
+   closes it and caught 5 real errors on its first run, 3 pre-existing.
+4. **The explanation schema's `signal_id` enum was a hand-copied duplicate.** Adding
+   `depth` broke the model path completely: 0 of 3 markets model-explained, and the
+   Stage 5 gate still reported PASS because the fallback works as designed. Only the
+   fallback-reason field showed it. Both now derive from `SIGNAL_IDS`.
+5. **The 429 parser read milliseconds as seconds.** `/try again in ([\d.]+)s/i` — the
+   trailing `s` matched the `s` of `ms`, so "412.5ms" became 412 seconds, blew the
+   cap and skipped the retry. A market fell back over a 0.4-second pause. Unit-aware
+   now, cap raised 30s → 45s (the TPM window is a minute), and asserted in
+   `retry:test`.
+
+Back to **3 of 3 model-explained on three consecutive runs**. Prompt trimmed
+2,305 → 1,953 input tokens by sending `threshold basis` only for non-`ok` signals.
+`EXPLAIN_BUDGET` 3 → 2, because ~2,000 in plus a 2,048 ceiling bills ~4,000 per call
+against 8,000 TPM and a third call guarantees a 429.
+
+**Design system applied: severity is INK, not a traffic light.** `ok` unmarked,
+`elevated` a tonal bronze at hue 78, `severe` solid ink at the heaviest Zodiak
+weight, `unknown` hollow with its sounding line running out of the frame. The ramp
+is ink density and `unknown` is a different shape, so it survives greyscale. The
+self-review caught the first amber at ~2.7:1 against paper; it is now ~4.8:1.
+
+`label-caps` was on 34 elements doing four different jobs, which is the "one label
+treatment everywhere" tell. Now data labels only; section headings get
+`.section-mark` in Zodiak at sentence case, navigation and findings are plain
+interface text.
+
+The detail page states the book **twice**, "as displayed" then "as owned", because
+the gap between those two readings is the product. Settlement moved out of the
+sidebar into its own section above the trace. `quote life` earned a list column and
+`last fill` lost one.
+
+**Not verified: the two dynamic pages rendering in a browser.** The production build
+compiles and typechecks, but `/` and `/m/[id]` are `force-dynamic`, so the build does
+not render them. Run `cd apps/web && npm run dev` yourself and look.
+
+**Do not start the dev server from a tool call in this repo.** Three launches in one
+session (subshell `&`, harness background, `nohup &`) plus a `next build` stacked
+Turbopack worker pools and crashed WSL.
+
 ## 2026-08-29 — Stage 3 scaffolded; three fixes from reading real output
 
 `apps/web` is up: Next.js 16.2.6, React 19, Tailwind 4.3.3, bun, initialized from Samuel's own
@@ -396,13 +493,15 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | Command | What it does |
 |---|---|
 | `npm run snapshot` | Stage 2 gate — ingest + provenance, lists live venues |
+| `npm run capture -- <marketId> [label]` | Freeze one market's whole evidence set to `fixtures/` |
 | `npm run calibrate` | Threshold sweep — per-market rows + distributions |
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
 | `npm run explain` | Stage 5 gate — full traces + verdict-integrity + guard proof |
 | `npm run explain -- --offline` | Same, deterministic narrator only (no key needed) |
-| `npm run test:risk` | 42 assertions over synthetic snapshots, no network |
+| `npm run test:risk` | 65 assertions over synthetic snapshots, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
-| `npm run typecheck` | Whole workspace |
+| `npm run typecheck` | Whole workspace, `scripts/` included |
+| `cd apps/web && npm run dev` | The dashboard. Run this yourself; see the note above |
 
 ## Links
 - Hackathon: https://dorahacks.io/hackathon/event-contracts/detail
