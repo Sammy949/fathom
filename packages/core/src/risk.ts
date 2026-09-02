@@ -260,7 +260,7 @@ export function liquiditySignal(book: BookMetrics | null): Signal {
     return {
       ...base,
       severity: "unknown",
-      finding: `Order book read back crossed (bid ${book.bid.best?.toFixed(3)} at or above ask ${book.ask.best?.toFixed(3)}), which cannot occur — the data is untrustworthy, not the market.`,
+      finding: `Order book read back crossed (bid ${book.bid.best?.toFixed(3)} at or above ask ${book.ask.best?.toFixed(3)}), which cannot occur. The data is untrustworthy, not the market.`,
       evidence: { bid: book.bid.best ?? null, ask: book.ask.best ?? null, crossed: true },
     };
   }
@@ -268,7 +268,7 @@ export function liquiditySignal(book: BookMetrics | null): Signal {
     return {
       ...base,
       severity: "severe",
-      finding: "No orders resting on either side — nothing can be executed.",
+      finding: "No orders resting on either side, so nothing can be executed.",
       evidence: { bidLevels: 0, askLevels: 0 },
     };
   }
@@ -338,7 +338,7 @@ export function liquiditySignal(book: BookMetrics | null): Signal {
     return {
       ...base,
       severity,
-      finding: `Spread is ${pts(spread)} on a ${book.mid?.toFixed(3)} mid with ${depth.toFixed(0)} shares near the touch — in line with this venue.`,
+      finding: `Spread is ${pts(spread)} on a ${book.mid?.toFixed(3)} mid with ${depth.toFixed(0)} shares near the touch, in line with this venue.`,
       evidence,
     };
   }
@@ -378,7 +378,7 @@ export function depthSignal(d: DepthMetrics | null): Signal {
     id: "depth" as const,
     label: "Depth durability",
     basis:
-      "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain — fields every aggregated view sums away. " +
+      "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. " +
       "Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past " +
       "expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a " +
       "sub-8s TTL are the deviations.",
@@ -466,7 +466,7 @@ export function depthSignal(d: DepthMetrics | null): Signal {
       ...base,
       severity: "severe",
       finding:
-        `The median resting order expires in ${ttl.toFixed(0)}s — the displayed book is at the point of vanishing, ` +
+        `The median resting order expires in ${ttl.toFixed(0)}s, so the displayed book is at the point of vanishing, ` +
         `well inside this venue's measured 11-28s floor. ${composition}`,
       evidence,
     };
@@ -571,7 +571,7 @@ export function stalenessSignal(fresh: Freshness | null, windowSec: number | nul
     id: "staleness" as const,
     label: "Staleness",
     basis:
-      "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557 — " +
+      "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. " +
       "absolute age is meaningless across a venue running 5m to 24h series.",
   };
 
@@ -611,7 +611,7 @@ export function stalenessSignal(fresh: Freshness | null, windowSec: number | nul
     return {
       ...base,
       severity: "severe",
-      finding: `No trade for ${mins(fresh.lastTradeAgeSec ?? 0)} — ${(rel * 100).toFixed(0)}% of this market's entire window.`,
+      finding: `No trade for ${mins(fresh.lastTradeAgeSec ?? 0)}, ${(rel * 100).toFixed(0)}% of this market's entire window.`,
       evidence,
     };
   }
@@ -672,7 +672,7 @@ export function windowSignal(fresh: Freshness | null, windowSec: number | null):
     return {
       ...base,
       severity: "severe",
-      finding: `Only ${human} of trading left — the market can lock before an order lands.`,
+      finding: `Only ${human} of trading left; the market can lock before an order lands.`,
       evidence,
     };
   }
@@ -686,7 +686,7 @@ export function windowSignal(fresh: Freshness | null, windowSec: number | null):
     return {
       ...base,
       severity: "severe",
-      finding: `${(((elapsed ?? 0) * 100)).toFixed(0)}% of the window has elapsed with ${human} left — the market can lock before an order lands.`,
+      finding: `${(((elapsed ?? 0) * 100)).toFixed(0)}% of the window has elapsed with ${human} left; the market can lock before an order lands.`,
       evidence,
     };
   }
@@ -724,7 +724,7 @@ export function manipulationSignal(
     id: "manipulation" as const,
     label: "Order flow",
     basis:
-      "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market — it cannot " +
+      "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot " +
       "discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
   };
 
@@ -872,7 +872,7 @@ export function resolutionSignal(res: ResolutionState | null): Signal {
     return {
       ...base,
       severity: "severe",
-      finding: "The oracle voided this question — both sides redeem at 0.5 regardless of price.",
+      finding: "The oracle voided this question, so both sides redeem at 0.5 regardless of price.",
       evidence,
     };
   }
@@ -1091,7 +1091,7 @@ export function assess(signals: Signal[]): Assessment {
         break;
       case "depth":
         requiredChecks.push(
-          "Re-read the book immediately before acting — the displayed depth expires in seconds and is not a commitment",
+          "Re-read the book immediately before acting: the displayed depth expires in seconds and is not a commitment",
         );
         break;
       case "volatility":
@@ -1101,7 +1101,7 @@ export function assess(signals: Signal[]): Assessment {
         requiredChecks.push("Treat the quoted mid as indicative until a fresh trade prints");
         break;
       case "window":
-        requiredChecks.push("Re-check on-chain status immediately before acting — the window may lock first");
+        requiredChecks.push("Re-check on-chain status immediately before acting; the window may lock first");
         break;
       case "manipulation":
         requiredChecks.push("Check whether one-sided flow is a single participant before following it");
@@ -1183,7 +1183,7 @@ export function gradeSnapshot(s: MarketSnapshot): Assessment {
         {
           rule: "no-onchain-state",
           because:
-            "On-chain market status could not be read, so nothing here can be confirmed tradable — the indexer alone is not authoritative.",
+            "On-chain market status could not be read, so nothing here can be confirmed tradable. The indexer alone is not authoritative.",
         },
         ...assessment.rules,
       ],

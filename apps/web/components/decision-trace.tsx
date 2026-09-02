@@ -43,7 +43,7 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
                   </p>
                 ) : null}
 
-                {/* Evidence — the raw fields the finding was computed from. */}
+                {/* Evidence: the raw fields the finding was computed from. */}
                 {Object.keys(s.evidence).length > 0 ? (
                   <dl className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
                     {Object.entries(s.evidence)
@@ -117,7 +117,7 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
             </>
           ) : (
             <>
-              Written by the deterministic narrator, from the same signals — the model was not
+              Written by the deterministic narrator, from the same signals. The model was not
               used.
             </>
           )}

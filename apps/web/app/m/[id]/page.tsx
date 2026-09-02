@@ -5,7 +5,7 @@ import { DecisionTraceView } from "@/components/decision-trace"
 import { Provenance } from "@/components/provenance"
 import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
-import { ago, duration, pct, points, prob, shares, windowLabel } from "@/lib/format"
+import { ago, duration, NO_READING, pct, points, prob, shares, windowLabel } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
 // Per-request for the same reason as the index — see app/page.tsx.
@@ -39,7 +39,7 @@ export default async function MarketPage({
       {/* ── the finding ──────────────────────────────────────────────────── */}
       <header className="mt-6 border-b pb-8">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="font-display text-2xl leading-none">{row.asset ?? "—"}</h1>
+          <h1 className="font-display text-2xl leading-none">{row.asset ?? NO_READING}</h1>
           <span className="label-caps">{windowLabel(row.intervalSec)} window</span>
         </div>
         <p className="text-muted-foreground font-data mt-1.5 text-xs">{trace.symbol}</p>
@@ -120,7 +120,7 @@ export default async function MarketPage({
                 rel="noreferrer"
                 className="text-primary text-xs leading-relaxed underline decoration-1 underline-offset-2"
               >
-                Oracle question — every price source, its value, the median, and how many had to
+                Oracle question: every price source, its value, the median, and how many had to
                 agree
               </a>
             </div>
@@ -146,7 +146,7 @@ export default async function MarketPage({
               <h3 className="label-caps mb-2">last fill</h3>
               <p className="font-data text-sm">{duration(row.lastTradeAgeSec)}</p>
               <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                {pct(row.lastTradeAgeSec / row.intervalSec)} of this market&apos;s own window —
+                {pct(row.lastTradeAgeSec / row.intervalSec)} of this market&apos;s own window,
                 the only comparable measure across a venue running 15m to 24h series
               </p>
             </div>

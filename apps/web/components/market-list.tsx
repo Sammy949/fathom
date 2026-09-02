@@ -17,7 +17,7 @@ import Link from "next/link"
 
 import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
-import { duration, points, prob, shortId, windowLabel } from "@/lib/format"
+import { duration, NO_READING, points, prob, shortId, windowLabel } from "@/lib/format"
 import type { MarketRow } from "@/lib/venue"
 
 export function MarketList({ rows }: { rows: MarketRow[] }) {
@@ -54,7 +54,7 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-lg leading-none group-hover:text-primary">
-                    {r.asset ?? "—"}
+                    {r.asset ?? NO_READING}
                   </span>
                   <span className="label-caps">{windowLabel(r.intervalSec)} window</span>
                   {r.unmeasured > 0 ? (

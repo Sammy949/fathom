@@ -40,7 +40,7 @@ const fontSans = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata = {
-  title: "Fathom — risk verdicts for DreamDEX Event Contracts",
+  title: "Fathom: risk verdicts for DreamDEX Event Contracts",
   description:
     "Every verdict computed in code, every number traced to a measurement. ALLOW / RECHECK / BLOCK with an inspectable decision trace.",
 }

@@ -213,7 +213,7 @@ export async function classifyOwner(
     verdict = {
       owner,
       class: "eoa",
-      reason: "externally owned account — can sign a cancel at any time",
+      reason: "externally owned account; can sign a cancel at any time",
       codeBytes: 0,
       delegatesTo: null,
     };
@@ -232,8 +232,8 @@ export async function classifyOwner(
         owner,
         class: "upgradeable",
         reason: delegatesTo
-          ? `proxy delegating to ${delegatesTo} — the code deciding whether it can cancel is replaceable by whoever controls the target`
-          : "proxy — its behaviour lives at a target that can be replaced, so it cannot be certified unable to cancel",
+          ? `proxy delegating to ${delegatesTo}, so the code deciding whether it can cancel is replaceable by whoever controls the target`
+          : "proxy: its behaviour lives at a target that can be replaced, so it cannot be certified unable to cancel",
         codeBytes: bytes,
         delegatesTo,
       };
@@ -250,7 +250,7 @@ export async function classifyOwner(
         owner,
         class: "opaque",
         reason:
-          "contract with no cancel, reduce or forwarding selector found — absence in bytecode is not proof one is unreachable",
+          "contract with no cancel, reduce or forwarding selector found; absence in bytecode is not proof one is unreachable",
         codeBytes: bytes,
         delegatesTo: null,
       };

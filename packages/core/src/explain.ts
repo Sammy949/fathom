@@ -65,7 +65,7 @@ const EXPLAIN_TOOL_SCHEMA = {
     summary: {
       type: "string" as const,
       description:
-        "Two or three sentences explaining what the signals collectively show. Reference specific measured values. Do not state or imply a verdict — it has already been determined.",
+        "Two or three sentences explaining what the signals collectively show. Reference specific measured values. Do not state or imply a verdict; it has already been determined.",
     },
     per_signal: {
       type: "array" as const,
@@ -116,12 +116,12 @@ A deterministic engine has already measured this market and reached a verdict. Y
 HARD CONSTRAINTS
 - The verdict, the confidence figure, and every measured number are already decided. You cannot change them and you are not asked to.
 - Never predict whether the market resolves YES or NO. Never estimate a probability of any outcome. Never advise buying or selling. If the evidence seems to point somewhere, that is not yours to say.
-- NUMBERS MUST BE COPIED VERBATIM. If you cite a figure, copy it exactly as it is written in the finding or evidence you were given. Do NOT convert units (seconds to minutes, points to percent), do NOT rescale, do NOT round, and do NOT compute anything new — not an average, not a ratio, not a difference. An automated check rejects any figure that does not appear verbatim in your inputs, and a rejected explanation is discarded entirely. When a quantity would read better in other units, describe it in words instead ("over half the window", "most of the way to expiry") rather than doing the arithmetic.
-- A signal marked "unknown" was NOT MEASURED. It is not reassuring and it is not alarming — say plainly that it could not be established. Never describe an unmeasured signal as fine.
+- NUMBERS MUST BE COPIED VERBATIM. If you cite a figure, copy it exactly as it is written in the finding or evidence you were given. Do NOT convert units (seconds to minutes, points to percent), do NOT rescale, do NOT round, and do NOT compute anything new: not an average, not a ratio, not a difference. An automated check rejects any figure that does not appear verbatim in your inputs, and a rejected explanation is discarded entirely. When a quantity would read better in other units, describe it in words instead ("over half the window", "most of the way to expiry") rather than doing the arithmetic.
+- A signal marked "unknown" was NOT MEASURED. It is not reassuring and it is not alarming. Say plainly that it could not be established. Never describe an unmeasured signal as fine.
 - Every claim must trace to a signal you were given.
 
 CALIBRATION — THIS VENUE IS NOT A REAL-MONEY BOOK
-Spreads of 2 to 3 probability points are NORMAL here, not alarming. A price step of about 10 points between trades is NORMAL. A market going tens of minutes without a trade is NORMAL on a 24-hour window. The thresholds you are shown are calibrated to this venue's measured distributions. Do not import intuitions from equity or crypto spot markets — describing an ordinary 2.6-point spread as "wide" or "concerning" would be wrong here.
+Spreads of 2 to 3 probability points are NORMAL here, not alarming. A price step of about 10 points between trades is NORMAL. A market going tens of minutes without a trade is NORMAL on a 24-hour window. The thresholds you are shown are calibrated to this venue's measured distributions. Do not import intuitions from equity or crypto spot markets; describing an ordinary 2.6-point spread as "wide" or "concerning" would be wrong here.
 
 STYLE
 Direct and specific. Lead with what matters. No hedging padding ("it is worth noting that", "one should be aware"), no filler, no restating the verdict word back at the reader. Write for someone who will act on this in the next minute. Plain sentences over jargon; where a term is unavoidable, use it precisely.`;
@@ -134,7 +134,7 @@ function renderAssessment(s: MarketSnapshot, a: Assessment): string {
     `Asset ${id.asset ?? "?"} · window ${id.intervalSec ? `${id.intervalSec / 60} minutes` : "unknown"} · settles against its own opening price`,
     `Question: ${id.question ?? "n/a"}`,
     "",
-    `COMPUTED VERDICT: ${a.verdict} (confidence ${a.confidence} — this measures how completely the market could be observed, NOT a probability of any outcome)`,
+    `COMPUTED VERDICT: ${a.verdict} (confidence ${a.confidence}: this measures how completely the market could be observed, NOT a probability of any outcome)`,
     `Action: ${a.action}`,
     "",
     "SIGNALS AS MEASURED:",
@@ -483,7 +483,7 @@ export async function explainAssessment(
   } catch (e) {
     const reason = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
     // Label the provider so a failure is diagnosable without leaking the key.
-    return fallbackExplanation(s, a, `${describeProvider(cfg)} — ${reason}`);
+    return fallbackExplanation(s, a, `${describeProvider(cfg)}: ${reason}`);
   }
 }
 

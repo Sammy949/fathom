@@ -31,7 +31,7 @@ export default async function Home() {
         </div>
         <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
           Every verdict below is computed in code from measured order-book, trade and oracle
-          state. A language model writes the explanations and cannot change a verdict — its
+          state. A language model writes the explanations and cannot change a verdict: its
           output schema has no field for one.
         </p>
 
@@ -76,7 +76,7 @@ export default async function Home() {
 
       <footer className="text-muted-foreground mt-16 border-t pt-6 text-xs leading-relaxed">
         Thresholds are calibrated to this venue&apos;s measured distributions, not to real-money
-        market intuitions — spreads of 2 to 3 probability points are normal here. Confidence
+        market intuitions. Spreads of 2 to 3 probability points are normal here. Confidence
         measures how completely a market could be observed; it is never a probability of any
         outcome.
       </footer>

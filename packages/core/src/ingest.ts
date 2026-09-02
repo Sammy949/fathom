@@ -291,7 +291,7 @@ export async function ingestVenue(
   if (!venueId) {
     throw new Error(
       "VENUE_ID is not set. One deployment hosts several venues and their markets sit " +
-        "side by side in the indexer, so there is no safe default — read it off a live " +
+        "side by side in the indexer, so there is no safe default. Read it off a live " +
         "market row (venue ids move).",
     );
   }
@@ -332,7 +332,7 @@ export async function ingestVenue(
         // The registry sweep and the indexer disagree — usually a market that
         // rolled between the two reads.
         throw new Error(
-          `no unified market for ${row.marketId} (registry/indexer disagree — likely rolled mid-read)`,
+          `no unified market for ${row.marketId} (registry/indexer disagree, likely rolled mid-read)`,
         );
       }
       return snapshotMarket(ctx, market, row, opts);

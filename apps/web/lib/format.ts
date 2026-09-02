@@ -8,9 +8,19 @@
  * model; the UI should hold itself to the same standard.
  */
 
-/** Probability, always three decimals — the venue's tick grid resolution. */
+/**
+ * What a cell shows when there is no reading.
+ *
+ * Not an em-dash, which is the machine-written tell, and not a hyphen, which in a
+ * column of signed figures reads as a minus sign. A middle dot is unambiguous and
+ * matches the sounding line's own mark for a line that never found bottom, so
+ * "this could not be measured" looks the same wherever it appears.
+ */
+export const NO_READING = "·"
+
+/** Probability, always three decimals: the venue's tick grid resolution. */
 export const prob = (v: number | null | undefined): string =>
-  v === null || v === undefined ? "—" : v.toFixed(3)
+  v === null || v === undefined ? NO_READING : v.toFixed(3)
 
 /**
  * A spread or move, in probability POINTS.
@@ -22,15 +32,15 @@ export const prob = (v: number | null | undefined): string =>
  * leads with absolute points too.
  */
 export const points = (v: number | null | undefined, dp = 1): string =>
-  v === null || v === undefined ? "—" : `${(v * 100).toFixed(dp)}`
+  v === null || v === undefined ? NO_READING : `${(v * 100).toFixed(dp)}`
 
 /** A fraction as a percentage. For window-elapsed and coverage, never for spread. */
 export const pct = (v: number | null | undefined, dp = 0): string =>
-  v === null || v === undefined ? "—" : `${(v * 100).toFixed(dp)}%`
+  v === null || v === undefined ? NO_READING : `${(v * 100).toFixed(dp)}%`
 
 /** Share counts. Whole shares; the venue quotes in hundreds. */
 export const shares = (v: number | null | undefined): string =>
-  v === null || v === undefined ? "—" : Math.round(v).toLocaleString("en-US")
+  v === null || v === undefined ? NO_READING : Math.round(v).toLocaleString("en-US")
 
 /**
  * A duration, in the largest unit that stays legible.
@@ -41,7 +51,7 @@ export const shares = (v: number | null | undefined): string =>
  * numbers is how a reader draws the wrong conclusion.
  */
 export function duration(sec: number | null | undefined): string {
-  if (sec === null || sec === undefined) return "—"
+  if (sec === null || sec === undefined) return NO_READING
   const s = Math.abs(sec)
   const sign = sec < 0 ? "-" : ""
   if (s < 90) return `${sign}${Math.round(s)}s`
@@ -52,7 +62,7 @@ export function duration(sec: number | null | undefined): string {
 
 /** Window length as a human label. Intervals are 900 / 3600 / 14400 / 86400. */
 export function windowLabel(sec: number | null | undefined): string {
-  if (!sec) return "—"
+  if (!sec) return NO_READING
   if (sec < 3_600) return `${sec / 60}m`
   if (sec < 86_400) return `${sec / 3_600}h`
   return `${sec / 86_400}d`
