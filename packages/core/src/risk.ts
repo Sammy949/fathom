@@ -337,10 +337,22 @@ export function liquiditySignal(book: BookMetrics | null, resting: DepthMetrics 
   const spread = book.spread ?? 0;
   const ratio = book.spreadPct ?? 0;
   const depth = Math.min(book.bid.nearShares, book.ask.nearShares);
+  /**
+   * Rounded to the venue's tick grid, like every other figure here.
+   *
+   * These three were the only raw floats in any evidence object, and it showed on
+   * screen: `mid` is `(bid + ask) / 2`, so a 0.058/0.061 touch produced
+   * `0.0595000000000000004`, and because the explanation layer is handed the
+   * evidence verbatim, that IEEE-754 tail was quoted back inside a model-written
+   * sentence: "0.021 points on a 0.0595000000000000004 mid". A product whose whole
+   * claim is that every number traces to a measurement cannot print binary
+   * floating-point noise in prose. Three decimals is the venue's own price
+   * resolution, which is what `prob()` renders in the UI too.
+   */
   const evidence = {
-    bid: book.bid.best ?? null,
-    ask: book.ask.best ?? null,
-    mid: book.mid ?? null,
+    bid: book.bid.best === undefined ? null : Number(book.bid.best.toFixed(3)),
+    ask: book.ask.best === undefined ? null : Number(book.ask.best.toFixed(3)),
+    mid: book.mid === undefined ? null : Number(book.mid.toFixed(3)),
     spreadPoints: Number(spread.toFixed(4)),
     spreadOverMid: Number(ratio.toFixed(3)),
     nearBidShares: Number(book.bid.nearShares.toFixed(2)),
