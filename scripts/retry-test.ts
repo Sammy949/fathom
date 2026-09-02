@@ -20,6 +20,7 @@ import {
   DEFAULT_RETRY,
   IndexerRejected,
   IndexerUnavailable,
+  isRetryableGenerationFailure,
   query,
   queryOrNull,
   retryAfterMsFrom,
@@ -154,6 +155,34 @@ async function main(): Promise<void> {
   check(
     "a sub-minute wait is inside the 45s cap",
     (retryAfterMsFrom("Please try again in 30.405s.", null) ?? Infinity) <= 45_000,
+  );
+
+  // 7. Which provider failures are worth another attempt. Same reason the 429
+  // parser gets its own assertions: this classification decides whether a market
+  // reaches the model or the narrator, and the only visible trace of getting it
+  // wrong is a fallback-reason line nobody reads. The `json_validate_failed` case
+  // was measured live — 2 of 4 `npm run explain` runs lost a market, once to a
+  // transport failure and once to Groq rejecting its own truncated generation.
+  console.log(`\n${BOLD}retryable provider failures${R}`);
+  const truncated =
+    '{"error":{"message":"Generated JSON does not match the expected schema. Please adjust your ' +
+    "prompt. See 'failed_generation' for more details. Error: jsonschema: '' does not validate " +
+    'with /required: missing properties: \'summary\'","type":"invalid_request_error",' +
+    '"code":"json_validate_failed"}}';
+  check(
+    "a truncated generation is retryable, not our schema bug",
+    isRetryableGenerationFailure(400, truncated),
+  );
+  check(
+    "a real schema rejection still fails fast",
+    !isRetryableGenerationFailure(
+      400,
+      '{"error":{"message":"response_format.json_schema is invalid","type":"invalid_request_error"}}',
+    ),
+  );
+  check(
+    "an auth failure is never retried as a generation failure",
+    !isRetryableGenerationFailure(401, '{"error":{"code":"invalid_api_key"}}'),
   );
 
   console.log(`\n${BOLD}result${R}`);

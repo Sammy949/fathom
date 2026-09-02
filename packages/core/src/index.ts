@@ -144,6 +144,7 @@ export {
 export {
   resolveProvider,
   callProvider,
+  isRetryableGenerationFailure,
   retryAfterMsFrom,
   describeProvider,
   GROQ_DEFAULT_MODEL,

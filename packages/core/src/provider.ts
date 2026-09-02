@@ -162,17 +162,42 @@ const retryAfterMs = (body: string, headers: Headers): number | null =>
  * same code path works against every OpenAI-compatible provider without a
  * per-provider client.
  *
- * Retries twice, on two different conditions:
+ * Retries twice, on three different conditions:
  *   429 — wait exactly as long as the provider asks (Groq states it in the body
  *         and in `retry-after`), then try again.
  *   transport failure — `TypeError: fetch failed`, ETIMEDOUT and friends. Same
  *         WSL/IPv6 flakiness that made the indexer reads unreliable; measured
  *         here as roughly 1 market in 3 on some runs.
+ *   a truncated generation — see `isRetryableGenerationFailure`.
  *
- * Everything else fails immediately. A 400 is our schema being wrong and no
- * number of attempts will fix it, so burning retries would only delay the real
+ * Everything else fails immediately. A 400 is normally our schema being wrong and
+ * no number of attempts will fix it, so burning retries would only delay the real
  * error.
  */
+
+/**
+ * True for the one 400 that is NOT our bug.
+ *
+ * Groq returns `code: "json_validate_failed"` when its own constrained decoding
+ * produces JSON that fails the schema — "missing properties: 'summary'". Strict
+ * mode is supposed to make that impossible, and the reason it happens anyway is
+ * `max_completion_tokens`: the generation runs into the ceiling and the object is
+ * cut off before its last property. Measured on successful runs, output billed at
+ * 1,171 / 1,176 / 1,396 tokens against a 1,400 ceiling — the longest explanations
+ * sit ON the cap, so the next one over it truncates.
+ *
+ * That is transient in exactly the way a 429 is: the same request will usually
+ * succeed, because the next generation is a little shorter. Raising the ceiling
+ * would instead spend the increase on EVERY call, since Groq bills the ceiling as
+ * requested rather than as used, and three calls already exceed the 8,000 TPM
+ * budget. So it is retried and the cap stays honest.
+ *
+ * Exported for the same reason `retryAfterMsFrom` is: this classification was
+ * silently wrong once already, and a retry rule that is not asserted is a guess.
+ */
+export function isRetryableGenerationFailure(status: number, body: string): boolean {
+  return status === 400 && body.includes("json_validate_failed");
+}
 async function callOpenAICompatible(
   cfg: ProviderConfig,
   req: ProviderRequest,
@@ -236,6 +261,13 @@ async function callOpenAICompatible(
           await sleep(waitMs + 250);
           return callOpenAICompatible(cfg, req, attempt + 1);
         }
+      }
+      // A truncated generation is transient in the same way: retry rather than
+      // reporting the model's own cut-off object as a schema error of ours.
+      if (isRetryableGenerationFailure(res.status, body) && attempt + 1 < maxAttempts) {
+        done();
+        await sleep(300 * 2 ** attempt + Math.random() * 200);
+        return callOpenAICompatible(cfg, req, attempt + 1);
       }
       // Surface the provider's own message — a 400 here is usually a schema
       // Groq's strict mode rejects, and the detail says which part.
