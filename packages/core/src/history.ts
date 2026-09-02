@@ -199,6 +199,17 @@ export interface Freshness {
   secToExpiry: number;
   /** True when the market has never traded at all. */
   neverTraded: boolean;
+  /**
+   * True when trade recency could not be ESTABLISHED: the fills read failed and the
+   * indexed row carried no `lastTradeAt` either.
+   *
+   * Distinct from `neverTraded`, which is a measurement. Without the distinction the
+   * two are indistinguishable downstream, and the engine will state "this market has
+   * never traded" on the strength of a read that failed — a claim about the market
+   * manufactured from an outage. `neverTraded` is therefore false whenever this is
+   * true: absence of evidence is not evidence of absence.
+   */
+  recencyUnknown: boolean;
 }
 
 export function freshness(args: {
@@ -207,6 +218,11 @@ export function freshness(args: {
   expirySec: number;
   intervalSec?: number;
   nowSec?: number;
+  /**
+   * Set when the caller knows recency is unavailable rather than absent. Defaults to
+   * false, so a successful read with no fills still reports `neverTraded` normally.
+   */
+  recencyUnknown?: boolean;
 }): Freshness {
   const now = args.nowSec ?? Math.floor(Date.now() / 1000);
   const secToExpiry = args.expirySec - now;
@@ -216,6 +232,7 @@ export function freshness(args: {
 
   const lastTradeAgeSec =
     args.lastTradeAtSec && args.lastTradeAtSec > 0 ? now - args.lastTradeAtSec : undefined;
+  const recencyUnknown = args.recencyUnknown === true;
 
   const windowElapsed =
     windowLen && windowLen > 0 && args.tradingStartSec
@@ -230,6 +247,7 @@ export function freshness(args: {
         : undefined,
     windowElapsed,
     secToExpiry,
-    neverTraded: lastTradeAgeSec === undefined,
+    neverTraded: !recencyUnknown && lastTradeAgeSec === undefined,
+    recencyUnknown,
   };
 }

@@ -142,7 +142,13 @@ function report(s: MarketSnapshot): void {
     console.log(
       `  freshness  last trade ${dur(fr.lastTradeAgeSec)} ago${rel}  ·  expires in ${dur(fr.secToExpiry)}  ·  window ${pct(fr.windowElapsed)} elapsed`,
     );
-    if (fr.neverTraded) console.log(`             ${DIM}never traded${R}`);
+    if (fr.recencyUnknown) {
+      // Distinct from "never traded", and the distinction is the point: this is a
+      // read that did not land, not a market that has been quiet.
+      console.log(`             ${YEL}trade recency could not be established${R} ${DIM}(fills read did not land, row carries no lastTradeAt)${R}`);
+    } else if (fr.neverTraded) {
+      console.log(`             ${DIM}never traded${R}`);
+    }
   }
 
   // ── resolution ────────────────────────────────────────────────────────────

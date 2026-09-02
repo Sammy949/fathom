@@ -238,6 +238,15 @@ export async function snapshotMarket(
         ? Number(row.lastTradeAt)
         : undefined;
 
+  // When BOTH sources are gone, recency is unknown rather than absent. This used to
+  // be wrapped in `ok()` unconditionally, so a failed fills read on a row with no
+  // `lastTradeAt` published `neverTraded: true` with ok provenance — a claim about
+  // the market built from an outage, and invisible to `degradedFields`. Note the
+  // field as a whole stays `ok`: expiry and window elapsed are still genuinely
+  // measured, and degrading all of freshness would blind the window signal over a
+  // fills query, turning one honest gap into two.
+  const recencyUnknown = flow.value === null && !row.lastTradeAt;
+
   const fresh = ok(
     freshness({
       lastTradeAtSec,
@@ -246,6 +255,7 @@ export async function snapshotMarket(
       expirySec: onchain.value?.expirySec ?? identity.expirySec,
       intervalSec: identity.intervalSec ?? undefined,
       nowSec,
+      recencyUnknown,
     }),
   );
 

@@ -18,10 +18,14 @@
  * No network. Pure functions in, verdicts out.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import {
   assess,
   bucketOf,
   depthSignal,
+  freshness,
   gradeSnapshot,
   liquiditySignal,
   manipulationSignal,
@@ -109,6 +113,7 @@ const healthyFresh = (o: Partial<Freshness> = {}): Freshness => ({
   windowElapsed: 0.56,
   secToExpiry: 37_800,
   neverTraded: false,
+  recencyUnknown: false,
   ...o,
 });
 
@@ -294,19 +299,45 @@ expect(
   "elevated",
 );
 
+/** An order book with nothing on either side. */
+const emptySide = { levels: 0, depthShares: 0, nearShares: 0, nearNotional: 0 };
+const emptyBook = (o: Partial<BookMetrics> = {}): BookMetrics =>
+  healthyBook({
+    bid: emptySide,
+    ask: emptySide,
+    mid: undefined,
+    spread: undefined,
+    spreadPct: undefined,
+    imbalance: undefined,
+    unusable: "empty",
+    ...o,
+  });
+
+/** The per-order chain read agreeing that nothing is resting. */
+const noResting = (o: Partial<DepthMetrics> = {}): DepthMetrics =>
+  venueDepth({
+    orders: 0,
+    bidShares: 0,
+    askShares: 0,
+    totalShares: 0,
+    pullableShares: 0,
+    byOwner: [],
+    medianTtlSec: null,
+    minTtlSec: null,
+    maxTtlSec: null,
+    ...o,
+  });
+
 expect(
   "empty book → BLOCK",
   verdictOf(
     snapshot({
-      book: healthyBook({
-        bid: { levels: 0, depthShares: 0, nearShares: 0, nearNotional: 0 },
-        ask: { levels: 0, depthShares: 0, nearShares: 0, nearNotional: 0 },
-        mid: undefined,
-        spread: undefined,
-        spreadPct: undefined,
-        imbalance: undefined,
-        unusable: "empty",
-      }),
+      book: emptyBook(),
+      // Coherent with the book: no orders in the aggregate means none on the chain
+      // either. The pair used to disagree — an empty book beside a full 6-order
+      // ladder — which is not a state the venue can be in, and is now read as the
+      // stale-read signal it always was.
+      depth: noResting(),
     }),
   ),
   "BLOCK",
@@ -317,14 +348,66 @@ expect(
   verdictOf(
     snapshot({
       book: healthyBook({
-        ask: { levels: 0, depthShares: 0, nearShares: 0, nearNotional: 0 },
+        ask: emptySide,
         mid: undefined,
         spread: undefined,
         unusable: "one-sided",
       }),
+      depth: venueDepth({ orders: 3, bidShares: 990, askShares: 0, totalShares: 990, pullableShares: 990 }),
     }),
   ),
   "BLOCK",
+);
+
+// ── the two sources disagreeing ───────────────────────────────────────────────
+// An empty aggregated book beside a live per-order chain read is not a market with
+// no liquidity, it is one read contradicting another. Grading BLOCK off the loser of
+// that contradiction is how a healthy market gets a false BLOCK in front of a judge.
+expect(
+  "empty book contradicted by a live chain read is unknown, not severe",
+  liquiditySignal(emptyBook(), venueDepth()).severity,
+  "unknown",
+);
+expect(
+  "that contradiction is RECHECK, not BLOCK",
+  verdictOf(snapshot({ book: emptyBook(), depth: venueDepth() })),
+  "RECHECK",
+);
+expect(
+  "and it asks for the book to be re-read",
+  gradeSnapshot(snapshot({ book: emptyBook(), depth: venueDepth() })).rules.map((r) => r.rule),
+  ["unobservable-liquidity"],
+);
+expect(
+  "one-sided book contradicted by both sides on chain is unknown",
+  liquiditySignal(healthyBook({ ask: emptySide, mid: undefined, spread: undefined, unusable: "one-sided" }), venueDepth())
+    .severity,
+  "unknown",
+);
+// The three ways the downgrade must NOT fire. Each one is a case where the chain
+// read agrees, cannot corroborate, or corroborates nothing fillable.
+expect(
+  "an empty book the chain agrees with stays severe",
+  liquiditySignal(emptyBook(), noResting()).severity,
+  "severe",
+);
+expect(
+  "an unreadable chain read never downgrades the book",
+  liquiditySignal(emptyBook(), null).severity,
+  "severe",
+);
+expect(
+  "a chain read that is entirely past expiry never downgrades the book",
+  liquiditySignal(emptyBook(), venueDepth({ phantomShares: 1980, pullableShares: 0 })).severity,
+  "severe",
+);
+expect(
+  "one side quoted on chain is not a contradiction of a one-sided book",
+  liquiditySignal(
+    healthyBook({ ask: emptySide, mid: undefined, spread: undefined, unusable: "one-sided" }),
+    venueDepth({ orders: 3, bidShares: 990, askShares: 0, totalShares: 990 }),
+  ).severity,
+  "severe",
 );
 
 expect(
@@ -564,6 +647,55 @@ expect(
   stalenessSignal(healthyFresh({ neverTraded: true, lastTradeAgeSec: undefined }), 86_400).severity,
   "elevated",
 );
+// A failed fills read and a genuinely quiet market are NOT the same state, and they
+// used to produce the identical `neverTraded: true`. Ingestion then wrapped it in
+// `ok()`, so the trace asserted "this market has never traded" off the back of an
+// outage, with provenance clean enough that `degradedFields` did not list it.
+expect(
+  "staleness: unestablished recency is unknown, not never-traded",
+  stalenessSignal(
+    healthyFresh({ recencyUnknown: true, neverTraded: false, lastTradeAgeSec: undefined, ageVsWindow: undefined }),
+    86_400,
+  ).severity,
+  "unknown",
+);
+expect(
+  "staleness: unestablished recency withholds ALLOW",
+  verdictOf(
+    snapshot({
+      fresh: healthyFresh({
+        recencyUnknown: true,
+        neverTraded: false,
+        lastTradeAgeSec: undefined,
+        ageVsWindow: undefined,
+      }),
+    }),
+  ),
+  "RECHECK",
+);
+// The two flags are mutually exclusive by construction: absence of evidence must
+// not be recorded as evidence of absence.
+expect(
+  "freshness: recencyUnknown forces neverTraded false",
+  freshness({ expirySec: 2_000_000_000, intervalSec: 86_400, recencyUnknown: true }).neverTraded,
+  false,
+);
+expect(
+  "freshness: a successful read with no fills still reports never-traded",
+  freshness({ expirySec: 2_000_000_000, intervalSec: 86_400 }).neverTraded,
+  true,
+);
+// The window is still measurable when recency is not: expiry and elapsed come from
+// the row, not from the fills query. Degrading all of freshness would have blinded
+// this over an unrelated read.
+expect(
+  "window: still measured when trade recency is unknown",
+  windowSignal(
+    healthyFresh({ recencyUnknown: true, lastTradeAgeSec: undefined, secToExpiry: 2100, windowElapsed: 0.85 }),
+    14_400,
+  ).severity,
+  "elevated",
+);
 expect(
   "window: closed window is severe",
   windowSignal(healthyFresh({ secToExpiry: -10 }), 86_400).severity,
@@ -704,6 +836,91 @@ expect(
   bucketOf("opaque", -1),
   "phantom",
 );
+
+// ── the frozen fixture ────────────────────────────────────────────────────────
+
+console.log(`\n${BOLD}frozen evidence${R}`);
+
+/**
+ * The one severe case here that is REAL rather than constructed.
+ *
+ * `capture.ts` writes `verdictAtCapture` into the fixture "so a regression shows up
+ * as a diff rather than a silent change" — and then nothing ever compared it. The
+ * file was written by one script and read by none, which made the strongest BLOCK in
+ * the demo the only case with no gate behind it.
+ *
+ * Grading it is deterministic. Every clock-dependent number (the settlement lapse,
+ * trade recency, the window) was resolved at capture and frozen into the snapshot, so
+ * `gradeSnapshot` re-derives nothing from `Date.now()`. That matters because
+ * `voidExpired()` is permissionless: the live market cannot be made to reproduce this
+ * state, so the fixture is the only copy of it that will ever exist.
+ *
+ * A missing or unreadable fixture FAILS rather than skips. A gate that goes quiet
+ * when its input disappears is the vacuous pass this audit was about.
+ */
+const FIXTURE_PATH = join(import.meta.dirname, "..", "fixtures", "stuck-market-c067.json");
+
+interface FrozenFixture {
+  note: string;
+  capturedAtIso: string;
+  indexerClaimed: { clobStatus: string | null; disagreesWithChain: boolean };
+  snapshot: MarketSnapshot;
+  verdictAtCapture: {
+    verdict: Verdict;
+    confidence: number;
+    action: string;
+    rules: { rule: string; because: string }[];
+    severities: { id: string; severity: string }[];
+  };
+}
+
+let fixture: FrozenFixture | null = null;
+try {
+  fixture = JSON.parse(readFileSync(FIXTURE_PATH, "utf8")) as FrozenFixture;
+} catch (e) {
+  const why = e instanceof Error ? e.message : String(e);
+  failures.push(`frozen fixture is unreadable, so the committed BLOCK case is unverified: ${why}`);
+  console.log(`  ${RED}✗${R} frozen fixture could not be read ${DIM}${why}${R}`);
+}
+
+if (fixture) {
+  const regraded = gradeSnapshot(fixture.snapshot);
+  const recorded = fixture.verdictAtCapture;
+  console.log(`  ${DIM}captured ${fixture.capturedAtIso}${R}`);
+
+  // Against the recording: engine drift shows up here as a diff, which is what the
+  // recording was for.
+  expect("fixture: verdict unchanged since capture", regraded.verdict, recorded.verdict);
+  expect("fixture: confidence unchanged since capture", regraded.confidence, recorded.confidence);
+  expect("fixture: action unchanged since capture", regraded.action, recorded.action);
+  expect(
+    "fixture: the same rules fire, in the same order",
+    regraded.rules.map((r) => r.rule),
+    recorded.rules.map((r) => r.rule),
+  );
+  expect(
+    "fixture: every signal severity unchanged",
+    regraded.signals.map((s) => ({ id: s.id, severity: s.severity })),
+    recorded.severities,
+  );
+
+  // And against the CASE itself, so the gate still asserts something real if the
+  // fixture is ever re-captured and the recording moves with it.
+  expect("fixture: the stuck market is BLOCK", regraded.verdict, "BLOCK");
+  expect("fixture: nothing may be executed on it", regraded.action, "do_not_execute");
+  expect("fixture: the chain says it is not tradable", fixture.snapshot.onchain.value?.tradable, false);
+  expect("fixture: not-trading is the first rule", regraded.rules[0]?.rule, "not-trading");
+  expect(
+    "fixture: the lapsed settlement window is severe",
+    regraded.signals.find((s) => s.id === "resolution")?.severity,
+    "severe",
+  );
+  expect(
+    "fixture: the indexer contradicted the chain, which is the whole case",
+    fixture.indexerClaimed.disagreesWithChain,
+    true,
+  );
+}
 
 // ── result ────────────────────────────────────────────────────────────────────
 

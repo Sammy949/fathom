@@ -243,7 +243,7 @@ const worst = (a: Severity, b: Severity): Severity => {
  * ratio only enters to catch the unplayable tail, where the spread approaches or
  * exceeds the mid itself.
  */
-export function liquiditySignal(book: BookMetrics | null): Signal {
+export function liquiditySignal(book: BookMetrics | null, resting: DepthMetrics | null = null): Signal {
   const base = {
     id: "liquidity" as const,
     label: "Liquidity",
@@ -264,6 +264,54 @@ export function liquiditySignal(book: BookMetrics | null): Signal {
       evidence: { bid: book.bid.best ?? null, ask: book.ask.best ?? null, crossed: true },
     };
   }
+
+  // A book reading empty or one-sided is strong evidence for BLOCK, and usually
+  // right: the venue rolls windows continuously and a fresh generation genuinely has
+  // no maker on it yet. But the snapshot already carries an INDEPENDENT per-order
+  // chain read, taken seconds later in the same pass, and when that read finds live
+  // orders resting on both sides it is the aggregated book that is wrong rather than
+  // the market. That is the same call as the crossed branch above, on the same
+  // grounds, so it gets the same answer: report the read as untrustworthy instead of
+  // grading a market on it. The verdict becomes RECHECK with "re-read the order book"
+  // attached, which is the actionable truth.
+  //
+  // Deliberately narrow, on three counts. It applies only to the categorical
+  // disagreements, because `DepthMetrics` carries no price levels and so cannot
+  // corroborate near-touch thinness (and on this venue near-touch depth measures 990
+  // or nothing, never in between). It requires shares on both sides plus live shares
+  // overall, since phantom depth is not broken out per side. And a missing or degraded
+  // depth read never downgrades anything: absence of corroboration is not
+  // corroboration.
+  const liveShares = resting === null ? 0 : resting.totalShares - resting.phantomShares;
+  if (
+    (book.unusable === "empty" || book.unusable === "one-sided") &&
+    resting !== null &&
+    resting.orders > 0 &&
+    resting.bidShares > 0 &&
+    resting.askShares > 0 &&
+    liveShares > 0
+  ) {
+    return {
+      ...base,
+      severity: "unknown",
+      finding:
+        `The aggregated book read back ${book.unusable}, but the per-order chain read from the same pass found ` +
+        `${liveShares.toFixed(0)} live shares across ${resting.orders} orders with both sides quoted. Two independent ` +
+        `sources disagree, so tradability here is unread rather than absent.`,
+      evidence: {
+        bookUnusable: book.unusable,
+        bookBidLevels: book.bid.levels,
+        bookAskLevels: book.ask.levels,
+        chainOrders: resting.orders,
+        chainBidShares: Number(resting.bidShares.toFixed(2)),
+        chainAskShares: Number(resting.askShares.toFixed(2)),
+        chainLiveShares: Number(liveShares.toFixed(2)),
+        chainPhantomShares: Number(resting.phantomShares.toFixed(2)),
+        sourcesDisagree: true,
+      },
+    };
+  }
+
   if (book.unusable === "empty") {
     return {
       ...base,
@@ -580,6 +628,22 @@ export function stalenessSignal(fresh: Freshness | null, windowSec: number | nul
   }
 
   const mins = (s: number) => `${Math.round(s / 60)} min`;
+
+  // Checked BEFORE `neverTraded`, because the two used to be the same state. When
+  // the fills read failed and the indexed row carried no `lastTradeAt`, freshness
+  // reported `neverTraded: true` and this signal published "this market has never
+  // traded, so its quoted mid reflects a maker's opening guess" — a measured-sounding
+  // claim about the market, produced by a read that did not land. Unmeasured is not
+  // reassuring, and it is not damning either.
+  if (fresh.recencyUnknown) {
+    return {
+      ...base,
+      severity: "unknown",
+      finding:
+        "Trade recency could not be established: the fills read did not land and the indexed row carries no last-trade time. This is a gap in observation, not a quiet market.",
+      evidence: { recencyUnknown: true, secToExpiry: fresh.secToExpiry },
+    };
+  }
 
   if (fresh.neverTraded) {
     // Not the same as stale: there is no price to be stale. Any mid is the maker's
@@ -1162,7 +1226,7 @@ export function gradeSnapshot(s: MarketSnapshot): Assessment {
   const signals: Signal[] = [
     venueSignal(s.identity.venueId, s.identity.question),
     resolutionSignal(s.resolution.value),
-    liquiditySignal(book),
+    liquiditySignal(book, s.depth.value),
     depthSignal(s.depth.value),
     volatilitySignal(s.move.value),
     stalenessSignal(s.freshness.value, s.identity.intervalSec),
