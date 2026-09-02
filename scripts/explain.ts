@@ -242,6 +242,18 @@ async function main(): Promise<void> {
         expect: "unknown-signal",
       },
       {
+        // The real failure, taken verbatim off a rendered page. Every figure in it
+        // was honest and copied correctly, which is why no other guard fired: the
+        // defect is register, not accuracy. A log line is not an explanation.
+        name: "field names and hex quoted in prose",
+        text: {
+          ...good,
+          summary:
+            "Listed on DreamDEX (venueId=0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c) with recent activity (lastTradeAgeSec=103).",
+        },
+        expect: "machine-syntax",
+      },
+      {
         name: `contradicting the ${a.verdict} verdict`,
         text: {
           ...good,
@@ -277,7 +289,11 @@ async function main(): Promise<void> {
     // Unmeasured signals legitimately trip the "described as ok" check here, so
     // only require that clean prose raises no FABRICATION or contradiction.
     const spurious = clean.filter(
-      (f) => f.check === "fabricated-number" || f.check === "verdict-contradiction" || f.check === "unknown-signal",
+      (f) =>
+        f.check === "fabricated-number" ||
+        f.check === "verdict-contradiction" ||
+        f.check === "unknown-signal" ||
+        f.check === "machine-syntax",
     );
     console.log(
       spurious.length === 0

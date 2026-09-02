@@ -124,12 +124,26 @@ CALIBRATION — THIS VENUE IS NOT A REAL-MONEY BOOK
 Spreads of 2 to 3 probability points are NORMAL here, not alarming. A price step of about 10 points between trades is NORMAL. A market going tens of minutes without a trade is NORMAL on a 24-hour window. The thresholds you are shown are calibrated to this venue's measured distributions. Do not import intuitions from equity or crypto spot markets; describing an ordinary 2.6-point spread as "wide" or "concerning" would be wrong here.
 
 STYLE
-Direct and specific. Lead with what matters. No hedging padding ("it is worth noting that", "one should be aware"), no filler, no restating the verdict word back at the reader. Write for someone who will act on this in the next minute. Plain sentences over jargon; where a term is unavoidable, use it precisely.`;
+Direct and specific. Lead with what matters. No hedging padding ("it is worth noting that", "one should be aware"), no filler, no restating the verdict word back at the reader. Write for someone who will act on this in the next minute. Plain sentences over jargon; where a term is unavoidable, use it precisely.
+
+WRITE FOR A PERSON, NOT FOR A LOG
+The inputs below are machine records. Your output is a sentence someone reads. Those are not the same register, and the difference is not cosmetic.
+- NEVER write a field name. Not "lastTradeAgeSec=103", not "windowElapsed=0.448", not "severity=unknown", not "(liquidity severity=unknown)". Say "the last trade was 103 seconds ago" or "45% of the window has elapsed". A reader has never seen our schema and should not have to.
+- NEVER write an identifier: no 0x addresses, no venue ids, no market ids. They are 66 characters of hex that tell a reader nothing and crowd out what does.
+- NEVER write our internal signal ids in prose. In your per-signal readings the id belongs ONLY in the signal_id field. If you name a signal in a sentence, use its human label: "order flow" not "manipulation", "depth durability" not "depth".
+- No key=value pairs, no parenthetical field dumps, no unit suffixes lifted off a variable name ("Sec", "Ns", "Pct").
+The figures themselves must still be copied verbatim, exactly as the rule above requires. It is the SCAFFOLDING that is banned, never the number.
+
+PER-SIGNAL READINGS MUST ADD SOMETHING
+Each signal already arrives with a finding written in plain language. Do not paraphrase it back. If you have nothing to add beyond what the finding says, return an EMPTY reading for that signal; an empty reading is correct and expected, and it is strictly better than a restatement. Write a reading only where you can say something the finding does not: what it implies for acting now, how two signals interact, or why an unmeasured signal matters here.`;
 
 /** Compact evidence block. Only what the model may reason from. */
 function renderAssessment(s: MarketSnapshot, a: Assessment): string {
   const id = s.identity;
   const lines: string[] = [
+    // The symbol, not the marketId or the venueId. Neither identifier tells the
+    // model anything it can reason from, and sending them is what put a
+    // 66-character hex string in a sentence a human was meant to read.
     `MARKET: ${id.symbol}`,
     `Asset ${id.asset ?? "?"} · window ${id.intervalSec ? `${id.intervalSec / 60} minutes` : "unknown"} · settles against its own opening price`,
     `Question: ${id.question ?? "n/a"}`,
@@ -141,12 +155,28 @@ function renderAssessment(s: MarketSnapshot, a: Assessment): string {
   ];
 
   for (const sig of a.signals) {
-    lines.push(`- id=${sig.id} | severity=${sig.severity} | ${sig.finding}`);
+    // The label leads, and the id is marked as OURS rather than as vocabulary.
+    // Sending `id=manipulation` beside a finding about order flow taught the model
+    // to write "manipulation" in prose, where the interface says "Order flow" — the
+    // reader then sees a word the product never uses, about a market nobody accused
+    // of anything. Same mechanism behind `lastTradeAgeSec=103` appearing in a
+    // sentence: whatever shape the prompt is in is the shape the prose comes back in.
+    lines.push(
+      `- ${sig.label} (severity: ${sig.severity}, our internal id for the signal_id field only: ${sig.id})`,
+    );
+    lines.push(`  finding: ${sig.finding}`);
     const ev = Object.entries(sig.evidence)
       .filter(([, v]) => v !== null && v !== undefined)
+      // Long hex is dropped before the model ever sees it. Telling it not to quote
+      // identifiers works better when the identifiers are not in the prompt: the
+      // venue signal's evidence carries a 66-character venueId and its expected
+      // twin, the depth signal carries an owner address, and one of them came back
+      // inside a sentence. A reader cannot use them and the trace already shows them
+      // verbatim in the evidence sheet, which is where they belong.
+      .filter(([, v]) => !(typeof v === "string" && /^0x[0-9a-f]{16,}$/i.test(v)))
       .map(([k, v]) => `${k}=${v}`)
       .join(", ");
-    if (ev) lines.push(`  evidence: ${ev}`);
+    if (ev) lines.push(`  measured values, for reference, NEVER to be quoted as key=value: ${ev}`);
     // Threshold basis only where a threshold actually fired. On an `ok` signal
     // the finding already says "in line with this venue" and the calibration
     // detail is dead weight — eight bases cost ~430 input tokens against an
@@ -313,6 +343,36 @@ export function guardExplanation(
     }
   }
 
+  // 4. Machine syntax in prose. The output is a sentence a person reads, so a
+  //    field name, a key=value pair or a long hex identifier is a defect in the
+  //    same class as a fabricated number: not wrong, but not written for anyone.
+  //
+  //    Caught live rather than reasoned about. A rendered summary read:
+  //    "listed on DreamDEX (venueId=0x679795a0...) and tied to oracle question
+  //    49517, with recent activity (lastTradeAgeSec=103, ageVsWindow=0.114) and
+  //    45% of the 15-minute window elapsed (windowElapsed=0.448, secToExpiry=497)".
+  //    Every figure in it was honest and verbatim, which is exactly why no other
+  //    guard fired. The prompt now forbids this shape; this check is what makes
+  //    the prohibition enforceable instead of advisory, and it fails the market to
+  //    the deterministic narrator rather than shipping a log line as an
+  //    explanation.
+  //
+  //    Deliberately narrow so it cannot reject honest prose: it wants a
+  //    camelCase-or-suffixed identifier immediately followed by `=`, or 12+ hex
+  //    characters. Ordinary sentences do not contain either.
+  for (const m of prose.matchAll(/\b([a-z][a-zA-Z]*(?:[A-Z][a-zA-Z]*)+|severity|evidence)\s*=/g)) {
+    failures.push({
+      check: "machine-syntax",
+      detail: `prose contains the field reference "${m[0].trim()}"; readers have not seen our schema`,
+    });
+  }
+  for (const m of prose.matchAll(/0x[0-9a-fA-F]{12,}/g)) {
+    failures.push({
+      check: "machine-syntax",
+      detail: `prose quotes the identifier "${m[0].slice(0, 12)}…"; it tells a reader nothing`,
+    });
+  }
+
   // 5. Outcome prediction — the one thing the product must never do.
   if (/\b(will (likely )?(resolve|settle|close) (yes|no|above|below))\b/i.test(prose)) {
     failures.push({ check: "outcome-prediction", detail: "prose predicts the market's resolution" });
@@ -322,13 +382,6 @@ export function guardExplanation(
 }
 
 // ── deterministic fallback ─────────────────────────────────────────────────────
-
-const SEVERITY_PHRASE: Record<Severity, string> = {
-  ok: "is within this venue's normal range",
-  elevated: "needs a closer look",
-  severe: "is a blocking problem",
-  unknown: "could not be measured",
-};
 
 /**
  * Build an explanation from the signals alone, no model involved.
@@ -381,10 +434,14 @@ export function fallbackExplanation(
   return {
     headline,
     summary: parts.join(" "),
-    perSignal: a.signals.map((sig) => ({
-      signalId: sig.id,
-      reading: `${sig.label} ${SEVERITY_PHRASE[sig.severity]}. ${sig.finding}`,
-    })),
+    // NO per-signal readings. The narrator's template was
+    // `${label} ${severityPhrase}. ${finding}` — which restated the engine's
+    // finding verbatim on every signal, and on a live render made 8 of 8 readings
+    // pure duplication. The UI already prints the finding; a reading exists to add
+    // something to it, and the deterministic path has nothing to add by
+    // construction. An empty list is the honest answer, and the same rule the
+    // model is now given: say nothing rather than say it twice.
+    perSignal: [],
     source: "fallback",
     fallbackReason: reason,
   };
