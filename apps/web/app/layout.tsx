@@ -1,4 +1,3 @@
-import { Geist, Geist_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
 import "./globals.css"
@@ -8,22 +7,31 @@ import { cn } from "@/lib/utils"
 /**
  * Type system. Three faces, three jobs, no overlap.
  *
- * ZODIAK (display) — verdicts, headline figures, section heads. A Century-model
- * bracketed slab: the typographic register of financial reporting and legal
- * exhibits rather than of magazines. Chosen for one specific property — its
- * nineteenth-century uppercase proportions extend to the NUMERALS, so they are
- * near-monospaced by construction and headline figures column up without
- * needing tabular-nums. Fathom is a wall of figures; that is not incidental.
+ * ALL THREE ARE SELF-HOSTED FROM `public/fonts`, and that is not a preference any
+ * more. Geist and Geist Mono came from `next/font/google`, which fetches at BUILD
+ * time: `fonts.googleapis.com` resolves IPv6-only, this box has no working IPv6
+ * (the NAT64 / ENETUNREACH problem logged in the Stage 1 notes), and the build
+ * started failing outright with "Failed to fetch `Geist` from Google Fonts". A
+ * build that needs a third-party host is a build that can fail on someone else's
+ * network, including a deploy. The woff2 files are copied from their `@fontsource`
+ * packages into `public/fonts`, so nothing here touches the network.
  *
- * GEIST (interface) — body, labels, controls. Deliberately quiet: the display
- * face carries the identity, so the workhorse should not compete.
+ * INSTRUMENT SANS (interface) - body, labels, controls, navigation. A grotesque
+ * with slightly condensed proportions and a tall x-height, so it holds up at the
+ * 11-12px this interface leans on. Variable, one file, 100-900.
  *
- * GEIST MONO (data) — every measured figure, via `.font-data`. Mono is a costume
- * when it carries running prose, but here the content genuinely IS data, which
- * is the one case where it is the honest choice.
+ * INSTRUMENT SERIF (accent voice) - ITALIC ONLY, and used sparingly. Not a
+ * headline face here: universe.works ships only the italic and uses it as a
+ * counter-voice inside otherwise-sans composition, which is the move worth taking.
  *
- * Self-hosted from `public/fonts` rather than a CDN link so there is no
- * render-blocking third-party request and no layout shift.
+ * ZODIAK (display) - verdicts, headline figures, section heads. Kept, because it
+ * was chosen for one specific property no substitute has: its nineteenth-century
+ * bracketed-slab construction extends to the NUMERALS, so they are near-monospaced
+ * and headline figures column up without tabular-nums. Fathom is a wall of figures.
+ *
+ * GEIST MONO (data) - every measured figure, via `.font-data`. Mono is a costume
+ * when it carries running prose; here the content genuinely IS data, which is the
+ * one case where it is the honest choice.
  */
 const fontDisplay = localFont({
   src: [
@@ -35,9 +43,38 @@ const fontDisplay = localFont({
   display: "swap",
 })
 
-const fontSans = Geist({ subsets: ["latin"], variable: "--font-sans" })
+const fontSans = localFont({
+  src: [
+    {
+      path: "../public/fonts/InstrumentSans-Variable.woff2",
+      weight: "100 900",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/InstrumentSans-VariableItalic.woff2",
+      weight: "100 900",
+      style: "italic",
+    },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+})
 
-const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+const fontSerif = localFont({
+  src: [
+    { path: "../public/fonts/InstrumentSerif-400.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/InstrumentSerif-400-Italic.woff2", weight: "400", style: "italic" },
+  ],
+  variable: "--font-serif",
+  display: "swap",
+})
+
+const fontMono = localFont({
+  src: "../public/fonts/GeistMono-Variable.woff2",
+  weight: "100 900",
+  variable: "--font-mono",
+  display: "swap",
+})
 
 export const metadata = {
   title: "Fathom: risk verdicts for DreamDEX Event Contracts",
@@ -58,6 +95,7 @@ export default function RootLayout({
         "antialiased",
         fontDisplay.variable,
         fontSans.variable,
+        fontSerif.variable,
         fontMono.variable,
       )}
     >
