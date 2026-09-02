@@ -75,6 +75,19 @@ export {
 } from "./snapshot";
 
 export {
+  publicClient,
+  poolParams,
+  marketChainState,
+  restingOrders,
+  restingBook,
+  binaryPoolAbi,
+  binaryMarketAbi,
+  type PoolParams,
+  type MarketChainState,
+  type RestingOrder,
+} from "./chain";
+
+export {
   ingestVenue,
   snapshotMarket,
   candleIntervalFor,
