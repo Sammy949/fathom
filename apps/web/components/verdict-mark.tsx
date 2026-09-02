@@ -7,23 +7,29 @@
  * what it permits stated underneath in plain words, the way a report states a
  * conclusion.
  *
- * SEVERITY IS INK, NOT HUE, and that shapes what ALLOW looks like. ALLOW gets the
- * page's quietest tone at the lightest weight, because a market with nothing wrong
- * with it has earned no emphasis. RECHECK gets the single warning amber. BLOCK
- * gets full-strength ink at the heaviest weight Zodiak carries. So a board of
- * healthy markets reads calm, and one BLOCK is the loudest thing on the screen
- * without a red pill anywhere in sight.
+ * COLOUR HERE, INK EVERYWHERE ELSE, and the line between them is the point. A
+ * verdict is a DECISION, and green/amber/red is the one convention that reads a
+ * decision correctly at a glance in any culture that drives. A signal severity is
+ * a READING, and green on a reading would claim "fine" about a measurement that
+ * may never have been taken. So the traffic light stops at this component: the
+ * eight signals keep the ink ramp, where `unknown` is a different shape rather
+ * than a reassuring colour.
+ *
+ * Weight still carries rank independently of hue, so the row scans in greyscale
+ * and for the ~8% of men who will not reliably separate the green from the red:
+ * ALLOW is light, RECHECK regular, BLOCK bold, and only BLOCK gets the heaviest
+ * weight Zodiak carries.
  */
 
 import { cn } from "@/lib/utils"
 
 type Verdict = "ALLOW" | "RECHECK" | "BLOCK"
 
-/** Ink weight and depth per verdict. Colour does none of the ranking alone. */
+/** Hue states the decision, weight states its force. Neither carries it alone. */
 const INK: Record<Verdict, { color: string; weight: string }> = {
-  ALLOW: { color: "var(--muted-foreground)", weight: "font-light" },
-  RECHECK: { color: "var(--ink-elevated)", weight: "font-normal" },
-  BLOCK: { color: "var(--ink-severe)", weight: "font-bold" },
+  ALLOW: { color: "var(--verdict-allow)", weight: "font-light" },
+  RECHECK: { color: "var(--verdict-recheck)", weight: "font-normal" },
+  BLOCK: { color: "var(--verdict-block)", weight: "font-bold" },
 }
 
 /** What the verdict actually permits, in words a trader can act on. */

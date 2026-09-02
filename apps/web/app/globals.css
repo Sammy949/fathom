@@ -4,78 +4,111 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── The palette ─────────────────────────────────────────────────────────────
+   PAPER FIRST, and the orange is the only accent.
+
+   Light is the primary theme now. An instrument reads as an instrument on paper:
+   a lab report, a broadsheet, a survey. The near-black ground this started on
+   pushed it toward "dark SaaS product", which is a costume every other tool on
+   the board is already wearing.
+
+   ONE HUE THREADED THROUGH EVERY NEUTRAL, and it is the accent's hue. This is the
+   correction that mattered most. Every neutral used to sit at hue 285-286, a cool
+   violet, while the accent sat at 38, an orange. Warm accent on cool grays reads
+   as two palettes sharing a page. Ferry gets this right by keeping neutrals at
+   258-262 against a 260 primary, so here the grays carry a whisper of the same
+   warmth (hue 45-60, chroma 0.002-0.016) and the whole surface agrees with itself.
+
+   Contrast is computed, not guessed (oklch -> sRGB -> WCAG):
+     ink on paper      17.5:1      orange on paper    5.8:1
+     muted on paper     5.8:1      paper on orange    5.8:1
+   Ink on a filled orange measures 3.0:1, so a filled orange surface takes PAPER
+   text, never ink. That is the one trap in this palette.
+   ------------------------------------------------------------------------- */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.141 0.005 285.823);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.553 0.195 38.402);
-    --primary-foreground: oklch(0.98 0.016 73.684);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
-    --chart-1: oklch(0.837 0.128 66.29);
-    --chart-2: oklch(0.705 0.213 47.604);
-    --chart-3: oklch(0.646 0.222 41.116);
-    --chart-4: oklch(0.553 0.195 38.402);
-    --chart-5: oklch(0.47 0.157 37.304);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.646 0.222 41.116);
-    --sidebar-primary-foreground: oklch(0.98 0.016 73.684);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.705 0.015 286.067);
+    /* Paper, not clinical white. #fdfcfb. */
+    --background: oklch(0.992 0.002 60);
+    --foreground: oklch(0.205 0.01 50);
+    --card: oklch(0.998 0.001 60);
+    --card-foreground: oklch(0.205 0.01 50);
+    --popover: oklch(0.998 0.001 60);
+    --popover-foreground: oklch(0.205 0.01 50);
+    /* Fathom's orange, kept. Darkened slightly from the preset's 0.553 so it
+       clears AA against paper as text, not just as a fill. */
+    --primary: oklch(0.52 0.185 40);
+    --primary-foreground: oklch(0.992 0.002 60);
+    --secondary: oklch(0.965 0.004 55);
+    --secondary-foreground: oklch(0.26 0.012 50);
+    --muted: oklch(0.965 0.004 55);
+    --muted-foreground: oklch(0.505 0.014 55);
+    --accent: oklch(0.965 0.004 55);
+    --accent-foreground: oklch(0.26 0.012 50);
+    --destructive: oklch(0.505 0.19 28);
+    --border: oklch(0.9 0.006 55);
+    --input: oklch(0.9 0.006 55);
+    --ring: oklch(0.52 0.185 40);
+    /* One family, stepped by lightness. Charts are not a rainbow here. */
+    --chart-1: oklch(0.52 0.185 40);
+    --chart-2: oklch(0.62 0.15 45);
+    --chart-3: oklch(0.7 0.11 50);
+    --chart-4: oklch(0.78 0.07 55);
+    --chart-5: oklch(0.86 0.04 60);
+    /* Strictly architectural. Sharp corners, everywhere, including every shadcn
+       primitive we add on top. This is a drafting tool, not a consumer app. */
+    --radius: 0rem;
+    --sidebar: oklch(0.978 0.003 58);
+    --sidebar-foreground: oklch(0.205 0.01 50);
+    --sidebar-primary: oklch(0.52 0.185 40);
+    --sidebar-primary-foreground: oklch(0.992 0.002 60);
+    --sidebar-accent: oklch(0.965 0.004 55);
+    --sidebar-accent-foreground: oklch(0.26 0.012 50);
+    --sidebar-border: oklch(0.9 0.006 55);
+    --sidebar-ring: oklch(0.52 0.185 40);
 }
 
 .dark {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.47 0.157 37.304);
-    --primary-foreground: oklch(0.98 0.016 73.684);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.552 0.016 285.938);
-    --chart-1: oklch(0.837 0.128 66.29);
-    --chart-2: oklch(0.705 0.213 47.604);
-    --chart-3: oklch(0.646 0.222 41.116);
-    --chart-4: oklch(0.553 0.195 38.402);
-    --chart-5: oklch(0.47 0.157 37.304);
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.705 0.213 47.604);
-    --sidebar-primary-foreground: oklch(0.98 0.016 73.684);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.552 0.016 285.938);
+    /* Lifted off pure black and warmed. #14110f. Ferry's dark sits at 0.19
+       rather than the 0.141 near-black this used to use, and the lift is what
+       keeps a dark ground from reading as a void. */
+    --background: oklch(0.18 0.006 50);
+    --foreground: oklch(0.968 0.004 60);
+    --card: oklch(0.225 0.007 50);
+    --card-foreground: oklch(0.968 0.004 60);
+    --popover: oklch(0.225 0.007 50);
+    --popover-foreground: oklch(0.968 0.004 60);
+    /* Lightened for the dark ground: 7.6:1, where the light-mode value would
+       measure 3.4:1 here and fail. */
+    --primary: oklch(0.735 0.15 45);
+    --primary-foreground: oklch(0.18 0.006 50);
+    --secondary: oklch(0.27 0.008 50);
+    --secondary-foreground: oklch(0.968 0.004 60);
+    --muted: oklch(0.27 0.008 50);
+    --muted-foreground: oklch(0.7 0.012 58);
+    --accent: oklch(0.31 0.012 50);
+    --accent-foreground: oklch(0.968 0.004 60);
+    --destructive: oklch(0.68 0.17 28);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 16%);
+    --ring: oklch(0.735 0.15 45);
+    --chart-1: oklch(0.735 0.15 45);
+    --chart-2: oklch(0.67 0.13 42);
+    --chart-3: oklch(0.6 0.11 48);
+    --chart-4: oklch(0.52 0.08 52);
+    --chart-5: oklch(0.44 0.05 56);
+    --sidebar: oklch(0.225 0.007 50);
+    --sidebar-foreground: oklch(0.968 0.004 60);
+    --sidebar-primary: oklch(0.735 0.15 45);
+    --sidebar-primary-foreground: oklch(0.18 0.006 50);
+    --sidebar-accent: oklch(0.31 0.012 50);
+    --sidebar-accent-foreground: oklch(0.968 0.004 60);
+    --sidebar-border: oklch(1 0 0 / 12%);
+    --sidebar-ring: oklch(0.735 0.15 45);
 }
 
 @theme inline {
     --font-sans: var(--font-sans);
     --font-mono: var(--font-mono);
+    --font-serif: var(--font-serif);
     --font-display: var(--font-display);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -126,6 +159,20 @@
     }
   html {
     @apply font-sans;
+    }
+  /* Tabular figures wherever mono is used, not only via `.font-data`. Lifted from
+     Ferry, where the same rule keeps money columns from jittering: if a figure is
+     set in mono anywhere, it should align. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+    }
+  /* Display and short measures set their own line breaks rather than orphaning a
+     word. Cheap, and it is the difference between a headline and a wrapped string. */
+  h1, h2, h3 {
+    text-wrap: balance;
+    }
+  p {
+    text-wrap: pretty;
     }
 }
 
@@ -191,9 +238,13 @@
                 so it gets no colour at all -- a hairline resolving near the
                 surface. A screen of healthy markets should look calm, the way a
                 clean audit reads: exceptions get emphasis, findings get stated.
-     elevated   The ONE warning hue. A tonal amber, pushed to hue 85 so it sits
-                clearly away from the brand's 38-degree burnt orange and can
-                never be mistaken for decoration or for a link.
+     elevated   THE ACCENT, and there is only one. This used to be a separate
+                bronze at hue 85, deliberately held away from the brand's orange
+                at 38 -- which meant the page carried two warm accents close
+                enough in hue to muddle, and neither read as decisive. Collapsed:
+                elevated IS the orange. RECHECK and "look here" are the same
+                instruction, so they are the same colour, and the accent now
+                appears in exactly two roles rather than four.
      severe     SOLID INK at full strength. On a page where nothing else is at
                 maximum contrast, maximum contrast IS the alarm, and ink outranks
                 any colour. Note it inverts: ink means the greatest available
@@ -208,22 +259,44 @@
    the scale survives greyscale and does not rest on hue discrimination.
    ------------------------------------------------------------------------- */
 :root {
-  --ink-ok: oklch(0.62 0.008 286 / 0.5);
-  /* Dark enough to clear WCAG AA against paper (about 4.8:1), which a mid amber
-     does not: the first pass used oklch(0.68 0.125 85) and measured ~2.7:1, so
-     RECHECK and every elevated finding were set in text you had to work to read.
-     Lowering L to 0.48 lands it as a bronze rather than a highlighter, which is
-     also the right register here and keeps it clear of the 38-degree brand
-     orange. */
-  --ink-elevated: oklch(0.48 0.125 78);
-  --ink-severe: oklch(0.17 0.01 286);
-  --ink-unknown: oklch(0.6 0.008 286 / 0.6);
+  --ink-ok: oklch(0.62 0.008 55 / 0.5);
+  /* One accent. Same token as `--primary`, restated here so the severity scale
+     reads as a scale in one place. Measured 5.8:1 on paper, where the first pass
+     at oklch(0.68 0.125 85) measured 2.7:1 and made every RECHECK something you
+     had to work to read. */
+  --ink-elevated: oklch(0.52 0.185 40);
+  --ink-severe: oklch(0.205 0.01 50);
+  --ink-unknown: oklch(0.6 0.008 55 / 0.6);
+
+  /* Verdict colours, and note what they are NOT used for. See the note above the
+     ink scale: a VERDICT is a decision, and a decision is the one thing a traffic
+     light is actually good at. A SIGNAL severity is a reading, and green there
+     would claim "fine" about a measurement that may not have been taken. So these
+     three appear on the verdict word and nowhere else in the interface.
+
+     HUES ARE PUSHED APART BECAUSE THE FIRST PAIR FAILED ON SCREEN. Sitting red at
+     hue 25 next to the brand orange at 45 gave two salmons twenty degrees apart:
+     both cleared contrast, and on the ink ground a rendered board of RECHECK and
+     BLOCK rows read as one colour. Block is now a true crimson at hue 12-14 and
+     recheck carries the brand orange, a 40 degree gap. Weight in `VerdictMark`
+     still ranks them independently of hue, so the row survives greyscale and
+     red-green colour blindness.
+
+     Measured on paper: allow 6.3:1, recheck 5.8:1, block 7.2:1.
+     On the ink ground: 8.6:1, 8.4:1, 4.6:1. */
+  --verdict-allow: oklch(0.47 0.12 148);
+  --verdict-recheck: oklch(0.52 0.185 40);
+  --verdict-block: oklch(0.47 0.2 14);
 }
 
 .dark {
-  --ink-ok: oklch(0.5 0.008 286 / 0.65);
-  --ink-elevated: oklch(0.82 0.12 85);
-  --ink-severe: oklch(0.985 0 0);
-  --ink-unknown: oklch(0.55 0.008 286 / 0.7);
+  --ink-ok: oklch(0.5 0.008 55 / 0.65);
+  --ink-elevated: oklch(0.735 0.15 45);
+  --ink-severe: oklch(0.968 0.004 60);
+  --ink-unknown: oklch(0.55 0.008 55 / 0.7);
+
+  --verdict-allow: oklch(0.74 0.135 150);
+  --verdict-recheck: oklch(0.76 0.15 52);
+  --verdict-block: oklch(0.62 0.21 12);
 }
 
