@@ -29,28 +29,37 @@ const STATE_INK: Record<string, string> = {
   absent: "var(--ink-unknown)",
 }
 
-/** Filled square for a real read, hollow for a failed one, rule for absent. */
+/**
+ * Filled square for a real read, hollow for a failed one, rule for absent.
+ *
+ * CENTRED BY CONSTRUCTION, not by a tuned margin. The first version hung the marks
+ * off `items-baseline` with `mt-1.5` and `mt-2`, which is a guess dressed as a
+ * measurement: an empty flex item's baseline is its BOTTOM MARGIN EDGE, so those
+ * margins moved the box's height rather than its position and the two variants were
+ * never differentially placed the way the values implied. Nobody would catch that
+ * without rendering it, and it cannot be rendered cheaply here.
+ *
+ * So the mark now sits in a box the exact height of the text's line (`h-4` against
+ * `leading-4`) and is centred inside it. That is deterministic, needs no eyeball, and
+ * survives a change of font.
+ */
 function StateMark({ state }: { state: string }) {
   const ink = STATE_INK[state] ?? "var(--ink-unknown)"
-  if (state === "absent") {
-    return (
-      <span
-        aria-hidden
-        className="mt-2 h-px w-1.5 shrink-0"
-        style={{ backgroundColor: ink }}
-      />
-    )
-  }
   return (
-    <span
-      aria-hidden
-      className="mt-1.5 size-1.5 shrink-0"
-      style={
-        state === "ok"
-          ? { backgroundColor: ink }
-          : { border: `1px solid ${ink}`, backgroundColor: "transparent" }
-      }
-    />
+    <span aria-hidden className="flex h-4 w-1.5 shrink-0 items-center">
+      {state === "absent" ? (
+        <span className="h-px w-full" style={{ backgroundColor: ink }} />
+      ) : (
+        <span
+          className="size-1.5"
+          style={
+            state === "ok"
+              ? { backgroundColor: ink }
+              : { border: `1px solid ${ink}`, backgroundColor: "transparent" }
+          }
+        />
+      )}
+    </span>
   )
 }
 
@@ -64,7 +73,7 @@ export function Provenance({
       <h3 className="section-mark mb-3">Provenance</h3>
       <dl className="space-y-1.5">
         {entries.map((e) => (
-          <div key={e.field} className="flex items-baseline gap-2 text-xs">
+          <div key={e.field} className="flex items-start gap-2 text-xs leading-4">
             <StateMark state={e.state} />
             <dt className="font-data w-20 shrink-0">{e.field}</dt>
             <dd className="text-muted-foreground min-w-0 flex-1">
