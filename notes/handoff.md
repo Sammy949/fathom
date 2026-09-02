@@ -2,6 +2,34 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-09-02 (later still) — the frozen board is demo insurance, and it is the only artifact that shows all three verdicts
+
+Written up from another session's `515c009`, which built it. Recording it here because the reason it
+exists is a finding from this session's measurements, and because `npm run dev` now means something
+different than it did this morning.
+
+**`npm run capture:board` freezes one live pass to `fixtures/board.json`, and `FATHOM_FIXTURE=1`
+renders the dashboard from that file with no network in the render path.** Live is still the default,
+so a deploy behaves as it always did. `apps/web`'s `npm run dev` now sets `FATHOM_FIXTURE=1`; use
+`npm run dev:live` to hit the venue. `build:fixture` does the same for a build.
+
+**Why it is insurance and not just a dev-loop speedup.** Three `grade` runs inside two hours gave
+0 ALLOW / 10 RECHECK / 0 BLOCK, then 0 / 4 / 6, then 0 / 9 / 1. Every one was correct; the board
+simply moves with venue state, and a judge who reloads gets a different screen than the one being
+demoed. Worse, **no live pass all session produced a single ALLOW.** The committed board does:
+**ALLOW 1 / RECHECK 4 / BLOCK 3 across 8 markets, 8 of 8 model-explained, 0 failures**, captured
+10:36:59Z. That is the only artifact in the repo that demonstrates the engine using its full verdict
+range, which is exactly what the discrimination claim needs on the day.
+
+Two details worth not rediscovering. The capture imports the dashboard's own `buildVenueRead` rather
+than reassembling rows, so the fixture cannot drift from what the page renders — a fixture that does
+not match the page is worse than no fixture. And it refuses to run with `FATHOM_FIXTURE` set, since
+that would capture the file it is reading; verified, exit 2.
+
+Verified after that commit landed: `npm run typecheck`, `npm run test:risk` (89), both `build` and
+`build:fixture`, and the capture guard. Note the frozen board still has not been seen in a browser;
+`FATHOM_FIXTURE=1 npm run dev` is now the fastest way to look, and it needs no network.
+
 ## 2026-09-02 (later) — the gates could pass with the real path at zero
 
 The audit started from a rule rather than a symptom: **does this gate's happy path get
@@ -625,6 +653,7 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 |---|---|
 | `npm run snapshot` | Stage 2 gate — ingest + provenance, lists live venues |
 | `npm run capture -- <marketId> [label]` | Freeze one market's whole evidence set to `fixtures/` |
+| `npm run capture:board` | Freeze the whole board to `fixtures/board.json` — demo insurance, see the top entry |
 | `npm run calibrate` | Threshold sweep — per-market rows + distributions |
 | `npm run probe:book` | Book-read stability — polls one a second for 90s, counts what would have graded severe |
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
@@ -633,7 +662,8 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | `npm run test:risk` | 89 assertions over synthetic snapshots plus the frozen fixture, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
 | `npm run typecheck` | Whole workspace, `scripts/` included |
-| `cd apps/web && npm run dev` | The dashboard. Run this yourself; see the note above |
+| `cd apps/web && npm run dev` | The dashboard, from the frozen board (`FATHOM_FIXTURE=1`), no network. Run this yourself; see the note above |
+| `cd apps/web && npm run dev:live` | The dashboard against the live venue |
 
 ## Links
 - Hackathon: https://dorahacks.io/hackathon/event-contracts/detail
