@@ -14,13 +14,15 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present && npm run typecheck:scripts",
     "typecheck:scripts": "tsc -p tsconfig.scripts.json",
-    "snapshot": "tsx scripts/snapshot.ts",
-    "capture": "tsx scripts/capture.ts",
+    "snapshot": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/snapshot.ts",
+    "capture": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/capture.ts",
+    "capture:board": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/capture-board.ts",
     "retry:test": "tsx scripts/retry-test.ts",
-    "calibrate": "tsx scripts/calibrate.ts",
-    "grade": "tsx scripts/grade.ts",
+    "calibrate": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/calibrate.ts",
+    "probe:book": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/probe-book.ts",
+    "grade": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/grade.ts",
     "test:risk": "tsx scripts/test-risk.ts",
-    "explain": "tsx scripts/explain.ts"
+    "explain": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/explain.ts"
   },
   "devDependencies": {
     "tsx": "4.19.2",

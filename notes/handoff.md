@@ -75,6 +75,15 @@ would have spent the increase on every call, since Groq bills it as requested ra
 After the fix: **5 consecutive runs, 15 of 15 markets model-explained.** Before it, 2 of 4 runs
 degraded silently under a green gate.
 
+**AND THE PROBE, RE-RUN AN HOUR LATER, SETTLED IT FROM THE OTHER SIDE.** `npm run
+probe:book` on a board that had since traded: the two idle 24h markets still read 990
+on all 90 reads each, and the third, a 4h market past its last fill, read **one-sided
+on 90 of 90 reads** — `levels 0/3`, no bid at all, for the entire 90 seconds. So the
+severe conditions this venue actually produces PERSIST: the maker withdraws a side and
+leaves it withdrawn. A two-poll rule would not have softened that verdict, it would
+have confirmed it. The false-BLOCK-from-one-unlucky-read failure mode is not the one
+this venue has.
+
 **THE REPOST-TIMING GAP DOES NOT EXIST ON THIS VENUE, MEASURED.** The worry was that a single
 `fetchOrderBook` could land between a maker cancel and its repost, read an empty or thin book, and
 grade liquidity severe — which is BLOCK — on a market that is fine. Polled three markets once a
@@ -617,6 +626,7 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | `npm run snapshot` | Stage 2 gate — ingest + provenance, lists live venues |
 | `npm run capture -- <marketId> [label]` | Freeze one market's whole evidence set to `fixtures/` |
 | `npm run calibrate` | Threshold sweep — per-market rows + distributions |
+| `npm run probe:book` | Book-read stability — polls one a second for 90s, counts what would have graded severe |
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
 | `npm run explain` | Stage 5 gate — full traces + verdict-integrity + guard proof |
 | `npm run explain -- --offline` | Same, deterministic narrator only (no key needed) |

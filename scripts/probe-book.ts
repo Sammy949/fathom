@@ -1,7 +1,7 @@
 /**
  * Book-read stability probe. Read-only, sends nothing.
  *
- *   npx tsx scripts/probe-book.ts
+ *   npm run probe:book
  *
  * Not a gate. A measurement instrument, in the same genre as `calibrate.ts`: it
  * exists so a claim about read stability can be re-established rather than
@@ -21,10 +21,18 @@
  * venue constant. A later `grade` run read 200 near the touch on a market that had
  * been traded against.
  *
+ * RE-RUN AN HOUR LATER, AND IT SETTLED THE QUESTION FROM THE OTHER SIDE. Two idle 24h
+ * markets still read 990 on all 90 reads each. The third, a 4h market past its last
+ * fill, read ONE-SIDED on 90 of 90 reads: `levels 0/3`, no bid at all, for the entire
+ * 90 seconds. So the severe conditions that actually occur on this venue PERSIST -
+ * the maker withdraws a side and leaves it withdrawn - and a two-poll rule would not
+ * have softened that verdict, it would have confirmed it. Which is the answer: the
+ * false-BLOCK-from-one-unlucky-read failure mode is not the one this venue produces.
+ *
  * It also records the book's own `timestamp` per read, because if the SDK handed back
  * a cached view then "two consecutive polls" would be one observation twice and any
  * two-poll rule would be theatre. It does not: 90 of 90 timestamps were distinct on
- * every market.
+ * every market, on every run.
  */
 
 import { createExchange, shutdown } from "@fathom/ec";
@@ -120,7 +128,15 @@ async function main(): Promise<void> {
     console.log(`\n  ${BOLD}${t.symbol}${R}`);
     console.log(`    reads              ${rs.length} (${errors.length} error(s))`);
     console.log(`    distinct book ts   ${distinctTs} ${DIM}of ${good.length} good reads${R}`);
-    console.log(`    near-touch shares  min ${Math.min(...nears).toFixed(0)} max ${Math.max(...nears).toFixed(0)}`);
+    // Guarded, because `Math.min(...[])` is Infinity and a market that was
+    // one-sided for the whole window has no two-sided read to measure. That exact
+    // artifact is what gave `npm run grade` away when it passed on an empty board,
+    // and it turned up here on the first market that had no bids.
+    console.log(
+      nears.length > 0
+        ? `    near-touch shares  min ${Math.min(...nears).toFixed(0)} max ${Math.max(...nears).toFixed(0)}`
+        : `    near-touch shares  ${DIM}no two-sided read to measure${R}`,
+    );
     console.log(`    empty              ${empty.length}`);
     console.log(`    one-sided          ${oneSided.length}`);
     console.log(`    crossed            ${crossed.length}`);
@@ -141,13 +157,20 @@ async function main(): Promise<void> {
     }
     if (longest > 0) {
       console.log(`    ${YEL}longest severe run  ${longest} consecutive read(s) ≈ ${(longest * EVERY_MS) / 1000}s${R}`);
-      for (const r of good) {
-        const bad = r.unusable === "empty" || r.unusable === "one-sided" || (!r.unusable && r.nearMin <= 50);
-        if (bad) {
-          console.log(
-            `      ${DIM}+${((r.at - t0) / 1000).toFixed(1)}s  ${r.unusable ?? "thin"}  levels ${r.bidLevels}/${r.askLevels}  nearMin ${r.nearMin.toFixed(0)}${R}`,
-          );
-        }
+      // Capped. A market that is one-sided for the whole window prints the same
+      // line ninety times otherwise, which buries the summary above it — and the
+      // fact worth reading is that the condition PERSISTED, which the run length
+      // already states.
+      const bad = good.filter(
+        (r) => r.unusable === "empty" || r.unusable === "one-sided" || (!r.unusable && r.nearMin <= 50),
+      );
+      for (const r of bad.slice(0, 5)) {
+        console.log(
+          `      ${DIM}+${((r.at - t0) / 1000).toFixed(1)}s  ${r.unusable ?? "thin"}  levels ${r.bidLevels}/${r.askLevels}  nearMin ${r.nearMin.toFixed(0)}${R}`,
+        );
+      }
+      if (bad.length > 5) {
+        console.log(`      ${DIM}… and ${bad.length - 5} more, ${bad.length} of ${good.length} reads in all${R}`);
       }
     }
     if (errors.length) {
