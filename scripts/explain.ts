@@ -88,6 +88,20 @@ async function main(): Promise<void> {
   const { snapshots } = await ingestVenue(ctx, { minIntervalSec: 900 });
   // Three markets is enough to show the range without burning tokens.
   const chosen = snapshots.slice(0, 3);
+  if (chosen.length === 0) {
+    problems.push("no markets were ingested, so nothing below was actually exercised");
+  }
+
+  /** Where each explanation came from, so the gate can assert the model ran. */
+  const sources: { symbol: string; source: string; reason?: string; model?: string }[] = [];
+  /**
+   * Kept separate from `problems` on purpose. The verdict-integrity line below was
+   * keyed to the GLOBAL problem count, so the moment any unrelated check pushed a
+   * problem it reported "the explanation step altered an assessment" about an
+   * assessment that had not changed. Same insensitivity as a gate reading "did
+   * something respond": a status line has to be keyed to its own check.
+   */
+  const integrityViolations: string[] = [];
 
   for (const snapshot of chosen) {
     const before = gradeSnapshot(snapshot);
@@ -99,11 +113,19 @@ async function main(): Promise<void> {
     // engine at all, this is where it would show.
     const after = gradeSnapshot(snapshot);
     if (fingerprint(after) !== fpBefore) {
+      integrityViolations.push(snapshot.identity.symbol);
       problems.push(`${snapshot.identity.symbol}: assessment changed across the explanation step`);
     }
 
     const trace = buildTrace(snapshot, after, explanation);
     const vc = VERDICT_COLOR[trace.verdict];
+
+    sources.push({
+      symbol: trace.symbol,
+      source: trace.explanation.source,
+      reason: trace.explanation.fallbackReason,
+      model: trace.explanation.model,
+    });
 
     console.log(
       `\n${BOLD}${trace.symbol}${R} → ${vc}${BOLD}${trace.verdict}${R} ${DIM}confidence ${trace.confidence} · ${trace.action}${R}`,
@@ -149,12 +171,47 @@ async function main(): Promise<void> {
     }
   }
 
+  // ── the model actually ran ──────────────────────────────────────────────────
+  // This gate reported PASS while 0 of 3 markets were model-explained, because
+  // nothing here looked at `explanation.source` — the deterministic fallback is
+  // designed to absorb exactly that failure, so "something responded" is all the
+  // gate ever checked. That is how the `signal_id` enum drift stayed green: the
+  // only visible trace was the fallback-reason line, and a human had to read it.
+  //
+  // So when a provider is configured and we are not deliberately offline, every
+  // chosen market must come back model-explained, and a fallback names its own
+  // reason in the failure. A rate limit failing this gate is correct: the whole
+  // point of the token budget and the 429 retry is that the model path holds
+  // inside the free tier, and a run that quietly degrades is the thing being
+  // guarded against.
+  console.log(`\n${BOLD}explanation source${R}`);
+  const modelExplained = sources.filter((s) => s.source === "model");
+  if (offline || !provider) {
+    console.log(
+      `  ${DIM}not asserted — ${offline ? "offline mode requested" : "no provider configured"}, the fallback narrator is the expected path${R}`,
+    );
+  } else if (chosen.length > 0 && modelExplained.length === chosen.length) {
+    console.log(
+      `  ${GRN}PASS${R} ${modelExplained.length} of ${chosen.length} explained by ${modelExplained[0]?.model ?? "the model"}`,
+    );
+  } else {
+    console.log(
+      `  ${RED}FAIL${R} ${modelExplained.length} of ${chosen.length} model-explained${R}`,
+    );
+    for (const s of sources.filter((s) => s.source !== "model")) {
+      console.log(`    ${DIM}${s.symbol}: ${s.reason ?? "no reason recorded"}${R}`);
+      problems.push(`${s.symbol} fell back to the narrator: ${s.reason ?? "no reason recorded"}`);
+    }
+  }
+
   // ── the structural guarantee ───────────────────────────────────────────────
   console.log(`\n${BOLD}verdict integrity${R}`);
   console.log(
-    problems.length === 0
-      ? `  ${GRN}PASS${R} verdict, confidence, action and every severity unchanged across explanation`
-      : `  ${RED}FAIL${R} the explanation step altered an assessment`,
+    chosen.length === 0
+      ? `  ${DIM}not asserted — no markets to explain${R}`
+      : integrityViolations.length === 0
+        ? `  ${GRN}PASS${R} verdict, confidence, action and every severity unchanged across explanation on all ${chosen.length} markets`
+        : `  ${RED}FAIL${R} the explanation step altered an assessment on ${integrityViolations.join(", ")}`,
   );
 
   // ── guard proof ────────────────────────────────────────────────────────────
@@ -232,7 +289,14 @@ async function main(): Promise<void> {
 
   console.log(`\n${BOLD}gate${R}`);
   if (problems.length === 0) {
-    console.log(`  ${GRN}PASS${R} — model explains, engine decides, guard enforces`);
+    // The claim has to match the path that actually ran. Saying "model explains"
+    // after a narrator-only run is the same insensitivity this gate was just fixed
+    // for, one line further down.
+    console.log(
+      offline || !provider
+        ? `  ${GRN}PASS${R} — engine decides, guard enforces ${DIM}(narrator path: the model was not exercised)${R}`
+        : `  ${GRN}PASS${R} — model explains, engine decides, guard enforces`,
+    );
   } else {
     for (const p of problems) console.log(`  ${RED}FAIL${R} ${p}`);
   }
