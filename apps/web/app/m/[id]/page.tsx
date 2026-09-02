@@ -4,9 +4,9 @@ import { notFound } from "next/navigation"
 import {
   ExplanationSource,
   RequiredChecks,
-  RulePath,
   SignalTable,
 } from "@/components/decision-trace"
+import { GateLadder } from "@/components/gate-ladder"
 import { ProvenanceSheet } from "@/components/provenance"
 import { SiteNav } from "@/components/site-nav"
 import { Sounding } from "@/components/sounding"
@@ -239,7 +239,11 @@ export default async function MarketPage({
             </section>
           ) : null}
 
-          <RulePath trace={trace} />
+          {/* The gate ladder replaces the numbered rule list. Same information, minus
+              the raw rule ids that list printed in mono, and it shows the one thing
+              nothing else did: which checks were never reached because an earlier gate
+              already decided. */}
+          <GateLadder trace={trace} />
 
           <SignalTable trace={trace} />
 

@@ -122,27 +122,6 @@ export function RequiredChecks({ trace }: { trace: DecisionTrace }) {
   )
 }
 
-export function RulePath({ trace }: { trace: DecisionTrace }) {
-  return (
-    <section>
-      <h2 className="section-mark mb-4">Why this verdict, in evaluation order</h2>
-      <ol className="space-y-3">
-        {trace.rules.map((r, i) => (
-          <li key={`${r.rule}-${i}`} className="flex gap-3 text-sm">
-            <span className="font-data text-muted-foreground shrink-0 text-xs">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div className="min-w-0">
-              <p className="font-data text-primary text-xs">{r.rule}</p>
-              <p className="mt-0.5 leading-relaxed">{r.because}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
 export function ExplanationSource({ trace }: { trace: DecisionTrace }) {
   return (
     <section>
