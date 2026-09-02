@@ -1,4 +1,4 @@
-import { MarketList } from "@/components/market-list"
+import { MarketBoard } from "@/components/market-board"
 import { SiteNav } from "@/components/site-nav"
 import { shortId } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
@@ -16,10 +16,6 @@ export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const read = await getVenueRead()
-  const tally = read.rows.reduce<Record<string, number>>((acc, r) => {
-    acc[r.verdict] = (acc[r.verdict] ?? 0) + 1
-    return acc
-  }, {})
 
   return (
     <>
@@ -33,7 +29,7 @@ export default async function Home() {
             one line of deck rather than a 35-word paragraph: the claim is short
             enough to be a sentence, and identity, venue and read age now live in
             the nav instead of being said twice. */}
-        <header className="mb-12">
+        <header className="mb-10">
           <h1 className="font-display max-w-2xl text-3xl leading-tight">
             Every verdict here is computed in code.
           </h1>
@@ -41,22 +37,12 @@ export default async function Home() {
             A language model writes the explanations and cannot change a verdict: its output
             schema has no field for one.
           </p>
-
-          <dl className="mt-8 flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t pt-4">
-            <div className="flex items-baseline gap-2">
-              <dt className="label-caps">assessed</dt>
-              <dd className="font-data text-sm">{read.rows.length}</dd>
-            </div>
-            {(["ALLOW", "RECHECK", "BLOCK"] as const).map((v) => (
-              <div key={v} className="flex items-baseline gap-2">
-                <dt className="label-caps">{v.toLowerCase()}</dt>
-                <dd className="font-data text-sm">{tally[v] ?? 0}</dd>
-              </div>
-            ))}
-          </dl>
         </header>
 
-        <MarketList rows={read.rows} />
+        {/* The verdict tally used to sit in a `dl` above the list, restating counts
+            that the filter chips now carry as their own labels. One control, one
+            source of truth. */}
+        <MarketBoard rows={read.rows} />
 
         {/* Ingest failures are shown, not swallowed. A market the indexer listed
             but that could not be snapshotted is a fact about the read. */}
