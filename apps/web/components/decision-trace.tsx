@@ -21,8 +21,8 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
     <div className="space-y-10">
       {/* ── signals ─────────────────────────────────────────────────────── */}
       <section>
-        <h2 className="label-caps mb-4">signals · measured, thresholded, read</h2>
-        <ul className="divide-y border-y">
+        <h2 className="section-mark mb-4">Signals, as measured and thresholded</h2>
+        <ul className="divide-y border-t">
           {trace.signals.map((s) => (
             <li key={s.id} className="grid grid-cols-[auto_1fr] gap-4 py-5">
               <DepthMark severity={s.severity} className="mt-1" />
@@ -72,7 +72,7 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
 
       {/* ── the rule path ───────────────────────────────────────────────── */}
       <section>
-        <h2 className="label-caps mb-4">why this verdict · rules in evaluation order</h2>
+        <h2 className="section-mark mb-4">Why this verdict, in evaluation order</h2>
         <ol className="space-y-3">
           {trace.rules.map((r, i) => (
             <li key={`${r.rule}-${i}`} className="flex gap-3 text-sm">
@@ -91,7 +91,7 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
       {/* ── required checks ─────────────────────────────────────────────── */}
       {trace.requiredChecks.length > 0 ? (
         <section>
-          <h2 className="label-caps mb-4">before acting</h2>
+          <h2 className="section-mark mb-4">Before acting</h2>
           <ul className="space-y-2">
             {trace.requiredChecks.map((c) => (
               <li key={c} className="flex gap-3 text-sm leading-relaxed">
@@ -107,7 +107,7 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
 
       {/* ── explanation provenance ──────────────────────────────────────── */}
       <section className="border-t pt-6">
-        <h2 className="label-caps mb-3">explanation</h2>
+        <h2 className="section-mark mb-3">Explanation</h2>
         <p className="text-sm leading-relaxed">
           {trace.explanation.source === "model" ? (
             <>

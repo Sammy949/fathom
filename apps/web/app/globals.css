@@ -130,15 +130,22 @@
 }
 
 /* ── Fathom conventions ─────────────────────────────────────────────────────
-   Two utilities, applied without exception:
+   FOUR ROLES, FOUR TREATMENTS, NO OVERLAP. One small treatment doing every job
+   is a template, not a voice: when the section head, the column head, the
+   navigation and the findings all wear the same tracked-caps mono costume, the
+   page reads as generated however good each piece is. So each register is scoped
+   to one job and used for nothing else.
 
-   .font-data   EVERY measured figure. Mono + tabular-nums so columns of numbers
-                align on the decimal and do not jitter as values update. The
-                product's whole claim is that numbers trace to measurements, so
-                they should look measured rather than typeset.
-   .label-caps  Micro-labels only (column heads, field names). Deliberately NOT
-                the house voice — one label treatment used on every small string
-                reads as a template, so this is scoped to genuine labels.
+   .font-data     EVERY measured figure. Mono plus tabular-nums, so columns of
+                  numbers align on the decimal and do not jitter as values
+                  update. The product's whole claim is that numbers trace to
+                  measurements, so they should look measured rather than typeset.
+   .label-caps    DATA LABELS ONLY: column heads and the name of a figure. Never
+                  a heading, never navigation, never a finding.
+   .section-mark  STRUCTURE. The display face, small, sentence case. A heading is
+                  not a label and should not dress as one.
+   (body)         Prose and findings in Geist, unstyled, so a sentence reads as a
+                  sentence.
    ------------------------------------------------------------------------- */
 @layer components {
   .font-data {
@@ -157,7 +164,15 @@
     color: var(--muted-foreground);
   }
 
-  /* Display type wants tighter tracking as it scales up — a Century slab set
+  .section-mark {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: var(--foreground);
+  }
+
+  /* Display type wants tighter tracking as it scales up: a Century slab set
      large at default tracking reads loose and dated. */
   .font-display {
     font-family: var(--font-display);
@@ -165,28 +180,50 @@
   }
 }
 
-/* ── Sounding depth scale ───────────────────────────────────────────────────
-   The signature, and it is data-bound rather than decorative. Fathom is a unit
-   of depth; the product measures how deeply it could see. So severity reads as
-   depth of water: `ok` is shallow and legible, `severe` sounds into dark water,
-   and `unknown` is the line that never finds bottom — which is why it is styled
-   as absence rather than as a colour. "Unmeasured is not reassuring" enforced
-   visually, not just asserted in prose.
+/* ── The ink-depth severity scale ───────────────────────────────────────────
+   Severity is INK, not hue. This is not a traffic light and the difference is
+   load-bearing, because a traffic light says "green means fine" and that is the
+   one thing this product must never say about a signal it could not measure.
 
-   Amber and red appear ONLY here and only for warnings. Never decorative.
+   The scale, in order of how much ink a reading earns:
+
+     ok         UNMARKED. The reading was taken and there is nothing to report,
+                so it gets no colour at all -- a hairline resolving near the
+                surface. A screen of healthy markets should look calm, the way a
+                clean audit reads: exceptions get emphasis, findings get stated.
+     elevated   The ONE warning hue. A tonal amber, pushed to hue 85 so it sits
+                clearly away from the brand's 38-degree burnt orange and can
+                never be mistaken for decoration or for a link.
+     severe     SOLID INK at full strength. On a page where nothing else is at
+                maximum contrast, maximum contrast IS the alarm, and ink outranks
+                any colour. Note it inverts: ink means the greatest available
+                contrast against the substrate, so it is near-black on paper and
+                near-white on a dark ground.
+     unknown    HOLLOW. An outline, never a tint. It is the ABSENCE of a reading,
+                so it reads as an empty vessel rather than as a grey status. The
+                "unmeasured is not reassuring" invariant, enforced in the
+                rendering rather than asserted in prose.
+
+   Because the ramp is ink density and the unknown state is a different SHAPE,
+   the scale survives greyscale and does not rest on hue discrimination.
    ------------------------------------------------------------------------- */
 :root {
-  --sound-ok: oklch(0.62 0.09 175);
-  --sound-elevated: oklch(0.72 0.15 72);
-  --sound-severe: oklch(0.55 0.2 25);
-  --sound-unknown: oklch(0.72 0.008 286);
-  /* The sounding line itself — the one place the brand orange is structural. */
-  --sound-line: var(--primary);
+  --ink-ok: oklch(0.62 0.008 286 / 0.5);
+  /* Dark enough to clear WCAG AA against paper (about 4.8:1), which a mid amber
+     does not: the first pass used oklch(0.68 0.125 85) and measured ~2.7:1, so
+     RECHECK and every elevated finding were set in text you had to work to read.
+     Lowering L to 0.48 lands it as a bronze rather than a highlighter, which is
+     also the right register here and keeps it clear of the 38-degree brand
+     orange. */
+  --ink-elevated: oklch(0.48 0.125 78);
+  --ink-severe: oklch(0.17 0.01 286);
+  --ink-unknown: oklch(0.6 0.008 286 / 0.6);
 }
 
 .dark {
-  --sound-ok: oklch(0.7 0.1 175);
-  --sound-elevated: oklch(0.78 0.15 74);
-  --sound-severe: oklch(0.65 0.19 25);
-  --sound-unknown: oklch(0.45 0.008 286);
+  --ink-ok: oklch(0.5 0.008 286 / 0.65);
+  --ink-elevated: oklch(0.82 0.12 85);
+  --ink-severe: oklch(0.985 0 0);
+  --ink-unknown: oklch(0.55 0.008 286 / 0.7);
 }
+

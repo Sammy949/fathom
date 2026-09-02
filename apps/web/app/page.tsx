@@ -30,9 +30,9 @@ export default async function Home() {
           <span className="label-caps">DreamDEX event contracts · Somnia testnet</span>
         </div>
         <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
-          Every verdict below is computed in code from measured order-book, trade and oracle
-          state. A language model writes the explanations and cannot change a verdict: its
-          output schema has no field for one.
+          Every verdict below is computed in code from measured order-book, trade, oracle and
+          per-order chain state. A language model writes the explanations and cannot change a
+          verdict: its output schema has no field for one.
         </p>
 
         <dl className="mt-6 flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t pt-4">
@@ -63,7 +63,7 @@ export default async function Home() {
           but that could not be snapshotted is a fact about the read. */}
       {read.failures.length > 0 ? (
         <section className="mt-10 border-t pt-6">
-          <h2 className="label-caps mb-3">not assessed</h2>
+          <h2 className="section-mark mb-3">Not assessed</h2>
           <ul className="space-y-1.5">
             {read.failures.map((f) => (
               <li key={f.marketId} className="font-data text-muted-foreground text-xs">
@@ -74,11 +74,18 @@ export default async function Home() {
         </section>
       ) : null}
 
-      <footer className="text-muted-foreground mt-16 border-t pt-6 text-xs leading-relaxed">
-        Thresholds are calibrated to this venue&apos;s measured distributions, not to real-money
-        market intuitions. Spreads of 2 to 3 probability points are normal here. Confidence
-        measures how completely a market could be observed; it is never a probability of any
-        outcome.
+      <footer className="text-muted-foreground mt-16 max-w-3xl border-t pt-6 text-xs leading-relaxed">
+        <p>
+          Thresholds are calibrated to this venue&apos;s measured distributions, not to real-money
+          market intuitions. Spreads of 2 to 3 probability points are normal here, and so is a
+          resting book that expires in twenty seconds. Confidence measures how completely a market
+          could be observed; it is never a probability of any outcome.
+        </p>
+        <p className="mt-3">
+          Severity reads as ink, not as a traffic light. A signal with nothing to report is left
+          unmarked, because green would say a thing this engine refuses to say about a reading it
+          could not take.
+        </p>
       </footer>
     </main>
   )

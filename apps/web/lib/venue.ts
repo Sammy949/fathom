@@ -56,7 +56,19 @@ export interface MarketRow {
   spread: number | null
   lastTradeAgeSec: number | null
   secToExpiry: number
-  /** Count of signals that could not be measured — drives the depth reading. */
+  /**
+   * Seconds until the median resting order expires, and how many addresses own
+   * the displayed book.
+   *
+   * Carried into the list because this is the one column no other venue interface
+   * can show: `owner` and `expireTimestampNs` exist per order on the chain read
+   * and are summed away by every aggregated view. A book that reads "990 shares a
+   * side" everywhere else is one address on a 20-second timer, and that belongs at
+   * the top level rather than three clicks down.
+   */
+  quoteTtlSec: number | null
+  owners: number | null
+  /** Count of signals that could not be measured, which drives the depth reading. */
   unmeasured: number
 }
 
@@ -105,6 +117,7 @@ async function read(): Promise<VenueRead> {
   const rows: MarketRow[] = graded.map(({ snapshot, assessment }) => {
     const book = snapshot.book.value
     const fresh = snapshot.freshness.value
+    const depth = snapshot.depth.value
     return {
       marketId: snapshot.identity.marketId,
       symbol: snapshot.identity.symbol,
@@ -122,6 +135,8 @@ async function read(): Promise<VenueRead> {
       spread: book?.spread ?? null,
       lastTradeAgeSec: fresh?.lastTradeAgeSec ?? null,
       secToExpiry: fresh?.secToExpiry ?? 0,
+      quoteTtlSec: depth?.medianTtlSec ?? null,
+      owners: depth?.owners ?? null,
       unmeasured: assessment.unknownSignals.length,
     }
   })

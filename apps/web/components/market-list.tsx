@@ -1,16 +1,24 @@
 /**
- * The market list — the first screen, and it has to answer "which of these can I
+ * The market list: the first screen, and it has to answer "which of these can I
  * act on" without a click.
  *
- * Composed as a document, not a card grid. Rows on a shared baseline with 1px
- * rules, every figure in `.font-data` so the columns align on the decimal, and
- * the verdict as the heaviest element in each row. The sounding line sits at the
- * end of the row: seven signals, depth-marked, so a reader can see the SHAPE of
- * a market's risk before reading a single word.
+ * Composed as a document rather than a card grid. Rows on a shared baseline with
+ * 1px rules, every figure in `.font-data` so the columns align on the decimal, and
+ * the verdict carrying the row's ink weight. The sounding line sits at the end:
+ * eight signals, depth-marked, so a reader sees the SHAPE of a market's risk
+ * before reading a single word.
  *
- * No cards, no hover-lift, no severity pills. Those are the component-kit
- * defaults and they would flatten a genuinely ordered set of findings into
- * decoration.
+ * No cards, no hover-lift, no severity pills. Those are the component-kit defaults
+ * and they would flatten a genuinely ordered set of findings into decoration. The
+ * card-with-a-big-probability-figure is also the pattern every prediction market
+ * copied from Polymarket, which makes it the last thing this should look like.
+ *
+ * WHY `quote life` EARNS A COLUMN AND `last fill` LOST ONE. Quote life is the
+ * median seconds until the resting book expires, and it exists nowhere else in
+ * this product's category: `expireTimestampNs` is per order on the chain read and
+ * every aggregated view sums it away. Last-trade age was showing the same fact as
+ * the staleness mark two inches to its right, and the detail page states it in the
+ * only comparable form anyway, as a fraction of the market's own window.
  */
 
 import Link from "next/link"
@@ -19,6 +27,10 @@ import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
 import { duration, NO_READING, points, prob, shortId, windowLabel } from "@/lib/format"
 import type { MarketRow } from "@/lib/venue"
+
+/** One grid template, declared once, so heads and rows cannot drift apart. */
+const COLS =
+  "grid grid-cols-[1fr_auto] gap-4 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_4.5rem_4.5rem_auto]"
 
 export function MarketList({ rows }: { rows: MarketRow[] }) {
   if (rows.length === 0) {
@@ -33,11 +45,11 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
   return (
     <div>
       {/* Column heads. Mono micro-labels, not a styled table header. */}
-      <div className="text-muted-foreground grid grid-cols-[1fr_auto] items-end gap-4 border-b pb-2 sm:grid-cols-[minmax(0,1fr)_5rem_5rem_5rem_5rem_auto]">
+      <div className={`${COLS} text-muted-foreground items-end border-b pb-2`}>
         <span className="label-caps">market</span>
         <span className="label-caps hidden text-right sm:block">mid</span>
         <span className="label-caps hidden text-right sm:block">spread</span>
-        <span className="label-caps hidden text-right sm:block">last fill</span>
+        <span className="label-caps hidden text-right sm:block">quote life</span>
         <span className="label-caps hidden text-right sm:block">expires</span>
         <span className="label-caps text-right">verdict</span>
       </div>
@@ -47,7 +59,7 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
           <li key={r.marketId} className="border-b">
             <Link
               href={`/m/${r.marketId}`}
-              className="group grid grid-cols-[1fr_auto] items-center gap-4 py-4 outline-none transition-colors sm:grid-cols-[minmax(0,1fr)_5rem_5rem_5rem_5rem_auto] focus-visible:bg-muted/40 hover:bg-muted/40"
+              className={`${COLS} group items-center py-4 outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40`}
             >
               {/* Identity. Asset and window are the typed fields; the symbol is
                   display-only and never parsed. */}
@@ -58,7 +70,7 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                   </span>
                   <span className="label-caps">{windowLabel(r.intervalSec)} window</span>
                   {r.unmeasured > 0 ? (
-                    <span className="label-caps" style={{ color: "var(--sound-unknown)" }}>
+                    <span className="label-caps" style={{ color: "var(--ink-unknown)" }}>
                       {r.unmeasured} no reading
                     </span>
                   ) : null}
@@ -76,13 +88,13 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                 <span className="text-muted-foreground text-[0.65rem]">pt</span>
               </span>
               <span className="font-data text-muted-foreground hidden text-right text-sm sm:block">
-                {r.lastTradeAgeSec === null ? "never" : duration(r.lastTradeAgeSec)}
+                {r.quoteTtlSec === null ? NO_READING : duration(r.quoteTtlSec)}
               </span>
               <span className="font-data text-muted-foreground hidden text-right text-sm sm:block">
                 {duration(r.secToExpiry)}
               </span>
 
-              {/* Verdict + the sounding. The shape of the risk, before the words. */}
+              {/* Verdict plus the sounding: the shape of the risk, before the words. */}
               <div className="flex items-center justify-end gap-4">
                 <Sounding
                   signals={r.severities}

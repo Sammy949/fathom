@@ -22,17 +22,35 @@ export default async function MarketPage({
   const row = read.rows.find((r) => r.marketId === id)
   if (!trace || !row) notFound()
 
-  // The book figures come off the liquidity signal's own evidence, so the header
-  // and the trace below cannot disagree about what was measured.
-  const liq = trace.signals.find((s) => s.id === "liquidity")
-  const ev = (k: string) => {
-    const v = liq?.evidence[k]
-    return typeof v === "number" ? v : null
+  // Figures come off the signals' own evidence, so the header and the trace below
+  // cannot disagree about what was measured.
+  const evidenceOf = (id: string) => {
+    const sig = trace.signals.find((s) => s.id === id)
+    return (k: string) => {
+      const v = sig?.evidence[k]
+      return typeof v === "number" ? v : null
+    }
   }
+  const ev = evidenceOf("liquidity")
+  const dv = evidenceOf("depth")
+  const displayed = dv("totalShares")
+  /** A share bucket as a fraction of displayed depth, or null if we cannot say. */
+  const share = (n: number | null) =>
+    n === null || displayed === null || displayed <= 0 ? null : n / displayed
+
+  // Read off the resolution signal's evidence rather than re-deriving, so the
+  // settlement block and the trace name the same question.
+  const oracleQuestionId = (() => {
+    const v = trace.signals.find((s) => s.id === "resolution")?.evidence.oracleQuestionId
+    return typeof v === "string" || typeof v === "number" ? String(v) : null
+  })()
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
-      <Link href="/" className="label-caps hover:text-foreground transition-colors">
+      <Link
+        href="/"
+        className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+      >
         ← all markets
       </Link>
 
@@ -76,33 +94,82 @@ export default async function MarketPage({
         </p>
       </header>
 
-      {/* ── the book, as measured ────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-x-8 gap-y-6 border-b py-8 sm:grid-cols-4 lg:grid-cols-6">
-        {[
-          { label: "bid", value: prob(ev("bid")) },
-          { label: "ask", value: prob(ev("ask")) },
-          { label: "mid", value: prob(ev("mid")) },
-          {
-            label: "spread",
-            value: points(ev("spreadPoints")),
-            unit: "pt",
-          },
-          {
-            label: "depth (thinner side)",
-            value: shares(ev("thinnerSideShares")),
-            unit: "sh",
-          },
-          { label: "expires in", value: duration(row.secToExpiry) },
-        ].map((f) => (
-          <div key={f.label}>
-            <p className="label-caps mb-1.5">{f.label}</p>
-            <p className="font-data text-lg leading-none">
-              {f.value}
-              {f.unit ? <span className="text-muted-foreground text-xs"> {f.unit}</span> : null}
-            </p>
-          </div>
-        ))}
+      {/* ── the book, in two readings ─────────────────────────────────────────
+          Split deliberately, because the gap between them is the product. Every
+          venue interface can show the top strip. Only a per-order chain read can
+          show the bottom one, and on this venue the two describe very different
+          books: a healthy-looking two-sided ladder that belongs to one address
+          and expires in seconds. */}
+      <section className="border-b py-8">
+        <h2 className="section-mark mb-4">The book, as displayed</h2>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { label: "bid", value: prob(ev("bid")) },
+            { label: "ask", value: prob(ev("ask")) },
+            { label: "mid", value: prob(ev("mid")) },
+            { label: "spread", value: points(ev("spreadPoints")), unit: "pt" },
+            { label: "thinner side", value: shares(ev("thinnerSideShares")), unit: "sh" },
+            { label: "expires in", value: duration(row.secToExpiry) },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="label-caps mb-1.5">{f.label}</p>
+              <p className="font-data text-lg leading-none">
+                {f.value}
+                {f.unit ? <span className="text-muted-foreground text-xs"> {f.unit}</span> : null}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <h2 className="section-mark mt-8 mb-4">The same book, as owned</h2>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { label: "owners", value: dv("owners") === null ? NO_READING : String(dv("owners")) },
+            { label: "largest owner", value: pct(dv("topOwnerShare")) },
+            { label: "quote life", value: duration(dv("medianTtlSec")) },
+            { label: "firm to expiry", value: pct(share(dv("firmShares"))) },
+            { label: "pullable", value: pct(share(dv("pullableShares"))) },
+            { label: "past expiry", value: pct(share(dv("phantomShares"))) },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="label-caps mb-1.5">{f.label}</p>
+              <p className="font-data text-lg leading-none">{f.value}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-muted-foreground mt-5 max-w-2xl text-xs leading-relaxed">
+          <span className="font-data">owner</span> and{" "}
+          <span className="font-data">expireTimestampNs</span> exist per order on the chain read and
+          are summed away by the materialized book, the indexer&apos;s rows, and every aggregated
+          view. Firmness is only ever until an order&apos;s own expiry: the expired-order sweep is
+          permissionless, so nothing here is a standing commitment.
+        </p>
       </section>
+
+      {/* ── settlement, stated before the trace ───────────────────────────────
+          Placed here rather than in a sidebar because how a contract resolves is
+          the most consequential thing on the page: a market can be perfectly
+          liquid and still pay both sides 0.5 if the window lapses. Naming the
+          oracle and linking the audit trail is also the cheapest credibility this
+          product has, and it should not be a footnote. */}
+      {trace.oracleAuditUrl ? (
+        <section className="border-b py-8">
+          <h2 className="section-mark mb-3">Settlement</h2>
+          <p className="max-w-2xl text-sm leading-relaxed">
+            This market settles from oracle question{" "}
+            <span className="font-data">{oracleQuestionId ?? "unknown"}</span>. The audit trail is
+            public: every price source, its value, the median, and how many had to agree.
+          </p>
+          <a
+            href={trace.oracleAuditUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary font-data mt-2 inline-block text-xs underline decoration-1 underline-offset-2"
+          >
+            open the settlement receipt
+          </a>
+        </section>
+      ) : null}
 
       {/* ── trace + provenance ──────────────────────────────────────────── */}
       <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_14rem]">
@@ -111,29 +178,14 @@ export default async function MarketPage({
         <aside className="space-y-8 lg:sticky lg:top-8 lg:self-start">
           <Provenance entries={trace.provenance} />
 
-          {trace.oracleAuditUrl ? (
-            <div>
-              <h3 className="label-caps mb-2">settlement receipt</h3>
-              <a
-                href={trace.oracleAuditUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary text-xs leading-relaxed underline decoration-1 underline-offset-2"
-              >
-                Oracle question: every price source, its value, the median, and how many had to
-                agree
-              </a>
-            </div>
-          ) : null}
-
           <div>
-            <h3 className="label-caps mb-2">read</h3>
+            <h3 className="section-mark mb-2">Read</h3>
             <p className="font-data text-muted-foreground text-xs">{ago(trace.assembledAt)}</p>
           </div>
 
           {trace.unmeasured.length > 0 ? (
             <div>
-              <h3 className="label-caps mb-2">no reading</h3>
+              <h3 className="section-mark mb-2">No reading</h3>
               <p className="text-muted-foreground text-xs leading-relaxed">
                 {trace.unmeasured.join(", ")} could not be measured. Unmeasured is not the same as
                 acceptable, which is why this market cannot be cleared for execution.
@@ -143,7 +195,7 @@ export default async function MarketPage({
 
           {row.lastTradeAgeSec !== null && row.intervalSec ? (
             <div>
-              <h3 className="label-caps mb-2">last fill</h3>
+              <h3 className="section-mark mb-2">Last fill</h3>
               <p className="font-data text-sm">{duration(row.lastTradeAgeSec)}</p>
               <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                 {pct(row.lastTradeAgeSec / row.intervalSec)} of this market&apos;s own window,
