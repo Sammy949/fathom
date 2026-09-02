@@ -51,6 +51,8 @@
  * Nothing off-chain can distinguish it from real depth.
  */
 
+import { createHash } from "node:crypto";
+
 import type { Address, PublicClient } from "viem";
 
 import type { RestingOrder } from "./chain";
@@ -164,17 +166,22 @@ const IMPLEMENTATION_ABI = [
  * Where a proxy's behaviour actually lives.
  *
  * Tries the proxy itself first (ERC-1967 / UUPS answer `implementation()`), then
- * every address baked into its code (the beacon pattern, where the proxy is mute
- * and the beacon answers). Null when neither works — which is honest, and does
- * not change the classification: an unresolvable proxy is no more certifiable
- * than a resolvable one.
+ * the addresses baked into its code (the beacon pattern, where the proxy is mute
+ * and the beacon answers). Null when neither works, which is honest and does not
+ * change the classification: an unresolvable proxy is no more certifiable than a
+ * resolvable one.
+ *
+ * Candidates are capped. A large contract can carry dozens of address immediates
+ * and each miss is a full round trip against an RPC that on this box answers in
+ * about four seconds or not at all, so an uncapped walk turns one classification
+ * into a minute of reverting calls.
  */
 async function resolveDelegate(
   client: PublicClient,
   owner: Address,
   code: Uint8Array,
 ): Promise<Address | null> {
-  const candidates = [owner, ...addressImmediates(code)];
+  const candidates = [owner, ...addressImmediates(code)].slice(0, 4);
   for (const address of candidates) {
     try {
       const impl = (await client.readContract({
@@ -191,27 +198,50 @@ async function resolveDelegate(
 }
 
 /**
- * Classify one owner from its code. Cached per address for the process, because
- * runtime code at an address is immutable and a venue pass re-reads the same
- * owners on every market.
+ * Cached classification, keyed by CODE HASH rather than by address.
+ *
+ * This is the whole point of the two-level cache. On this venue all ten order
+ * owners are byte-identical deployments of the same 291-byte beacon proxy (every
+ * one hashes the same), and classifying a proxy costs a `getCode` plus one
+ * `implementation()` that reverts on the proxy plus one that succeeds on the
+ * beacon. Keyed by address that was thirty round trips per pass to reach ten
+ * identical answers. Keyed by code hash it is ten cheap `getCode` calls and ONE
+ * resolution, and the second market onward pays nothing at all.
+ *
+ * Two maps because they answer different questions and expire differently in
+ * principle: runtime code at an address is immutable, and a classification is a
+ * property of the code rather than of the account holding it.
  */
-const ownerCache = new Map<string, OwnerVerdict>();
+const codeHashByOwner = new Map<string, string>();
+const classificationByCodeHash = new Map<string, Omit<OwnerVerdict, "owner">>();
+
+const hashCode = (code: string): string =>
+  createHash("sha1").update(code).digest("hex");
 
 export async function classifyOwner(
   client: PublicClient,
   owner: Address,
 ): Promise<OwnerVerdict> {
   const key = owner.toLowerCase();
-  const hit = ownerCache.get(key);
-  if (hit) return hit;
+
+  const known = codeHashByOwner.get(key);
+  if (known) {
+    const cached = classificationByCodeHash.get(known);
+    if (cached) return { owner, ...cached };
+  }
 
   const code = (await client.getCode({ address: owner })) ?? "0x";
-  const bytes = Math.max(0, (code.length - 2) / 2);
+  const codeHash = hashCode(code);
+  codeHashByOwner.set(key, codeHash);
 
-  let verdict: OwnerVerdict;
+  const cached = classificationByCodeHash.get(codeHash);
+  if (cached) return { owner, ...cached };
+
+  const bytes = Math.max(0, (code.length - 2) / 2);
+  let classification: Omit<OwnerVerdict, "owner">;
+
   if (bytes === 0) {
-    verdict = {
-      owner,
+    classification = {
       class: "eoa",
       reason: "externally owned account; can sign a cancel at any time",
       codeBytes: 0,
@@ -227,9 +257,14 @@ export async function classifyOwner(
       // Behaviour is whatever the target currently holds, and the target can be
       // repointed. Resolve it for the trace, but the class does not depend on it:
       // an upgradeable owner is never certifiable as unable to cancel.
+      //
+      // Safe to memoise against the CODE rather than the account: a beacon proxy
+      // hard-codes its beacon as a PUSH immediate, so identical code resolves to
+      // the same target by construction. The target's own implementation can
+      // change under it, which is exactly why the class is `upgradeable` and does
+      // not depend on what we found.
       const delegatesTo = await resolveDelegate(client, owner, raw);
-      verdict = {
-        owner,
+      classification = {
         class: "upgradeable",
         reason: delegatesTo
           ? `proxy delegating to ${delegatesTo}, so the code deciding whether it can cancel is replaceable by whoever controls the target`
@@ -238,16 +273,14 @@ export async function classifyOwner(
         delegatesTo,
       };
     } else if (withdraw) {
-      verdict = {
-        owner,
+      classification = {
         class: "cancel-capable",
         reason: `contract code contains ${withdraw}`,
         codeBytes: bytes,
         delegatesTo: null,
       };
     } else {
-      verdict = {
-        owner,
+      classification = {
         class: "opaque",
         reason:
           "contract with no cancel, reduce or forwarding selector found; absence in bytecode is not proof one is unreachable",
@@ -257,12 +290,15 @@ export async function classifyOwner(
     }
   }
 
-  ownerCache.set(key, verdict);
-  return verdict;
+  classificationByCodeHash.set(codeHash, classification);
+  return { owner, ...classification };
 }
 
-/** Clear the owner-code cache. Only tests need this. */
-export const resetOwnerCache = (): void => void ownerCache.clear();
+/** Clear both owner caches. Only tests need this. */
+export const resetOwnerCache = (): void => {
+  codeHashByOwner.clear();
+  classificationByCodeHash.clear();
+};
 
 // ── the aggregate ──────────────────────────────────────────────────────────────
 

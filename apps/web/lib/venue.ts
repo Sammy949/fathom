@@ -2,15 +2,38 @@
  * Server-side market data for the dashboard.
  *
  * Everything here runs on the server, never in the browser. That is not a
- * performance preference — the Groq key and the venue config live in `.env`, and
- * the SDK opens a chain client; neither belongs in a client bundle.
+ * performance preference: the Groq key and the venue config live in `.env`, and
+ * the SDK opens a chain client, so neither belongs in a client bundle.
  *
- * Caching is a short in-memory TTL rather than a store. The verdict engine is
- * deterministic and the venue's markets roll on fixed windows, so a stale-by-
- * seconds read is honest as long as the UI says when it was taken — which is why
- * every snapshot carries `assembledAt` and per-field provenance. A cache also
- * keeps the free-tier Groq budget intact: without it, every page navigation
- * would re-explain three markets and burn the 8,000 TPM ceiling.
+ * HOW THIS SERVES A PAGE, AND WHY IT IS SHAPED THIS WAY. One ingestion pass is
+ * roughly 150 network round trips (10 markets, each needing an on-chain snapshot,
+ * a settlement window, a materialized book, both sides of the per-order book, and
+ * owner classification, plus candles, fills and an oracle row), followed by up to
+ * two sequential model calls. On a good connection that is seconds. On this box,
+ * where the SDK's WebSocket transport times out at 4s and IPv6 is unreachable, it
+ * can be minutes.
+ *
+ * So a request NEVER waits for a fresh pass when there is anything to serve:
+ *
+ *   cold          the first caller awaits, because there is no alternative
+ *   fresh         served from cache
+ *   stale         served from cache IMMEDIATELY, refresh kicked off behind it
+ *   refresh fails the last good read keeps being served, and says how old it is
+ *
+ * That is stale-while-revalidate, and it is honest here for the same reason the
+ * cache was always honest: every snapshot carries `assembledAt` and per-field
+ * provenance, and the masthead states when the read was taken. A page that says
+ * "read 3m ago" is telling the truth; a page that hangs for two minutes is not
+ * telling anyone anything.
+ *
+ * STATE LIVES ON `globalThis`, NOT IN MODULE SCOPE. In `next dev` a file save
+ * re-evaluates this module, so module-level state resets: the warm cache is lost
+ * and, worse, `createExchange` runs again while the previous client's WebSocket,
+ * its 15-second heads watchdog and its backoff reconnect timer keep running with
+ * nothing left holding a reference to close them. Several saves into a session
+ * that is a set of orphaned sockets all probing a half-answering endpoint on
+ * timers, which is measurably a hot machine. Pinning to `globalThis` is the same
+ * pattern a database client needs in dev, and for the same reason.
  */
 
 import { createExchange, type EcContext } from "@fathom/ec"
@@ -22,8 +45,18 @@ import {
   type DecisionTrace,
 } from "@fathom/core"
 
-/** How long a full read stays fresh. Long enough to survive a demo click-through. */
-const TTL_MS = 45_000
+/**
+ * How long a read stays fresh, and the floor between passes.
+ *
+ * The TTL has to exceed a realistic pass duration or stale-while-revalidate
+ * degrades into revalidate-always: a 45s TTL against a pass that can take minutes
+ * means a refresh is in flight essentially all the time, which is the fan-spinning
+ * behaviour in a different costume. `MIN_REFRESH_GAP_MS` is the hard floor
+ * measured from the END of the last pass, so a slow pass cannot chain into the
+ * next one.
+ */
+const TTL_MS = 120_000
+const MIN_REFRESH_GAP_MS = 60_000
 
 /** Markets shorter than this expire before anyone can read a verdict. */
 const MIN_INTERVAL_SEC = 900
@@ -84,14 +117,29 @@ export interface VenueRead {
   degraded: boolean
 }
 
-let cached: { at: number; data: VenueRead } | null = null
-let inflight: Promise<VenueRead> | null = null
+/**
+ * Everything that must outlive a dev recompile, in one place.
+ *
+ * `ctx` in particular: `createExchange` opens a WebSocket lazily on first chain
+ * I/O and the SDK ships `close()` for a reason. Left in module scope, a file save
+ * abandons the live one and builds another.
+ */
+type VenueState = {
+  ctx: EcContext | null
+  cached: { at: number; data: VenueRead } | null
+  inflight: Promise<VenueRead> | null
+  /** Wall clock (ms) the last pass FINISHED, pass or fail. Gates the cooldown. */
+  lastAttemptEndedAt: number
+}
+
+const store = globalThis as unknown as { __fathomVenue?: VenueState }
+store.__fathomVenue ??= { ctx: null, cached: null, inflight: null, lastAttemptEndedAt: 0 }
+const state = store.__fathomVenue
 
 /** One exchange client per process. Opening one per request leaks sockets. */
-let ctx: EcContext | null = null
 function exchange(): EcContext {
-  ctx ??= createExchange({ withSigner: false })
-  return ctx
+  state.ctx ??= createExchange({ withSigner: false })
+  return state.ctx
 }
 
 async function read(): Promise<VenueRead> {
@@ -153,32 +201,59 @@ async function read(): Promise<VenueRead> {
 }
 
 /**
- * The venue read, cached.
+ * Start a pass, or join the one already running.
  *
- * Concurrent callers share one in-flight read rather than each starting their
- * own — otherwise a page with several server components would fan out into
- * duplicate ingestion passes and multiply the Groq spend.
+ * Concurrent callers share one in-flight read rather than each starting their own.
+ * Otherwise a page with several server components fans out into duplicate
+ * ingestion passes and multiplies both the round trips and the Groq spend.
  */
-export async function getVenueRead(): Promise<VenueRead> {
-  if (cached && Date.now() - cached.at < TTL_MS) return cached.data
-  if (inflight) return inflight
-
-  inflight = read()
+function beginRead(): Promise<VenueRead> {
+  state.inflight ??= read()
     .then((data) => {
-      cached = { at: Date.now(), data }
+      state.cached = { at: Date.now(), data }
       return data
     })
     .finally(() => {
-      inflight = null
+      state.inflight = null
+      state.lastAttemptEndedAt = Date.now()
     })
+  return state.inflight
+}
 
+/** True when enough time has passed since the last pass ENDED to start another. */
+const refreshAllowed = (): boolean =>
+  !state.inflight && Date.now() - state.lastAttemptEndedAt >= MIN_REFRESH_GAP_MS
+
+/**
+ * The venue read: warm cache first, freshness second.
+ *
+ * A stale read served now beats a fresh read served in two minutes, because the
+ * page states its own age and a hanging page states nothing. The only caller that
+ * waits is the one that arrives with nothing cached at all.
+ */
+export async function getVenueRead(): Promise<VenueRead> {
+  const hit = state.cached
+
+  if (hit) {
+    const age = Date.now() - hit.at
+    if (age >= TTL_MS && refreshAllowed()) {
+      // Deliberately not awaited. `catch` is attached so a failed background pass
+      // cannot surface as an unhandled rejection and take the process down; the
+      // failure is invisible to this request by design, and the next one still
+      // sees the old `assembledAt`.
+      void beginRead().catch(() => undefined)
+    }
+    return hit.data
+  }
+
+  // Cold. Nothing to serve but the pass itself.
   try {
-    return await inflight
+    return await beginRead()
   } catch (e) {
     // A failed read must not blank the page. Serve the last good data with its
     // real `assembledAt` so the UI can show how stale it is; only a cold cache
     // surfaces the error.
-    if (cached) return cached.data
+    if (state.cached) return state.cached.data
     throw e
   }
 }
