@@ -17,9 +17,11 @@
 import type { EcContext } from "@fathom/ec";
 import { marketOnchain, outcomeSymbols } from "@fathom/ec";
 import type { UnifiedMarket } from "@somnia-chain/markets-sdk";
+import type { Address } from "viem";
 
 import { bookMetrics, DEFAULT_NEAR_BAND } from "./book";
-import { binaryMarketAbi, publicClient } from "./chain";
+import { binaryMarketAbi, publicClient, restingBook } from "./chain";
+import { depthMetrics, type DepthMetrics } from "./depth";
 import { flowMetrics, freshness, moveMetrics, toPricePoints } from "./history";
 import { candles, fills, liveMarkets, oracleQuestion, type MarketRow } from "./queries";
 import { withRetry } from "./resilient";
@@ -183,6 +185,24 @@ export async function snapshotMarket(
     ),
   );
 
+  // Per-order depth, from the chain. Independent of the materialized book above
+  // on purpose: they come from different sources and fail separately, and the
+  // engine has to distinguish "the book loaded but we could not see who owns it"
+  // from "no book". Needs the pool address, which the indexed row carries for
+  // THIS generation only — hence the nonce check in `identity`.
+  const depth = await (async (): Promise<Sourced<DepthMetrics>> => {
+    if (!row.poolAddress) return absent("indexed row carries no poolAddress");
+    try {
+      const client = publicClient(config);
+      const resting = await withRetry(`restingBook(${identity.marketId.slice(-6)})`, () =>
+        restingBook(client, row.poolAddress as Address),
+      );
+      return ok(await depthMetrics(client, resting, decimals, assembledAt));
+    } catch (e) {
+      return degraded<DepthMetrics>(reasonOf(e));
+    }
+  })();
+
   const interval = candleIntervalFor(identity.intervalSec);
   const priceRows = await sourced(() =>
     candles(config.indexerUrl, identity.marketId, interval),
@@ -239,7 +259,7 @@ export async function snapshotMarket(
     return ok(resolutionState(row, oracle, nowSec, onchain.value?.settlementWindowSec ?? null));
   })();
 
-  return { identity, assembledAt, onchain, book, prices, move, flow, freshness: fresh, resolution, row };
+  return { identity, assembledAt, onchain, book, depth, prices, move, flow, freshness: fresh, resolution, row };
 }
 
 export interface IngestResult {

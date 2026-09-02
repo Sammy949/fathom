@@ -88,6 +88,18 @@ export {
 } from "./chain";
 
 export {
+  depthMetrics,
+  classifyOwner,
+  bucketOf,
+  resetOwnerCache,
+  type DepthMetrics,
+  type DepthBucket,
+  type OwnerClass,
+  type OwnerDepth,
+  type OwnerVerdict,
+} from "./depth";
+
+export {
   ingestVenue,
   snapshotMarket,
   candleIntervalFor,
@@ -99,6 +111,7 @@ export {
   gradeSnapshot,
   assess,
   liquiditySignal,
+  depthSignal,
   volatilitySignal,
   stalenessSignal,
   windowSignal,

@@ -21,6 +21,7 @@
  */
 
 import type { BookMetrics } from "./book";
+import type { DepthMetrics } from "./depth";
 import type { FlowMetrics, Freshness, MoveMetrics, PricePoint } from "./history";
 import type { MarketRow, OracleQuestionRow } from "./queries";
 
@@ -190,6 +191,14 @@ export interface MarketSnapshot {
   assembledAt: number;
   onchain: Sourced<OnchainState>;
   book: Sourced<BookMetrics>;
+  /**
+   * Per-order resting depth with owners and expiries — the chain read the
+   * aggregated `book` above cannot produce. Separate rather than folded into
+   * `book` because the two come from different sources and fail independently: a
+   * materialized book can load while the per-order read times out, and the risk
+   * engine has to be able to tell the difference.
+   */
+  depth: Sourced<DepthMetrics>;
   prices: Sourced<PricePoint[]>;
   move: Sourced<MoveMetrics>;
   flow: Sourced<FlowMetrics>;
@@ -252,6 +261,7 @@ export function degradedFields(s: MarketSnapshot): string[] {
   const entries: [string, Provenance][] = [
     ["onchain", s.onchain.provenance],
     ["book", s.book.provenance],
+    ["depth", s.depth.provenance],
     ["prices", s.prices.provenance],
     ["move", s.move.provenance],
     ["flow", s.flow.provenance],

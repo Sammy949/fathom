@@ -20,6 +20,8 @@
 
 import {
   assess,
+  bucketOf,
+  depthSignal,
   gradeSnapshot,
   liquiditySignal,
   manipulationSignal,
@@ -32,6 +34,7 @@ import {
   ok,
   degraded,
   type BookMetrics,
+  type DepthMetrics,
   type FlowMetrics,
   type Freshness,
   type MarketSnapshot,
@@ -123,6 +126,41 @@ const healthyResolution = (o: Partial<ResolutionState> = {}): ResolutionState =>
   ...o,
 });
 
+/**
+ * The per-order depth this venue actually shows, measured on all 10 live markets
+ * twice: one owner holding 100% of both sides, 6 orders, 1,980 shares, TTL
+ * 11-28s, nothing past expiry. Every owner is a beacon proxy, so all of it is
+ * pullable and the firm bucket is 0 -- see depth.ts for why that is not a bug.
+ */
+const venueDepth = (o: Partial<DepthMetrics> = {}): DepthMetrics => ({
+  orders: 6,
+  bidShares: 990,
+  askShares: 990,
+  totalShares: 1980,
+  owners: 1,
+  topOwnerShare: 1,
+  concentration: 1,
+  medianTtlSec: 18,
+  minTtlSec: 11,
+  maxTtlSec: 28,
+  firmShares: 0,
+  pullableShares: 1980,
+  unverifiedShares: 0,
+  phantomShares: 0,
+  byOwner: [
+    {
+      owner: "0x3a29C57069eF535B842660f4437E26881c9358A8",
+      class: "upgradeable",
+      reason: "proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4 -- the code deciding whether it can cancel is replaceable by whoever controls the target",
+      shares: 1980,
+      share: 1,
+      soonestTtlSec: 11,
+    },
+  ],
+  readAt: Date.now(),
+  ...o,
+});
+
 const tradingOnchain = (o: Partial<OnchainState> = {}): OnchainState => ({
   status: 1,
   statusName: "Trading",
@@ -144,6 +182,7 @@ function snapshot(o: {
   move?: MoveMetrics | null;
   flow?: FlowMetrics | null;
   fresh?: Freshness | null;
+  depth?: DepthMetrics | null;
   resolution?: ResolutionState | null;
   venueId?: string | null;
 } = {}): MarketSnapshot {
@@ -171,6 +210,7 @@ function snapshot(o: {
     },
     assembledAt: Date.now(),
     onchain: nullable(o.onchain, tradingOnchain()),
+    depth: nullable(o.depth, venueDepth()),
     book: nullable(o.book, healthyBook()),
     prices: ok([]),
     move: nullable(o.move, healthyMove()),
@@ -564,6 +604,105 @@ expect(
   "resolution: healthy binding is ok",
   resolutionSignal(healthyResolution()).severity,
   "ok",
+);
+
+// ── depth durability ──────────────────────────────────────────────────────────
+//
+// The whole point of these: this venue's normal is a SOLE owner on a ~20s quote,
+// so if that read as elevated the signal would fire on all 10 markets, no market
+// could reach ALLOW, and the signal would carry no information — the exact shape
+// of the `imbalance = 0.000` mistake the calibration sweep caught. Severity has
+// to come from the parts that deviate.
+
+console.log(`\n${BOLD}depth durability${R}`);
+
+expect(
+  "depth: sole owner on a 20s quote is this venue's normal → ok",
+  depthSignal(venueDepth()).severity,
+  "ok",
+);
+expect(
+  "depth: sole owner alone never raises severity → ALLOW stays reachable",
+  verdictOf(snapshot()),
+  "ALLOW",
+);
+expect(
+  "depth: the firm bucket reads 0 and says so rather than going quiet",
+  /none of it committed/.test(depthSignal(venueDepth()).finding),
+  true,
+);
+expect(
+  "depth: quote about to vanish → elevated",
+  depthSignal(venueDepth({ medianTtlSec: 5, minTtlSec: 4 })).severity,
+  "elevated",
+);
+expect(
+  "depth: quote at the point of vanishing → severe",
+  depthSignal(venueDepth({ medianTtlSec: 1, minTtlSec: 0.5 })).severity,
+  "severe",
+);
+// Phantom depth is the sharp end: displayed, counted by every aggregated view,
+// and skipped by the matcher. A book overstating its own size is not a thin book.
+expect(
+  "depth: 15% past expiry → elevated",
+  depthSignal(venueDepth({ phantomShares: 297, pullableShares: 1683 })).severity,
+  "elevated",
+);
+expect(
+  "depth: majority past expiry → severe",
+  depthSignal(venueDepth({ phantomShares: 1200, pullableShares: 780 })).severity,
+  "severe",
+);
+expect(
+  "depth: majority past expiry → BLOCK",
+  verdictOf(snapshot({ depth: venueDepth({ phantomShares: 1200, pullableShares: 780 }) })),
+  "BLOCK",
+);
+expect(
+  "depth: unreadable per-order book is unknown, not ok",
+  depthSignal(null).severity,
+  "unknown",
+);
+expect(
+  "depth: unreadable per-order book withholds ALLOW",
+  verdictOf(snapshot({ depth: null })),
+  "RECHECK",
+);
+expect(
+  "depth: no resting orders is unknown, not severe — liquidity owns that verdict",
+  depthSignal(venueDepth({ orders: 0, totalShares: 0, bidShares: 0, askShares: 0, pullableShares: 0, byOwner: [] })).severity,
+  "unknown",
+);
+// A second maker is the improvement this measure exists to be able to SEE.
+expect(
+  "depth: two owners splitting the book reports both, still ok",
+  depthSignal(
+    venueDepth({
+      owners: 2,
+      topOwnerShare: 0.6,
+      concentration: 0.6 ** 2 + 0.4 ** 2,
+      byOwner: [
+        { owner: "0xaaa", class: "eoa", reason: "externally owned account", shares: 1188, share: 0.6, soonestTtlSec: 14 },
+        { owner: "0xbbb", class: "eoa", reason: "externally owned account", shares: 792, share: 0.4, soonestTtlSec: 19 },
+      ],
+    }),
+  ).severity,
+  "ok",
+);
+expect(
+  "depth: an opaque owner is the only class that can be firm-until-expiry",
+  bucketOf("opaque", 30),
+  "firm-until-expiry",
+);
+expect(
+  "depth: an upgradeable owner is pullable, not unverified",
+  bucketOf("upgradeable", 30),
+  "pullable",
+);
+expect(
+  "depth: expiry beats owner class — an expired order is phantom whoever holds it",
+  bucketOf("opaque", -1),
+  "phantom",
 );
 
 // ── result ────────────────────────────────────────────────────────────────────

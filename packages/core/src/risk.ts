@@ -28,6 +28,7 @@
  */
 
 import type { BookMetrics } from "./book";
+import type { DepthMetrics } from "./depth";
 import type { FlowMetrics, Freshness, MoveMetrics } from "./history";
 import type { MarketSnapshot, ResolutionState } from "./snapshot";
 
@@ -57,6 +58,7 @@ export interface Signal {
 
 export type SignalId =
   | "liquidity"
+  | "depth"
   | "volatility"
   | "staleness"
   | "window"
@@ -147,6 +149,42 @@ export const THRESHOLDS = {
 
   /** Candles needed before a volatility claim means anything. */
   minCandles: 3,
+
+  /**
+   * Seconds until the median resting order expires.
+   *
+   * Measured on this venue, all 10 live markets, twice: order TTLs run 11-28s
+   * and the maker reposts continuously. So a ~20s quote is this venue's NORMAL
+   * and cannot be the alarm — same shape as the spread calibration. The alarm
+   * sits BELOW the measured floor, where the displayed book is about to be gone
+   * rather than merely short-lived.
+   */
+  quoteTtlElevated: 8,
+  quoteTtlSevere: 2,
+
+  /**
+   * Fraction of displayed depth already past `expireTimestampNs`.
+   *
+   * The sharp end of the depth read. `getBookLevels` and every aggregated view
+   * still count these shares, but the matching loop skips an expired maker, so
+   * they are displayed liquidity that provably cannot be filled — before any
+   * keeper sweeps them. Measured 0 on every market so far, which is why any
+   * material reading is a deviation worth surfacing.
+   */
+  phantomDepthElevated: 0.1,
+  phantomDepthSevere: 0.5,
+
+  /**
+   * Single-owner share of displayed depth.
+   *
+   * Measured 1.00 on all 10 live markets — one dedicated maker address per
+   * market, quoting both sides. It is therefore a venue CONSTANT, and a signal
+   * that fires on every market says nothing, so this never raises severity on
+   * its own. It is reported on every market because it is the single most
+   * useful fact the per-order read recovers, and it corroborates a short TTL:
+   * a sole owner whose whole quote expires at once leaves nothing behind it.
+   */
+  soleOwnerShare: 0.99,
 } as const;
 
 /** The venue carrying real DreamDEX event contracts (operatorId 2). */
@@ -291,6 +329,154 @@ export function liquiditySignal(book: BookMetrics | null): Signal {
     };
   }
   return { ...base, severity, finding: `${notes.join("; ")}.`, evidence };
+}
+
+/**
+ * Depth durability: is the displayed book a commitment, and can it be filled?
+ *
+ * The only signal here with no off-chain equivalent, because `owner` and
+ * `expireTimestampNs` exist per order on the chain read and nowhere else — every
+ * aggregated view sums them away. See depth.ts for the mechanism and the
+ * measurements.
+ *
+ * WHAT MOVES THE VERDICT, and what deliberately does not:
+ *
+ *   phantom depth        moves it. Shares past their own expiry are still
+ *                        displayed and still counted by `getBookLevels`, but the
+ *                        matcher skips an expired maker — so they cannot be
+ *                        filled. A book overstating its own size is the one
+ *                        reading here you must not size a position against.
+ *   quote TTL            moves it BELOW the venue's measured 11-28s floor, where
+ *                        the book is about to be empty rather than merely
+ *                        short-lived.
+ *   owner concentration  does NOT move it. It measures 1.00 on all 10 live
+ *                        markets — one maker address per market by construction —
+ *                        and a signal constant across a venue cannot
+ *                        discriminate, whatever it sounds like. It is stated on
+ *                        every market anyway, because it is the most useful thing
+ *                        the read recovers and no other view can show it.
+ *   the firm bucket      does NOT move it, and reads 0% here for four separate
+ *                        verified reasons (depth.ts). Reported because being able
+ *                        to say why the answer is zero IS the claim.
+ */
+export function depthSignal(d: DepthMetrics | null): Signal {
+  const base = {
+    id: "depth" as const,
+    label: "Depth durability",
+    basis:
+      "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain — fields every aggregated view sums away. " +
+      "Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past " +
+      "expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a " +
+      "sub-8s TTL are the deviations.",
+  };
+
+  if (!d) {
+    return {
+      ...base,
+      severity: "unknown",
+      finding:
+        "Per-order resting depth could not be read, so nothing can be said about whether the displayed book is fillable.",
+      evidence: {},
+    };
+  }
+
+  const evidence = {
+    orders: d.orders,
+    owners: d.owners,
+    totalShares: Number(d.totalShares.toFixed(2)),
+    topOwnerShare: Number(d.topOwnerShare.toFixed(3)),
+    concentration: Number(d.concentration.toFixed(3)),
+    medianTtlSec: d.medianTtlSec === null ? null : Number(d.medianTtlSec.toFixed(1)),
+    minTtlSec: d.minTtlSec === null ? null : Number(d.minTtlSec.toFixed(1)),
+    firmShares: Number(d.firmShares.toFixed(2)),
+    pullableShares: Number(d.pullableShares.toFixed(2)),
+    unverifiedShares: Number(d.unverifiedShares.toFixed(2)),
+    phantomShares: Number(d.phantomShares.toFixed(2)),
+    topOwner: d.byOwner[0]?.owner ?? null,
+    topOwnerClass: d.byOwner[0]?.class ?? null,
+    topOwnerReason: d.byOwner[0]?.reason ?? null,
+  };
+
+  if (d.orders === 0) {
+    // Not the same as "the book is thin" — there is nothing to measure the
+    // durability OF. `liquiditySignal` already owns the empty-book verdict, so
+    // this reports absence rather than double-counting it as risk.
+    return {
+      ...base,
+      severity: "unknown",
+      finding:
+        "No orders are resting on either side, so there is no displayed depth to judge the durability of.",
+      evidence,
+    };
+  }
+
+  const phantomFrac = d.totalShares > 0 ? d.phantomShares / d.totalShares : 0;
+  const ttl = d.medianTtlSec ?? 0;
+  const sole = d.topOwnerShare >= THRESHOLDS.soleOwnerShare;
+  const pullablePct = (d.pullableShares / Math.max(d.totalShares, 1e-9)) * 100;
+
+  // How the book is held, stated the same way at every severity — the numbers are
+  // the content, and they should not appear only when something is wrong.
+  const composition =
+    `${d.totalShares.toFixed(0)} shares across ${d.orders} order${d.orders === 1 ? "" : "s"}, ` +
+    (sole
+      ? `all of it owned by one address (${d.byOwner[0]?.reason ?? "owner unclassified"})`
+      : `held by ${d.owners} owners, the largest ${(d.topOwnerShare * 100).toFixed(0)}%`) +
+    `. ${pullablePct.toFixed(0)}% is withdrawable at will` +
+    (d.firmShares > 0
+      ? `, ${((d.firmShares / d.totalShares) * 100).toFixed(0)}% firm only until its own expiry`
+      : ", none of it committed") +
+    `.`;
+
+  if (phantomFrac >= THRESHOLDS.phantomDepthSevere) {
+    return {
+      ...base,
+      severity: "severe",
+      finding:
+        `${(phantomFrac * 100).toFixed(0)}% of the displayed depth (${d.phantomShares.toFixed(0)} shares) is already past its own ` +
+        `expiry and cannot be matched against, so the book is overstating its size by more than half. ${composition}`,
+      evidence,
+    };
+  }
+  if (phantomFrac >= THRESHOLDS.phantomDepthElevated) {
+    return {
+      ...base,
+      severity: "elevated",
+      finding:
+        `${d.phantomShares.toFixed(0)} of ${d.totalShares.toFixed(0)} displayed shares (${(phantomFrac * 100).toFixed(0)}%) are past ` +
+        `expiry and unfillable, though still counted by every aggregated view. ${composition}`,
+      evidence,
+    };
+  }
+  if (ttl <= THRESHOLDS.quoteTtlSevere) {
+    return {
+      ...base,
+      severity: "severe",
+      finding:
+        `The median resting order expires in ${ttl.toFixed(0)}s — the displayed book is at the point of vanishing, ` +
+        `well inside this venue's measured 11-28s floor. ${composition}`,
+      evidence,
+    };
+  }
+  if (ttl <= THRESHOLDS.quoteTtlElevated) {
+    return {
+      ...base,
+      severity: "elevated",
+      finding:
+        `The median resting order expires in ${ttl.toFixed(0)}s, below this venue's measured 11-28s floor` +
+        (sole ? ", and there is no second owner quoting behind it" : "") +
+        `. ${composition}`,
+      evidence,
+    };
+  }
+  return {
+    ...base,
+    severity: "ok",
+    finding:
+      `Quotes are short-lived but in line with this venue: the median resting order expires in ${ttl.toFixed(0)}s ` +
+      `and nothing displayed is past expiry. ${composition}`,
+    evidence,
+  };
 }
 
 /**
@@ -864,7 +1050,9 @@ export function assess(signals: Signal[]): Assessment {
             ? "Wait for more trades to establish a price history before treating the move as known"
             : s.id === "manipulation"
               ? "Wait for more fills before reading flow direction"
-              : `Establish ${s.label.toLowerCase()} before acting`,
+              : s.id === "depth"
+                ? "Read the resting book per order on-chain before trusting the displayed size"
+                : `Establish ${s.label.toLowerCase()} before acting`,
         );
       }
       // Elevated findings still belong in the trace even when an unknown drove the
@@ -887,6 +1075,11 @@ export function assess(signals: Signal[]): Assessment {
     switch (s.id) {
       case "liquidity":
         requiredChecks.push("Confirm you can exit at a price close to entry before sizing a position");
+        break;
+      case "depth":
+        requiredChecks.push(
+          "Re-read the book immediately before acting — the displayed depth expires in seconds and is not a commitment",
+        );
         break;
       case "volatility":
         requiredChecks.push("Wait for the next few trades to see whether the move holds or reverts");
@@ -957,6 +1150,7 @@ export function gradeSnapshot(s: MarketSnapshot): Assessment {
     venueSignal(s.identity.venueId, s.identity.question),
     resolutionSignal(s.resolution.value),
     liquiditySignal(book),
+    depthSignal(s.depth.value),
     volatilitySignal(s.move.value),
     stalenessSignal(s.freshness.value, s.identity.intervalSec),
     windowSignal(s.freshness.value, s.identity.intervalSec),

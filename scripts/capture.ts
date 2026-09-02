@@ -30,6 +30,7 @@ import { createExchange, type EcContext } from "@fathom/ec";
 import {
   binaryPoolAbi,
   bookMetrics,
+  depthMetrics,
   candleIntervalFor,
   candles,
   degraded,
@@ -193,6 +194,9 @@ async function main(): Promise<void> {
   }
 
   // ── assemble the snapshot exactly as ingestion would ─────────────────────────
+  // Depth durability from the SAME per-order read printed above, classified at
+  // the captured instant so a replay reproduces the TTL arithmetic exactly.
+  const depth = await depthMetrics(client, resting, config.decimals, capturedAt);
   const prices = toPricePoints(candleRows, config.decimals);
   const flow = flowMetrics(fillRows, config.decimals, nowSec);
   const snapshot: MarketSnapshot = {
@@ -233,6 +237,7 @@ async function main(): Promise<void> {
       settlementWindowSec: chain.settlementWindowSec,
     }),
     book,
+    depth: ok(depth),
     prices: ok(prices),
     move: degraded("captured fixture: move is derived on replay from `prices`"),
     flow: ok(flow),
@@ -293,6 +298,7 @@ async function main(): Promise<void> {
       bids: resting.bids,
       asks: resting.asks,
     },
+    depth,
     raw: { row, oracle, candles: candleRows, fills: fillRows },
     snapshot,
     // Recorded so a regression shows up as a diff rather than a silent change.
