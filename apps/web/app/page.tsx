@@ -1,5 +1,6 @@
 import { MarketList } from "@/components/market-list"
-import { ago, shortId } from "@/lib/format"
+import { ReadAge } from "@/components/read-age"
+import { shortId } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
 /**
@@ -48,7 +49,9 @@ export default async function Home() {
           ))}
           <div className="flex items-baseline gap-2">
             <dt className="label-caps">read</dt>
-            <dd className="font-data text-muted-foreground text-sm">{ago(read.assembledAt)}</dd>
+            <dd className="font-data text-muted-foreground text-sm">
+              <ReadAge at={read.assembledAt} />
+            </dd>
           </div>
           <div className="flex items-baseline gap-2">
             <dt className="label-caps">venue</dt>

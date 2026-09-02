@@ -71,9 +71,13 @@ export function Provenance({
               <span style={e.state === "ok" ? undefined : { color: STATE_INK[e.state] }}>
                 {STATE_LABEL[e.state] ?? e.state}
               </span>
-              <span className="opacity-60"> · {ago(e.readAt)}</span>
+              {/* No opacity step on either of these. Both sat around 3:1 at 12px,
+                  and the reason line is the most important string in this strip when
+                  it exists: it is why a read failed. Rank comes from position and
+                  size, not from fading text under the legibility floor. */}
+              <span> · {ago(e.readAt)}</span>
               {e.reason ? (
-                <span className="block truncate opacity-60" title={e.reason}>
+                <span className="block truncate" title={e.reason}>
                   {e.reason}
                 </span>
               ) : null}

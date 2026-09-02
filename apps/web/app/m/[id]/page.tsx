@@ -3,9 +3,10 @@ import { notFound } from "next/navigation"
 
 import { DecisionTraceView } from "@/components/decision-trace"
 import { Provenance } from "@/components/provenance"
+import { ReadAge } from "@/components/read-age"
 import { Sounding } from "@/components/sounding"
 import { VerdictMark } from "@/components/verdict-mark"
-import { ago, duration, NO_READING, pct, points, prob, shares, windowLabel } from "@/lib/format"
+import { duration, NO_READING, pct, points, prob, shares, windowLabel } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
 // Per-request for the same reason as the index — see app/page.tsx.
@@ -58,7 +59,10 @@ export default async function MarketPage({
       <header className="mt-6 border-b pb-8">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-display text-2xl leading-none">{row.asset ?? NO_READING}</h1>
-          <span className="label-caps">{windowLabel(row.intervalSec)} window</span>
+          {/* A figure, so it is set as data — see the note in market-list. */}
+          <span className="font-data text-muted-foreground text-xs">
+            {windowLabel(row.intervalSec)} window
+          </span>
         </div>
         <p className="text-muted-foreground font-data mt-1.5 text-xs">{trace.symbol}</p>
 
@@ -180,7 +184,9 @@ export default async function MarketPage({
 
           <div>
             <h3 className="section-mark mb-2">Read</h3>
-            <p className="font-data text-muted-foreground text-xs">{ago(trace.assembledAt)}</p>
+            <p className="font-data text-muted-foreground text-xs">
+              <ReadAge at={trace.assembledAt} />
+            </p>
           </div>
 
           {trace.unmeasured.length > 0 ? (

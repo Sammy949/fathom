@@ -36,9 +36,16 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
                 {/* The finding: what was measured, in the engine's own words. */}
                 <p className="text-sm leading-relaxed">{s.finding}</p>
 
-                {/* The model's reading, clearly marked as the interpretive layer. */}
+                {/* The model's reading, clearly marked as the interpretive layer.
+                    The rail is inset from the text's own top and bottom and its
+                    caps are rounded, so it reads as a deliberate mark rather than
+                    a square-capped divider dropped beside a paragraph. */}
                 {s.reading ? (
-                  <p className="text-muted-foreground border-l-2 pl-3 text-sm leading-relaxed">
+                  <p className="text-muted-foreground relative pl-3.5 text-sm leading-relaxed">
+                    <span
+                      aria-hidden
+                      className="bg-border absolute top-1 bottom-1 left-0 w-0.5 rounded-full"
+                    />
                     {s.reading}
                   </p>
                 ) : null}
@@ -59,8 +66,13 @@ export function DecisionTraceView({ trace }: { trace: DecisionTrace }) {
                   </dl>
                 ) : null}
 
-                {/* Why this threshold, on this venue. The load-bearing line. */}
-                <p className="text-muted-foreground/80 pt-1 text-xs leading-relaxed">
+                {/* Why this threshold, on this venue. The load-bearing line, so it
+                    is set at the full secondary tone rather than a fraction of it:
+                    at `/80` this sat near 3.4:1 on paper at 12px, which is asking a
+                    judge to squint at the one sentence that proves the number was
+                    calibrated rather than guessed. Hierarchy comes from size and
+                    position here, never from fading text below legibility. */}
+                <p className="text-muted-foreground pt-1 text-xs leading-relaxed">
                   <span className="label-caps mr-1.5">basis</span>
                   {s.basis}
                 </p>

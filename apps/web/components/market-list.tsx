@@ -68,16 +68,27 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                   <span className="font-display text-lg leading-none group-hover:text-primary">
                     {r.asset ?? NO_READING}
                   </span>
-                  <span className="label-caps">{windowLabel(r.intervalSec)} window</span>
+                  {/* The window is a FIGURE, so it is set as data. `.label-caps` is
+                      scoped to the name of a figure, never its value — the whole
+                      point of four registers is that they do not blur back into
+                      one costume the moment a value looks small. */}
+                  <span className="font-data text-muted-foreground text-xs">
+                    {windowLabel(r.intervalSec)} window
+                  </span>
+                  {/* And this is a FINDING, so it reads as a word, matching
+                      `SeverityLabel` rather than the column heads. */}
                   {r.unmeasured > 0 ? (
-                    <span className="label-caps" style={{ color: "var(--ink-unknown)" }}>
+                    <span className="text-xs" style={{ color: "var(--ink-unknown)" }}>
                       {r.unmeasured} no reading
                     </span>
                   ) : null}
                 </div>
                 <p className="text-muted-foreground font-data mt-1 truncate text-xs">
                   {r.symbol}
-                  <span className="opacity-50"> · {shortId(r.marketId)}</span>
+                  {/* The id is a string someone may actually need to read off the
+                      screen and match against a block explorer, so it is not set at
+                      half the surrounding tone. */}
+                  <span> · {shortId(r.marketId)}</span>
                 </p>
               </div>
 
