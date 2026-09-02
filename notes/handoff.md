@@ -2,6 +2,128 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-09-02 (later) — the gates could pass with the real path at zero
+
+The audit started from a rule rather than a symptom: **does this gate's happy path get
+exercised on every run, or can a fallback stand in for it while the gate still says PASS?**
+Two gates failed that question and both failures were reproduced on demand, not reasoned about.
+
+1. **`npm run explain` reported PASS with 0 of 3 markets model-explained.** Nothing in it read
+   `explanation.source`. Shown twice: `-- --offline` printed "PASS — model explains, engine
+   decides" over three narrator fallbacks, and an invalid key printed the same PASS while every
+   call returned 401. This is the gate that missed the `signal_id` enum drift, and it would have
+   missed it again. It now requires every chosen market back as `source === "model"` whenever a
+   provider is configured and offline was not requested, names the `fallbackReason` on failure,
+   and no longer claims "model explains" after a narrator-only run. Verified red on the invalid
+   key (exit 1, reason quoted), green on the live path (3 of 3), "not asserted" offline.
+
+2. **`npm run grade` reported PASS having graded zero markets.** Pointing `VENUE_ID` at an id
+   carrying no live markets passed determinism, discrimination and the severity→verdict mapping,
+   with `confidence min Infinity max -Infinity` as the only visible tell. Every assertion loop was
+   vacuous, the discrimination check skipped itself behind `graded.length >= 3`, and per-market
+   ingest failures were printed in red and then dropped. Now an empty board fails, any ingest
+   failure fails, checks that did not run print "not asserted" rather than PASS, and a new
+   **reads** section fails when a field is degraded on *every* market. That last one is the hole
+   the depth signal could have fallen through: the per-order chain read going dark would have
+   printed `depth constant (unknown)` and kept the gate green.
+
+3. **The mapping line printed PASS unconditionally**, outside the loop that collects the
+   violations, so a real break printed PASS and then FAIL below it. It also carried a latent false
+   positive: `not-trading` and `no-onchain-state` force a verdict *before* the severity mapping is
+   consulted, so a Locked market whose signals all read ok would have been reported as a mapping
+   violation. Those two are now asserted on their own terms.
+
+4. **The frozen fixture was written by one script and read by none.** `capture.ts` records
+   `verdictAtCapture` "so a regression shows up as a diff rather than a silent change", and nothing
+   ever compared it, which made the strongest BLOCK in the demo the only case with no gate behind
+   it. `test:risk` now grades the frozen snapshot and asserts verdict, confidence, action, rule
+   order and every severity against the recording, plus the case's own invariants. Grading it is
+   deterministic because every clock-dependent number was resolved at capture. A missing fixture
+   FAILS rather than skips. Proven red both ways: flipping `tradable` to true caught the lost
+   `not-trading` rule, hiding the file failed the gate.
+
+5. **The product broke its own core invariant in one line.** `ingest.ts` wrapped freshness in
+   `ok()` unconditionally while `freshness()` derived `neverTraded` from an absent timestamp, so a
+   failed fills read on a row with no indexed `lastTradeAt` published "this market has never
+   traded, so its quoted mid reflects a maker's opening guess" **as a measurement**, with
+   provenance clean enough that `degradedFields` did not list it. A claim about the market
+   manufactured from an outage, in the one layer whose entire purpose is that a degraded read is
+   not a zero. There is now a `recencyUnknown` flag, mutually exclusive with `neverTraded`, and
+   staleness reports unknown. Freshness as a whole stays `ok` on purpose: expiry and window elapsed
+   are still genuinely measured, and degrading the field wholesale would blind the window signal
+   over a fills query, turning one honest gap into two.
+
+**AND THE NEW ASSERTION IMMEDIATELY EARNED ITS KEEP.** Running `npm run explain` four times with
+the source check in place: **2 of the 4 runs lost a market to the fallback**, for two different
+reasons, and every one of those runs would have printed PASS yesterday.
+
+- once `TypeError: fetch failed` — the documented WSL transport flake, which the provider already
+  retries; three attempts were exhausted.
+- once `HTTP 400 code: "json_validate_failed"` — **Groq rejecting its own constrained generation**,
+  "missing properties: 'summary'". Strict mode is supposed to make that impossible. The cause is the
+  token ceiling: successful runs bill 1,171 / 1,176 / **1,396** output tokens against
+  `max_completion_tokens: 1400`, so the longest explanations sit ON the cap and the next one over it
+  is cut off mid-object, producing JSON that fails its own schema.
+
+That 400 is transient in exactly the way a 429 is — the next generation is usually a little shorter —
+so it is now retried, while every other 400 still fails fast because a real schema rejection will
+never fix itself. The classification is exported as `isRetryableGenerationFailure` and asserted in
+`retry:test`, for the same reason the 429 parser is: a retry rule that is not asserted is a guess,
+and this one decides whether a market reaches the model or the narrator. Raising the ceiling instead
+would have spent the increase on every call, since Groq bills it as requested rather than as used.
+
+After the fix: **5 consecutive runs, 15 of 15 markets model-explained.** Before it, 2 of 4 runs
+degraded silently under a green gate.
+
+**THE REPOST-TIMING GAP DOES NOT EXIST ON THIS VENUE, MEASURED.** The worry was that a single
+`fetchOrderBook` could land between a maker cancel and its repost, read an empty or thin book, and
+grade liquidity severe — which is BLOCK — on a market that is fine. Polled three markets once a
+second for 90 seconds: **270 reads, 90 of 90 distinct book timestamps per market** (so every read
+was fresh and nothing was served from a cache), and `min(bid.nearShares, ask.nearShares)` came back
+**exactly 990 on every single read**. Min equals max. No empty read, no one-sided read, nothing
+under either depth threshold. The proposed fix — hold the thin-book condition across two
+consecutive polls — would have been 60-80 lines across four files, a second book read plus a dwell
+on every pass, and a decision about a frozen fixture that has only one read, all to defend a
+condition that does not occur. Not built.
+
+**What replaced it costs nothing and is a better line in the room.** The snapshot already carries
+two independent observations of resting liquidity: the materialized book, and the per-order chain
+read taken seconds later in the same pass. When the book reads empty or one-sided while the chain
+shows live orders on both sides, the two sources contradict each other and the aggregated book is
+the one that is wrong. `liquiditySignal` now reports that as `unknown` rather than `severe`, on
+exactly the precedent already set by the crossed-book branch ("the data is untrustworthy, not the
+market"), which makes the verdict RECHECK with "re-read the order book and confirm both sides are
+quoted" attached. Narrow on purpose: it needs shares on both sides plus live shares overall, it
+never fires from a missing or degraded chain read, and it does not touch near-touch thinness
+because `DepthMetrics` carries no price levels.
+
+Two existing fixtures had to be corrected to make it pass, and the correction is the finding: they
+paired an empty or one-sided book with a full 6-order chain ladder, which is not a state this venue
+can be in. It is the contradiction, and it was sitting in the test suite as the definition of BLOCK.
+
+**The constant-metric rule is now written down** in [product-fathom.md](product-fathom.md) rather
+than being rediscovered per signal — and it arrived with its own counter-example, which is the more
+useful half. Near-touch depth measured 990 on all 10 markets and all 270 polled reads, so it looked
+like a third instance of "constant, therefore a caption", and `depthElevated: 200` looked
+unreachable. Wrong: the three polled markets had **never traded**, so 990 is the size of an
+unconsumed ladder rather than a venue constant. A later run graded one market `elevated` at exactly
+200 shares near the touch. **A metric flat across ten idle markets has been measured once, not ten
+times.** Imbalance at 0.000 and owner concentration at 1.00 still stand, because those are
+structural.
+
+**The demo board swings with venue state, and that is the real credibility risk** — not a timing
+artifact. Three `grade` runs inside two hours: `0 ALLOW / 10 RECHECK / 0 BLOCK`, then `0 / 4 / 6`,
+then `0 / 9 / 1`. All three are correct. The single BLOCK in the last run is worth reading, because
+it is the case the two-poll fix was meant to protect against and it turns out to be real: a 15m
+market at 88% of its window with **no ask quoted**, and the per-order chain read agreeing at 990
+shares across 3 orders on one side only. Two independent sources concur that the maker pulled one
+side two minutes from expiry, so the cross-source check correctly did NOT downgrade it. That is a
+defensible BLOCK to be asked about. The frozen fixture exists to have one stable BLOCK whatever the
+board is doing, which is why wiring it into a gate mattered more than the two-poll change.
+
+Verified: `npm run typecheck`, `npm run test:risk` (**89 assertions**, was 65), `npm run grade`,
+`npm run explain`, `npm run explain -- --offline`, plus the four deliberate-failure runs above.
+
 ## 2026-09-02 — depth durability, the stuck-market fixture, and the ink-depth restyle
 
 Eight commits. `npm run typecheck` (now covers `scripts/` too), `npm run test:risk`
@@ -498,7 +620,7 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 | `npm run grade` | Stage 4 gate — verdicts, decision traces, discrimination check |
 | `npm run explain` | Stage 5 gate — full traces + verdict-integrity + guard proof |
 | `npm run explain -- --offline` | Same, deterministic narrator only (no key needed) |
-| `npm run test:risk` | 65 assertions over synthetic snapshots, no network |
+| `npm run test:risk` | 89 assertions over synthetic snapshots plus the frozen fixture, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
 | `npm run typecheck` | Whole workspace, `scripts/` included |
 | `cd apps/web && npm run dev` | The dashboard. Run this yourself; see the note above |

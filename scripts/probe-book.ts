@@ -1,15 +1,30 @@
 /**
- * TEMPORARY measurement. Not a gate, not committed.
+ * Book-read stability probe. Read-only, sends nothing.
  *
- * Question: can a SINGLE `fetchOrderBook` read land in the maker's repost gap and
- * report an empty or thin book on a market that is actually fine? The engine grades
- * `unusable: "empty"` and `nearShares <= 50` as SEVERE, and severe is BLOCK, so a
- * bad-luck read is a false BLOCK.
+ *   npx tsx scripts/probe-book.ts
  *
- * Method: poll the same markets once a second and count what the reads actually say.
- * Also records the book's own `timestamp`, because if the SDK hands back a cached
- * view then "two consecutive polls" is one observation twice and any two-poll rule
- * would be theatre.
+ * Not a gate. A measurement instrument, in the same genre as `calibrate.ts`: it
+ * exists so a claim about read stability can be re-established rather than
+ * remembered.
+ *
+ * THE QUESTION IT ANSWERS: can a SINGLE `fetchOrderBook` land in the maker's repost
+ * gap and report an empty or thin book on a market that is actually fine? The engine
+ * grades `unusable: "empty"` and `nearShares <= 50` as SEVERE, and severe is BLOCK,
+ * so a bad-luck read would be a false BLOCK in front of a judge.
+ *
+ * MEASURED 2026-09-02: 270 reads across three markets, one a second for 90 seconds.
+ * Zero empty, zero one-sided, zero under either depth threshold, and
+ * `min(bid.nearShares, ask.nearShares)` came back exactly 990 every time. So the gap
+ * is not observable here, and the "require the thin book across two consecutive
+ * polls" rule was not built. Note what that 990 does and does not mean: those three
+ * markets had never traded, so it is the size of an unconsumed ladder rather than a
+ * venue constant. A later `grade` run read 200 near the touch on a market that had
+ * been traded against.
+ *
+ * It also records the book's own `timestamp` per read, because if the SDK handed back
+ * a cached view then "two consecutive polls" would be one observation twice and any
+ * two-poll rule would be theatre. It does not: 90 of 90 timestamps were distinct on
+ * every market.
  */
 
 import { createExchange, shutdown } from "@fathom/ec";

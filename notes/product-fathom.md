@@ -60,6 +60,39 @@ spread on a 0.57 mid, with a three-level ladder each side at ~200/330/460 shares
 calibrated against a real-money book will grade every market BLOCK and the verdict will say
 nothing. Calibrate against observed testnet distributions, and say so in the trace.
 
+### The constant-metric rule (stated once, so it stops being rediscovered)
+
+**A metric that is constant across every market on the venue is a caption, never a severity
+input.** It cannot discriminate, and a signal that fires on everything communicates nothing.
+Report it, because it is often the most interesting fact on screen. Do not let it move a verdict.
+
+Two signals are constant for STRUCTURAL reasons, and those are the real cases:
+
+| Metric | Measured | Why it is constant |
+|---|---|---|
+| Depth imbalance | exactly `0.000` on every quoted market | the maker ladder is symmetric by construction; it only moves once a side is partly consumed |
+| Owner concentration | `1.00` on all 10 markets, twice | one dedicated maker address per market |
+
+**And one that looked constant and is not, which is the sharper lesson.** Near-touch depth measured
+990 shares on all 10 markets, and on all 270 reads of a 90-second poll across three of them — so it
+looked like a third instance of the rule, and `depthElevated: 200` / `depthSevere: 50` looked
+unreachable. It is not. The three polled markets had **never traded**, so their ladders were
+pristine; 990 is the size of an UNCONSUMED ladder, not a venue constant. A later run graded one
+market `elevated` at exactly 200 shares near the touch, and another `severe` on a one-sided book
+where the maker had pulled its asks two minutes from expiry. Near-touch depth discriminates
+precisely when there has been activity.
+
+So the test to apply before wiring any new signal to severity is two-part, and the second half is
+the one that was nearly missed:
+
+1. **Measure the range across the whole board.** `npm run calibrate` prints this under
+   "discriminating power" and `npm run grade` flags any signal that came back constant. Zero range
+   means it belongs in the trace as a stated fact with its own sentence, not in the severity ladder.
+2. **Ask whether the board was in one state when you measured it.** An idle board makes
+   activity-driven metrics look constant. A metric flat across ten never-traded markets has been
+   measured once, not ten times. Check it again when something has traded before concluding it
+   cannot discriminate.
+
 ### Data-source constraint (non-negotiable)
 
 Depth, spread and imbalance come from the SDK's materialized book (`fetchOrderBook`) or an
