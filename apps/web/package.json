@@ -4,9 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS=--max-old-space-size=3072 FATHOM_FIXTURE=1 next dev",
+    "dev:live": "NODE_OPTIONS=--max-old-space-size=3072 next dev",
+    "build": "NODE_OPTIONS=--max-old-space-size=3072 next build",
+    "build:fixture": "NODE_OPTIONS=--max-old-space-size=3072 FATHOM_FIXTURE=1 next build",
+    "start": "NODE_OPTIONS=--max-old-space-size=3072 next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit"

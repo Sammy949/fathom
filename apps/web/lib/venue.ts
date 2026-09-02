@@ -36,6 +36,9 @@
  * pattern a database client needs in dev, and for the same reason.
  */
 
+import { existsSync, readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+
 import { createExchange, type EcContext } from "@fathom/ec"
 import {
   buildTrace,
@@ -44,6 +47,52 @@ import {
   ingestVenue,
   type DecisionTrace,
 } from "@fathom/core"
+
+/**
+ * A frozen board, read from disk instead of from the venue.
+ *
+ * WHY THIS EXISTS, and it is two reasons rather than one.
+ *
+ * The dev loop. A live pass is ~150 round trips plus up to two model calls, and
+ * the dashboard is almost entirely server components, so iterating on type and
+ * colour meant waiting minutes per look at a page while a watcher and a chain
+ * socket sat on a 4-core VM. With a fixture the render touches no network at all:
+ * no exchange, no WebSocket, no retries, no Groq budget.
+ *
+ * The demo. Three `grade` runs inside two hours gave 0 ALLOW / 10 RECHECK / 0
+ * BLOCK, then 0 / 4 / 6, then 0 / 9 / 1. All three were correct; the board simply
+ * moves. A frozen board is the only way to guarantee that what is on screen shows
+ * the full range of verdicts, including the stuck market, rather than whatever the
+ * venue happens to be doing at that minute.
+ *
+ * Live is the DEFAULT, so a deploy behaves as it always did. `FATHOM_FIXTURE=1`
+ * opts in to the committed board; `FATHOM_FIXTURE=<path>` points at another one.
+ */
+const FIXTURE_ENV = (process.env.FATHOM_FIXTURE ?? "").trim()
+
+/**
+ * Where the frozen board lives.
+ *
+ * `FATHOM_FIXTURE=1` walks UP from the working directory looking for
+ * `fixtures/board.json`, rather than assuming a fixed number of `..` hops. Next
+ * runs with cwd at `apps/web` while a workspace script runs from the repo root,
+ * and hardcoding `../../fixtures` for the first silently resolved to
+ * `/home/samy/fixtures` for the second. Same walk-up that `loadEnv` uses to find
+ * `.env`, for the same reason. Any other value is taken as a literal path.
+ */
+function fixturePath(): string {
+  if (FIXTURE_ENV !== "1" && FIXTURE_ENV.toLowerCase() !== "true") return FIXTURE_ENV
+  let dir = process.cwd()
+  for (let i = 0; i < 6; i++) {
+    const candidate = join(dir, "fixtures", "board.json")
+    if (existsSync(candidate)) return candidate
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  // Nothing found: return the most likely path so the error names something real.
+  return join(process.cwd(), "fixtures", "board.json")
+}
 
 /**
  * How long a read stays fresh, and the floor between passes.
@@ -64,15 +113,24 @@ const MIN_INTERVAL_SEC = 900
 /**
  * How many markets get a model-written explanation per read.
  *
- * TWO, because two is what the free tier actually fits. Measured: the prompt runs
- * ~2,000 input tokens and Groq bills `max_completion_tokens` as REQUESTED, so a
- * call costs ~4,000 against an 8,000/minute ceiling. Three calls guarantee that
- * the third gets a 429 and lands on the fallback narrator — which is correct
- * behaviour and reads as the model failing rather than as a budget choice.
+ * TWO on a live request, because two is what the free tier actually fits.
+ * Measured: the prompt runs ~2,000 input tokens and Groq bills
+ * `max_completion_tokens` as REQUESTED, so a call costs ~4,000 against an
+ * 8,000/minute ceiling. A third call is guaranteed a 429 and lands on the fallback
+ * narrator, which is correct behaviour but reads as the model failing rather than
+ * as a budget choice.
  *
- * So the list explains nothing at all, and the detail view explains on demand.
+ * A CAPTURE IS DIFFERENT and gets to override this with
+ * `FATHOM_EXPLAIN_BUDGET`. A frozen board is written once and then read all day,
+ * so it can afford to spend four minutes letting the 429 retry pace itself and
+ * come back with every market model-explained. Two of eight is a thin thing to
+ * freeze into a demo when patience is free.
+ *
+ * Read at call time, not at import: `capture-board.ts` sets the variable in its
+ * own `main`, and ESM hoists imports above that, so a module-level constant would
+ * have been evaluated before the override existed.
  */
-const EXPLAIN_BUDGET = 2
+const explainBudget = (): number => Number(process.env.FATHOM_EXPLAIN_BUDGET ?? 2) || 2
 
 export interface MarketRow {
   marketId: string
@@ -142,7 +200,16 @@ function exchange(): EcContext {
   return state.ctx
 }
 
-async function read(): Promise<VenueRead> {
+/**
+ * Run one full ingestion pass and assemble the read.
+ *
+ * Exported, uncached, and free of any dependency on the request lifecycle, so
+ * `npm run capture:board` can call the EXACT code path the dashboard uses to
+ * freeze a board fixture. A capture script that reimplemented this would drift
+ * from it, and a fixture that does not match what the page would have rendered is
+ * worse than no fixture.
+ */
+export async function buildVenueRead(): Promise<VenueRead> {
   const ec = exchange()
   const { snapshots, failures, venueId, assembledAt, usable } = await ingestVenue(ec, {
     minIntervalSec: MIN_INTERVAL_SEC,
@@ -153,10 +220,11 @@ async function read(): Promise<VenueRead> {
   // Explain the first few. `Promise.all` would fire them concurrently and trip
   // the TPM ceiling on all of them at once, so these are sequential on purpose —
   // the 429 retry inside the provider can then actually clear.
+  const budget = explainBudget()
   const traces: Record<string, DecisionTrace> = {}
   for (const [i, { snapshot, assessment }] of graded.entries()) {
     const explanation =
-      i < EXPLAIN_BUDGET
+      i < budget
         ? await explainAssessment(snapshot, assessment)
         : await explainAssessment(snapshot, assessment, { offline: true })
     traces[snapshot.identity.marketId] = buildTrace(snapshot, assessment, explanation)
@@ -208,7 +276,7 @@ async function read(): Promise<VenueRead> {
  * ingestion passes and multiplies both the round trips and the Groq spend.
  */
 function beginRead(): Promise<VenueRead> {
-  state.inflight ??= read()
+  state.inflight ??= buildVenueRead()
     .then((data) => {
       state.cached = { at: Date.now(), data }
       return data
@@ -232,6 +300,27 @@ const refreshAllowed = (): boolean =>
  * waits is the one that arrives with nothing cached at all.
  */
 export async function getVenueRead(): Promise<VenueRead> {
+  // A fixture is read once and then answered from memory. No exchange is ever
+  // constructed on this path, so no socket is opened and nothing needs closing.
+  if (FIXTURE_ENV) {
+    if (!state.cached) {
+      const path = fixturePath()
+      try {
+        state.cached = {
+          at: Date.now(),
+          data: JSON.parse(readFileSync(path, "utf8")) as VenueRead,
+        }
+      } catch (e) {
+        throw new Error(
+          `FATHOM_FIXTURE is set but ${path} could not be read. Run \`npm run capture:board\` ` +
+            `once against the live venue, or unset FATHOM_FIXTURE to read live. ` +
+            `(${e instanceof Error ? e.message : String(e)})`,
+        )
+      }
+    }
+    return state.cached.data
+  }
+
   const hit = state.cached
 
   if (hit) {
