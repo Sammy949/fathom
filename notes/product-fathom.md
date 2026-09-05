@@ -120,22 +120,57 @@ confidently wrong numbers.
 - **BLOCK** — too illiquid, manipulated, stale, or ambiguous to trade.
 
 ## Implementation sequence
-| Stage | Deliverable | Required? |
-|---|---|---|
-| 1 | Clone Bot Kit, run `ec:doctor`, confirm venue + live markets on Shannon | Yes |
-| 2 | Indexer + on-chain ingestion → normalized market + order-book state | Yes |
-| 3 | Dashboard: market list, detail view, probability chart, liquidity metrics, freshness | Yes |
-| 4 | Deterministic risk metrics + ALLOW/RECHECK/BLOCK state machine | Yes |
-| 5 | Structured agent reasoning + inspectable decision trace | Yes |
-| 6 | Gated testnet execution (`ec-core` `placeLimit`) + order-status panel | Stretch |
-| 7 | Polish, failure states, demo-data fallback, technical walkthrough | Yes |
+| Stage | Deliverable | Required? | State |
+|---|---|---|---|
+| 1 | Clone Bot Kit, run `ec:doctor`, confirm venue + live markets on Shannon | Yes | done |
+| 2 | Indexer + on-chain ingestion → normalized market + order-book state | Yes | done |
+| 3 | Dashboard: market list, detail view, probability chart, liquidity metrics, freshness | Yes | built, unseen in a browser |
+| 4 | Deterministic risk metrics + ALLOW/RECHECK/BLOCK state machine | Yes | done |
+| 5 | Structured agent reasoning + inspectable decision trace | Yes | done |
+| 6 | Gated testnet execution (`ec-core` `placeLimit`) + order-status panel | Stretch | not started |
+| 7 | Polish, failure states, demo-data fallback, technical walkthrough | Yes | failure states + fixture fallback done |
 
-**Cut line = after Stage 5.** If time gets tight, Stages 1–5 are still a credible agentic
-analytics product. Stage 6 is the high-value stretch that shows the full execution surface.
+**Cut line = after Stage 5, and it is cleared.** Stages 1–5 are complete; Stage 3's dashboard is
+built and Stage 7's failure states (loading, error, 404) and demo-data fallback
+(`FATHOM_FIXTURE=1`) are in. The largest remaining risk is not a missing stage — it is that the
+dashboard has never been opened in a browser. Every check has been server-rendered markup or
+static SVG, so nothing interactive is verified.
 
 Stage 1 gate is `npm run ec:doctor` against Shannon — read-only, sends nothing. Note there is
 no auth step to confirm (private key only, no REST/SIWE for event contracts), so the gate is:
 correct venue resolved, live markets listed, on-chain status readable, book snapshot returned.
+
+### What the dashboard settled, and the rule each decision produced
+
+Stage 3 was specified above as "market list, detail view, probability chart, liquidity metrics,
+freshness". All five exist, but three of them ended up somewhere other than where that line
+implies, and the reasons generalise:
+
+- **The probability chart is a STEP, not a line.** Candles here are emitted per trade, not per
+  interval, so the series is irregular by nature — 3 to 6 points spanning hours, with holes. A
+  smooth line between two prints invents drift that never happened; a flat hold is what a
+  last-traded price actually claims. Two earlier attempts (runs-with-gaps, then a median-gap
+  threshold) both drew confident diagonals through real holes, and **only a render caught it**.
+  The rule: when samples are not periodic, do not interpolate, and prove it by rendering rather
+  than by reading the code.
+- **The chart's right edge is the READ TIME, not the last print.** If horizontal width means
+  elapsed time then the age of the newest reading is width that exists. Measured: a last print
+  170 minutes old, 29% of the chart. Ending at the last print silently claims it was now.
+- **"Liquidity metrics" became `quote life` and `owners`.** The generic spread/depth pair is
+  available in every venue interface. Median seconds-to-expiry of the resting book and the number
+  of addresses owning it are not: `owner` and `expireTimestampNs` are per-order on the chain read
+  and every aggregated view sums them away. A book reading "990 shares a side" everywhere else is
+  one address on a 20-second timer. That is the column no competitor screen can show.
+- **The eight-signal "sounding" mark was cut from the board.** Graded across the live venue, its
+  first four marks read `ok` on every row — half of every glyph carrying no information — and it
+  encoded severity as shape AND depth AND confidence as length across eight unlabelled positions
+  with no legend. The rule it produced: **a visual encoding needs a key on the same screen, or it
+  is decoration**; and the constant-metric rule above applies to marks, not just to severity
+  inputs.
+- **The board is a real `<table>`.** It was two CSS grids agreeing by convention and they had
+  already drifted apart. One `<colgroup>` with `table-layout: fixed` is a column the layout engine
+  guarantees, and fixed widths stop a counting-down value from resizing its column on refresh.
+
 
 ## Demo market selection (from live testnet data, 2026-08-28)
 
@@ -172,3 +207,27 @@ excellent.
 ## Design bar
 Anti-slop law applies (see global CLAUDE.md). Dashboard is the visual centerpiece and scores
 UX/Design 20% — decide a real signature, not a generic market-data wrapper.
+
+**The signature that was chosen: the page is an audit document, not a trading terminal.** Rows on
+a shared baseline with hairline rules, every figure in a self-hosted mono with tabular numerals,
+verdicts set in a display serif whose numerals are near-monospaced, and colour reserved for the
+one thing that is a decision. Three faces, three jobs: Instrument Sans for interface, Zodiak for
+verdicts and headline figures, Geist Mono for every measured number. Instrument Serif italic as a
+sparing counter-voice. All four self-hosted from `public/fonts`, because `next/font/google`
+fetches at build time and this network's IPv6 path is dead — a build that needs a third-party host
+is a build that fails on someone else's network.
+
+Three rules the build produced, worth keeping:
+
+- **Colour states a decision; ink states a reading.** The traffic light stops at `VerdictMark`.
+  A signal severity gets an ink ramp instead, because green on a reading would claim "fine" about
+  a measurement that may never have been taken. Weight carries rank independently of hue, so the
+  row scans in greyscale.
+- **An unmeasured reading must look unmeasured** — not clean, and not like a rendering gap. This
+  is the same invariant as the engine reporting `insufficient` rather than a confident zero, and
+  it is why the no-reading mark is a middle dot rather than a blank or an em-dash.
+- **Render it before believing it.** Two chart bugs and a table's worth of misalignment were
+  invisible in code and obvious in a render. The pattern that works: render the real component
+  (never a re-implementation), substitute theme `var(--…)` for hex, and assert geometry against
+  the input data.
+

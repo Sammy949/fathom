@@ -2,6 +2,151 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-09-05 — the indexer's database is down, and the repo did not build from a clean clone
+
+Two findings that matter more than the day's UI work, so they go first.
+
+**`main` could not be built by anyone who cloned it.** Six tracked files imported
+`@/components/ui/*` while `components/ui/` was entirely untracked: `error.tsx` and
+`theme-switch.tsx` (Button), `loading.tsx` (Skeleton), `decision-trace.tsx` and `provenance.tsx`
+(Sheet), `market-list.tsx` (Table). It built here only because the files sat on disk. Found by
+walking every tracked import against `git ls-files`, and confirmed by cloning to `/tmp` and
+re-checking — worth keeping as a habit, because a local build proves nothing about a clone.
+
+Two dependencies were also being resolved from a transitive install rather than from
+`package.json`: **`lucide-react`**, imported by `theme-switch.tsx` since `30d2edf` and never
+declared, and the **`@fontsource`** packages that are the source of the woff2 files in
+`public/fonts`. Both now declared.
+
+The shadcn registry had put **61 components** on disk; only 4 are imported, so only 4 are
+committed, and that took 7 dependencies back out of `package.json` (`recharts`, `cmdk`,
+`embla-carousel-react`, `react-day-picker`, `input-otp`, `react-resizable-panels`,
+`@shadcn/react`). `shadcn add` restores any of them in one command. Also deleted a stray root
+`bun.lock` that duplicated `apps/web/bun.lock` against a different registry — two lockfiles for
+one workspace is how two installs diverge.
+
+**The indexer's Postgres is down while its GraphQL gateway is up, and no retry setting fixes
+that.** `capture:board` failed twice on `LiveMarkets`. The diagnosis is one comparison:
+
+```
+query { __typename }              -> 200  0.67s     (answered from Hasura's own schema)
+query { Market(limit: 1) { … } }  -> 504  30.6s     "upstream request timeout"
+query { Candle(limit: 1) { … } }  -> 504  30.6s
+query { Fill(limit: 1) { … } }    -> 504  30.6s
+```
+
+Every query that touches a table times out at exactly 30s — `limit: 1`, no filter, one column.
+Nothing to optimise; the cheapest possible read fails identically to the expensive one. Confirmed
+via `curl` with no Node involved, so it is not ours. The chain RPC is healthy
+(`eth_blockNumber` → 200 in 1.3s), so this is the indexer specifically, not Somnia testnet. It
+flaps rather than being cleanly down: one `Market(limit: 1)` succeeded early in the probe, then
+six consecutive 504s on the identical query.
+
+**The retry was genuinely too impatient, though, and that is fixed independently.**
+`DEFAULT_SDK_RETRY` ran 4 attempts with ceilings of 400/800/1600ms under full jitter — an
+*expected* 1.4 seconds of total backoff. Measured latency on the same host when healthy: median
+316ms but individual requests 0.7s to 8.3s. Four attempts inside a second and a half against a
+host that stalls for eight is one attempt with extra steps. Now 6 attempts / 1s base / 8s cap,
+~11.5s expected. `DEFAULT_RETRY` in `indexer.ts` matched to it: both guard the same host, and
+leaving them an order of magnitude apart means which layer fails first is an accident of which
+call happens to be wrapped.
+
+**A wrong theory, recorded so it is not re-fixed.** The failure chain contains
+`ENETUNREACH 64:ff9b::…`, a NAT64 IPv6 address, and I was about to force `ipv4first`. Tested
+first: 20/20 requests succeeded both as-is and with `autoSelectFamily` off (median 196ms vs
+213ms). Node's Happy Eyeballs already handles it inside its 250ms attempt timeout. The v6 line is
+the loud half of an error whose v4 half had failed too. **There is no IPv6 problem to fix here.**
+
+### The board is a real table now, and the sounding is out of it
+
+The list was two independent CSS grids — one for the heads, one per row — agreeing only because
+they shared a template string. Nothing enforced it and it had already drifted: heads
+right-aligned while cells sat left, so no figure started under its own label. It is one
+`<colgroup>` with `table-layout: fixed` now, which is a column guaranteed by the layout engine.
+Fixed matters twice over: with `auto`, `23.4h` counting down to `6m` resizes its column and
+shifts every neighbour on refresh.
+
+**Figures are left-aligned, which reverses the usual advice on purpose.** Right-aligning numbers
+exists to line up decimals in *ragged* columns. Measured against the board these are uniform —
+`mid` always 5 characters, `spread` always 3, `quote` always 3 — because every figure passes
+through a fixed-precision formatter. The digits land identically either way, so right-alignment
+bought nothing and cost the column structure.
+
+**The sounding is gone from the row, and nothing replaced it.** Graded across the whole live
+board, its first four marks (venue, resolution, liquidity, depth) read `ok` on *every* row, so
+half of every mark carried no information; ten rows produced six shapes and four of those
+differed by one glyph. The disqualifying problem was legibility, not redundancy: a 64px mark
+encoded severity as shape AND as depth AND confidence as line length, across eight unlabelled
+positions with no legend on the page. `unmeasured N` already states the fact that drove most of
+its variation, in words that need no key. `DepthMark` survives in the detail page's signal table,
+where each mark sits beside its own label — the one place the shape has a key.
+
+`windowLabel` now rounds to the minute before choosing a unit. The venue reported
+`intervalSec: 3598` for one ETH market and raw division printed `59.96666666666667m` — nineteen
+characters of false precision next to a sibling labelled `1h`. Two seconds is a fact about how a
+timestamp was computed, not about a market.
+
+### The price chart is a step, and the first two attempts were wrong
+
+**The gap rule never fired.** It split the series wherever a gap exceeded 3× the median gap — but
+with five prints the median gap is itself 120 minutes, so a 240-minute hole is only 2× and passed
+as normal. It drew a confident diagonal straight through the hole it existed to mark. A heuristic
+tuned on the 51-point series that existed when it was written was dead at the 3-to-6 points these
+markets actually carry. **Only the render caught it**; the code read as correct.
+
+So: a step. Each point is a last-*traded* price, so between two prints the price was still that
+price — a flat hold is literally what the data says — and it jumps at the moment of the next
+trade. Smoothing is only defensible when samples are periodic and these are emitted per trade.
+The step needs no threshold at all, which is the real argument for it: nothing left to tune
+wrong.
+
+**The final hold runs to the read time, not the last print.** If width means elapsed time then
+the time since the last trade is width that exists, and stopping at the last print quietly claims
+that print was now. Measured: BTC 24h's last print was 170 minutes old, 29% of the chart. The
+trailing shelf ends with **no dot** — every other shelf is closed by a trade and that one is not
+closed yet, so the absence is the label.
+
+Dashed hold-marks were tried and cut: at these sample counts a mark on every long hold is a mark
+on every hold, and it beaded the one clean line the shape exists to be.
+
+### Method note, since it earned its keep twice today
+
+Both chart failures were invisible in code review and obvious in a render. The gate that found
+them renders the **real component** via `renderToStaticMarkup`, substitutes the theme's
+`var(--…)` for hex (librsvg does not resolve them), and asserts geometry against the input
+series: every segment axis-aligned, every hold at a price that printed, every jump at a time that
+traded, every print a path vertex. Nothing re-implements the geometry, so the picture cannot
+agree with a bug in a copy.
+
+**And the audit's own regex was wrong first.** `<th[^>]*>` also matched `<thead`, so the first
+run reported a phantom column mismatch — a bug in the checker reading as a bug in the component.
+A guard that rejects correct work is worse than no guard.
+
+### Verified
+
+`npm run typecheck` (4 projects), `eslint`, `build` and `build:fixture`, `test:risk` 89. The
+render gate across all 8 chartable live markets plus the 1-point, flat-series, missing
+`assembledAt` and stale `assembledAt` paths. The table audit against the frozen board: 6 `<col>`
+= 6 `<th>` = 6 `<td>` per row, `scope="col"` on every head, one link per row with the right href,
+every rendered value equal to its formatter applied to the raw reading. Clean-clone import check.
+
+**Not verified: any of this in a browser.** Every check above is server-rendered markup or static
+SVG. Hover, focus rings, the theme switch, the sheets, and the `<640px` layout are unexercised —
+and the table now wraps in `overflow-x-auto`, so narrow screens scroll horizontally where they
+used to hide columns. `FATHOM_FIXTURE=1 npm run dev` needs no network and is the way to look.
+
+### Next
+
+1. **Look at the dashboard in a browser.** It is the largest untested surface in the project and
+   the one being scored. Nothing below matters as much.
+2. **Recapture the board when the indexer recovers.** The current fixture is 8 markets all
+   RECHECK, so it cannot demonstrate the engine discriminating — the thing the frozen board exists
+   to prove. `npm run capture:board`, and check the tally it prints.
+3. **Consider a consecutive-timeout breaker.** Six attempts × 20s of an unanswerable request is
+   ~2 minutes to learn nothing. Bailing after two identical upstream timeouts on one endpoint
+   would turn that into a 40-second clear error. Not built.
+4. Decide whether `DepthMark` still earns its place on the detail page, with the page open.
+
 ## 2026-09-02 (later still) — the frozen board is demo insurance, and it is the only artifact that shows all three verdicts
 
 Written up from another session's `515c009`, which built it. Recording it here because the reason it
@@ -546,11 +691,12 @@ Don't parse it — use the typed fields.
   own risk fields anyway, and one repo means one tsconfig and one deploy. Tradeoff accepted: we
   own the diff if upstream fixes something. ~1,600 lines total across 10 files; we need roughly
   6 of them (`config`, `addresses`, `markets`, `orders`, `gotchas`, `settlement`).
-- **Build wallet: `0xC3d33eB15B59a092cC5663fAdF5BcAeBa5afF010`** (MetaMask, Somnia testnet).
-  Confirmed fresh on-chain — nonce 0 and zero balance on Shannon, Somnia mainnet, and Base, so
-  nothing is at risk from testnet use. The earlier throwaway key was **discarded**: the STT
-  faucet at testnet.somnia.network requires a **connected wallet** (no paste-an-address path),
-  so a bare keypair cannot be funded. Key material deleted.
+- **Build wallet: a dedicated MetaMask account on Somnia testnet.** The address lives in `.env`
+  (gitignored) and deliberately not here — a wallet address is a fingerprint even when it holds
+  nothing, and notes/ is tracked. Confirmed fresh on-chain at the time: nonce 0 and zero balance
+  on Shannon, Somnia mainnet, and Base, so nothing is at risk from testnet use. The earlier
+  throwaway key was **discarded**: the STT faucet at testnet.somnia.network requires a **connected
+  wallet** (no paste-an-address path), so a bare keypair cannot be funded. Key material deleted.
 - `PRIVATE_KEY` in the Bot Kit `.env` is deliberately **left blank**. `ec:doctor` is read-only
   and runs fine without it. Fill it in only at Stage 6, and only if that MetaMask account holds
   nothing on any mainnet — otherwise use a second MetaMask account for Shannon.
@@ -630,23 +776,33 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
       `0x679795a0…` (operatorId 2). See product-fathom.md.
 
 ## Immediate next steps
-1. **Decide the design direction** — the only thing blocking the dashboard build. Open questions:
-   which reference system (audit-document / lab-report, Debrief's Editorial Technical adapted to
-   orange, or a `styles.refero.design` reference); whether to replace the preset's Inter + DM Sans
-   with Geist + a distinctive display face; and whether "depth" is a real signature or twee.
-2. **Then Stage 3 — the dashboard.** Everything it needs exists: `DecisionTrace` carries signals with
-   measured value + calibration basis + plain reading, the rule path, per-field provenance, and
-   the oracle receipt URL. Design around real output, not placeholder chrome. UX/Design is 20% of
-   the score and the anti-slop law applies — decide a real signature first.
-2. **Stage 6 (stretch)** — gated `placeLimit` execution. Needs the funding steps below.
-3. Consider surfacing the *provenance* row in the UI — "which of these numbers is fresh" is a
-   genuinely unusual thing for a dashboard to show and it is already computed.
-4. **Set `GROQ_API_KEY` in `.env`** for model-written explanations (free key at
+
+Deadline **Sep 8 19:00 WAT** — three days. Stages 1–5 (the cut line) are complete and Stage 3 is
+built; what remains is verification and polish, not new subsystems.
+
+1. **Look at the dashboard in a browser.** `FATHOM_FIXTURE=1 npm run dev`, no network needed. It
+   is the largest untested surface in the project and it is 20% of the score. Every check so far
+   has been server-rendered markup or static SVG, so nothing interactive has been exercised:
+   hover, focus rings, the theme switch, both sheets, the price chart's hover readout, and the
+   `<640px` layout — where the board now scrolls horizontally rather than hiding columns. Run this
+   yourself; a dev server from a tool call has crashed WSL twice.
+2. **Recapture the board once the indexer's database recovers.** The committed fixture is 8
+   markets all RECHECK, which cannot demonstrate the engine discriminating — the one thing the
+   frozen board exists to prove. `npm run capture:board` and read the tally it prints; if it is
+   not mixed, run it again later. Blocked on the outage logged at the top, not on us.
+3. **Stage 6 (stretch)** — gated `placeLimit` execution. Needs the funding steps below.
+4. Consider a **consecutive-timeout breaker** on the indexer client. Six attempts × 20s of an
+   unanswerable request is ~2 minutes to learn nothing; bailing after two identical upstream
+   timeouts on one endpoint makes it a 40-second clear error. Not built.
+5. Decide whether `DepthMark` still earns its place in the detail page's signal table, with the
+   page actually open. It survived the board cut on the argument that a mark beside its own label
+   has a key; that is worth confirming by eye.
+6. **Set `GROQ_API_KEY` in `.env`** for model-written explanations (free key at
    console.groq.com/keys). Everything runs without it via the fallback narrator.
-5. **Funding, only needed for Stage 6:** STT gas (faucet needs MetaMask connected at
-   testnet.somnia.network, wallet `0xC3d33eB15B59a092cC5663fAdF5BcAeBa5afF010`) then tUSDC via
-   `faucet(uint256)` (10,000 cap per call, needs `PRIVATE_KEY` set in `.env`). Use a second
-   MetaMask account rather than one holding anything real.
+7. **Funding, only needed for Stage 6:** STT gas (faucet needs MetaMask connected at
+   testnet.somnia.network) then tUSDC via `faucet(uint256)` (10,000 cap per call, needs
+   `PRIVATE_KEY` set in `.env`). Use a second MetaMask account rather than one holding anything
+   real. The wallet address is in `.env`; it does not belong in a tracked file.
 
 ## Commands
 | Command | What it does |
