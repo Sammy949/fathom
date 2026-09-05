@@ -140,8 +140,6 @@ export interface MarketRow {
   verdict: DecisionTrace["verdict"]
   confidence: number
   action: DecisionTrace["action"]
-  /** Severity per signal id, for the list-level sounding marks. */
-  severities: { id: string; label: string; severity: string }[]
   /** Headline number pair, so the list shows real prices rather than chrome. */
   mid: number | null
   spread: number | null
@@ -159,7 +157,13 @@ export interface MarketRow {
    */
   quoteTtlSec: number | null
   owners: number | null
-  /** Count of signals that could not be measured, which drives the depth reading. */
+  /**
+   * Count of signals that could not be measured.
+   *
+   * The board states this in words on the row (`3 unmeasured`) and filters on it. It
+   * used to also drive the sounding's line length via `confidence`; that column is
+   * gone, and this is now the only place the board says how complete a read was.
+   */
   unmeasured: number
 }
 
@@ -242,11 +246,6 @@ export async function buildVenueRead(): Promise<VenueRead> {
       verdict: assessment.verdict,
       confidence: assessment.confidence,
       action: assessment.action,
-      severities: assessment.signals.map((s) => ({
-        id: s.id,
-        label: s.label,
-        severity: s.severity,
-      })),
       mid: book?.mid ?? null,
       spread: book?.spread ?? null,
       lastTradeAgeSec: fresh?.lastTradeAgeSec ?? null,
