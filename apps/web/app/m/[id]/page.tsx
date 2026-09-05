@@ -120,6 +120,7 @@ export default async function MarketPage({
             <PriceTrace
               points={trace.prices}
               intervalSec={row.intervalSec}
+              assembledAt={trace.assembledAt}
               insufficientNote={trace.signals.find((s) => s.id === "volatility")?.finding}
             />
           </div>
