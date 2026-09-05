@@ -56,6 +56,11 @@ export const shares = (v: number | null | undefined): string =>
  * hour-long window's `expires` reads `60m` while its own label reads `1h` — deliberate,
  * because a countdown wants the finer unit as it runs down and a window length wants the
  * name of its bucket.
+ *
+ * Hours and days go through `trim`, so a whole number does not carry a decimal it has not
+ * earned: `23h` rather than `23.0h`, `2d` rather than `2.0d`. A `.0` states a precision the
+ * rounding just discarded, and it also makes the string one character wider than its
+ * neighbours in a column sized to the content.
  */
 export function duration(sec: number | null | undefined): string {
   if (sec === null || sec === undefined) return NO_READING
@@ -63,8 +68,8 @@ export function duration(sec: number | null | undefined): string {
   const sign = sec < 0 ? "-" : ""
   if (s < 90) return `${sign}${Math.round(s)}s`
   if (s < 5_400) return `${sign}${Math.round(s / 60)}m`
-  if (s < 172_800) return `${sign}${(s / 3_600).toFixed(1)}h`
-  return `${sign}${(s / 86_400).toFixed(1)}d`
+  if (s < 172_800) return `${sign}${trim(s / 3_600, "h")}`
+  return `${sign}${trim(s / 86_400, "d")}`
 }
 
 /**
@@ -97,18 +102,32 @@ export function windowLabel(sec: number | null | undefined): string {
  *
  * `25h` of window is `1.0d` without this, which claims a precision the rounding just
  * removed and puts a different number of characters in the column than the `1d` beside
- * it. A genuinely fractional window still shows its fraction.
+ * it. A genuinely fractional value still shows its fraction.
+ *
+ * Shared by `duration` and `windowLabel`, so the two cannot disagree about when a decimal
+ * is worth printing. `duration` reimplemented `.toFixed(1)` on its own until a frozen board
+ * rendered `23.0h` beside a `2d`.
  */
 function trim(v: number, unit: string): string {
   const r = Math.round(v * 10) / 10
   return `${Number.isInteger(r) ? r : r.toFixed(1)}${unit}`
 }
 
-/** Wall-clock age of a read, for the staleness indicator. */
+/**
+ * Wall-clock age of a read, for the staleness indicator.
+ *
+ * DELEGATES TO `duration` rather than reimplementing its tiers, which is the whole fix. It
+ * used to carry two of its own — seconds, then minutes forever — so a frozen board captured
+ * the previous day rendered `1062m ago`, and a week-old one would read `10080m ago`. Four
+ * digits of minutes is not a duration a person parses; it is arithmetic homework. `duration`
+ * already has the ladder (s → m → h → d) and is calibrated for exactly this, so the two can
+ * no longer disagree about how long an hour is.
+ *
+ * Clamped at zero because a fixture's `assembledAt` can sit a second in the future relative
+ * to a client clock, and "-1s ago" reads as a bug rather than as clock skew.
+ */
 export function ago(ms: number): string {
-  const s = Math.max(0, Math.round((Date.now() - ms) / 1000))
-  if (s < 60) return `${s}s ago`
-  return `${Math.round(s / 60)}m ago`
+  return `${duration(Math.max(0, Math.round((Date.now() - ms) / 1000)))} ago`
 }
 
 /** Short marketId, matching how the venue's own symbols suffix them. */
