@@ -51,8 +51,23 @@ export interface RetryPolicy {
   timeoutMs: number;
 }
 
+/**
+ * Sized against the indexer's measured latency tail, not its median.
+ *
+ * See the note on `DEFAULT_SDK_RETRY` in resilient.ts for the measurement: median
+ * 316ms but individual requests observed between 0.7s and 8.3s, with occasional
+ * outright timeouts. `timeoutMs` stays at 20s — a single request that has not
+ * answered in twenty seconds is not going to — but the attempt count and ceilings
+ * are widened so an exhausted retry spans ~11s of backoff instead of ~1.75s.
+ *
+ * These queries are individually cheap and venue-scoped, so they were never the
+ * failure `capture:board` hit. Widened anyway for one reason: this policy and the SDK
+ * one guard the same host, and leaving them an order of magnitude apart means the
+ * layer that fails first is decided by which happens to be wrapped rather than by
+ * anything real.
+ */
 export const DEFAULT_RETRY: RetryPolicy = {
-  attempts: 4,
+  attempts: 6,
   baseDelayMs: 500,
   maxDelayMs: 8_000,
   timeoutMs: 20_000,
