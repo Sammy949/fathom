@@ -75,7 +75,7 @@ export default async function MarketPage({
 
   return (
     <>
-      <SiteNav venueId={read.venueId} network="Somnia testnet" assembledAt={trace.assembledAt} />
+      <SiteNav network="Somnia testnet" assembledAt={trace.assembledAt} />
       <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
         <Link
           href="/"
