@@ -40,6 +40,27 @@ const RED = "\x1b[31m";
 
 const OUT = join(import.meta.dirname, "..", "fixtures", "board.json");
 
+/**
+ * Markets to include that the venue sweep cannot reach, appended by id.
+ *
+ * `0x…c067` is the stuck-market BLOCK case: Locked on-chain, unresolved, 1503 tUSDC
+ * stranded past a settlement window that closed days ago, while the indexer still reports
+ * `clobStatus: "Trading"`. `liveMarkets` filters `expiry: {_gt: now}`, so ingestion cannot
+ * see it — and without it a frozen board is ALLOW and RECHECK only, which cannot show the
+ * engine using its full range. It is also the strongest single piece of evidence in the
+ * product: the venue contradicting itself, checkable by anyone with an RPC.
+ *
+ * Two things keep this honest rather than a thumb on the scale. The row arrives with a
+ * negative `secToExpiry` and `MarketList` flags it "past expiry" in the severe ink, so it
+ * cannot read as tradable. And if the id cannot be reached it lands in `read.failures` and
+ * is printed below, rather than the board quietly coming back one row short.
+ *
+ * `voidExpired()` is permissionless, so this state is not reproducible: the day someone
+ * calls it, the market resolves and this entry stops being interesting. That is why
+ * `fixtures/stuck-market-c067.json` exists separately and `test:risk` grades it.
+ */
+const ALSO_INCLUDE = ["0x000000000000000000000000000000000000000000000000000000000000c067"];
+
 async function main(): Promise<void> {
   if (process.env.FATHOM_FIXTURE) {
     console.error(
@@ -56,7 +77,7 @@ async function main(): Promise<void> {
 
   console.log(`${BOLD}capture:board${R} ${DIM}one live pass, then freeze${R}\n`);
   const started = Date.now();
-  const read = await buildVenueRead();
+  const read = await buildVenueRead({ alsoMarketIds: ALSO_INCLUDE });
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
   const tally = read.rows.reduce<Record<string, number>>((acc, r) => {
@@ -72,8 +93,42 @@ async function main(): Promise<void> {
       `ALLOW ${tally.ALLOW ?? 0} RECHECK ${tally.RECHECK ?? 0} BLOCK ${tally.BLOCK ?? 0} · ` +
       `${explained}/${Object.keys(read.traces).length} model-explained`,
   );
+
+  // The per-market table, so the mix is readable before anything is frozen. A tally alone
+  // does not say WHICH market is the BLOCK, and that is the one worth confirming.
+  console.log("");
+  for (const r of read.rows) {
+    const expired = r.secToExpiry <= 0;
+    const win = r.intervalSec ? `${Math.round(r.intervalSec / 60)}m` : "?";
+    console.log(
+      `    ${(r.asset ?? "?").padEnd(4)} ${win.padStart(6)}  ` +
+        `${r.verdict.padEnd(8)} ${DIM}conf ${r.confidence.toFixed(2)}  ` +
+        `${String(r.unmeasured)} unmeasured${R}` +
+        (expired ? `  ${RED}past expiry${R}` : ""),
+    );
+  }
+  console.log("");
+
   if (read.failures.length) {
     console.log(`  ${YEL}${read.failures.length} market(s) could not be snapshotted${R}`);
+    for (const f of read.failures) {
+      console.log(`    ${DIM}${f.marketId.slice(-6)} — ${f.reason}${R}`);
+    }
+  }
+
+  // An explicitly requested market that did not arrive is a FAILED capture, not a warning.
+  // The whole reason `ALSO_INCLUDE` exists is that the board needs a specific market in it;
+  // writing a fixture without it would be silently freezing the wrong board.
+  const missing = ALSO_INCLUDE.filter(
+    (id) => !read.rows.some((r) => r.marketId.toLowerCase() === id.toLowerCase()),
+  );
+  if (missing.length) {
+    console.error(
+      `\n${RED}not written${R}: ${missing.length} explicitly requested market(s) are absent ` +
+        `(${missing.map((m) => m.slice(-6)).join(", ")}). See the failures above — the board ` +
+        `was asked for these by id, so a fixture without them is not the board that was requested.`,
+    );
+    process.exit(1);
   }
 
   // A board with one verdict in it is a fixture that cannot demonstrate the
@@ -85,6 +140,11 @@ async function main(): Promise<void> {
     console.log(
       `  ${YEL}note${R} every market graded ${Object.keys(tally)[0] ?? "nothing"}. ` +
         `Fine for the dev loop, thin for a demo — recapture when the board has spread.`,
+    );
+  } else if (distinct < 3) {
+    console.log(
+      `  ${YEL}note${R} two of three verdicts present (${Object.keys(tally).join(", ")}). ` +
+        `Usable, but the full range is the thing worth showing.`,
     );
   }
 

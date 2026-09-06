@@ -45,7 +45,11 @@ import {
   explainAssessment,
   gradeSnapshot,
   ingestVenue,
+  marketById,
+  snapshotMarket,
+  withRetry,
   type DecisionTrace,
+  type MarketSnapshot,
 } from "@fathom/core"
 
 /**
@@ -144,6 +148,15 @@ export interface MarketRow {
   mid: number | null
   spread: number | null
   lastTradeAgeSec: number | null
+  /**
+   * Seconds until expiry. NEGATIVE means the market is already past it.
+   *
+   * `ingestVenue` cannot normally produce a negative here — `liveMarkets` filters
+   * `expiry: {_gt: now}` — so it only appears for a market included explicitly by id
+   * (see `alsoMarketIds`). The board MUST flag such a row rather than letting it read as
+   * a live market with an odd countdown; `MarketList` keys that flag off this field being
+   * `<= 0`, so it fires on any past-expiry row and not only on a hand-picked one.
+   */
   secToExpiry: number
   /**
    * Seconds until the median resting order expires, and how many addresses own
@@ -212,14 +225,84 @@ function exchange(): EcContext {
  * freeze a board fixture. A capture script that reimplemented this would drift
  * from it, and a fixture that does not match what the page would have rendered is
  * worse than no fixture.
+ *
+ * `alsoMarketIds` appends markets the venue sweep cannot reach, and it exists for
+ * exactly one case. `liveMarkets` filters `expiry: {_gt: now}`, so a market that has
+ * expired unresolved is invisible to ingestion — which is precisely the most
+ * interesting market on this venue: `0x…c067` sits Locked on-chain with 1503 tUSDC
+ * stranded 7.5 days past its settlement window while the indexer still reports
+ * `clobStatus: "Trading"`. That is the venue contradicting itself, verifiable by anyone
+ * with an RPC, and it is the only stable BLOCK the board can show. Without it a frozen
+ * board is ALLOW and RECHECK only, and the engine's full range goes undemonstrated.
+ *
+ * DEFAULT OFF, and only `capture:board` passes it. A live request must keep showing the
+ * live board and nothing else. Two guarantees travel with the option:
+ *
+ *   1. Rows arrive with a NEGATIVE `secToExpiry`, and `MarketList` refuses to render such
+ *      a row without a past-expiry flag. A market the venue considers over must not read
+ *      as tradable, and the flag is keyed off the data rather than off this option, so a
+ *      market that lapses between capture and viewing flags itself too.
+ *   2. An id that cannot be reached is a FAILURE in the read, not a silent omission — the
+ *      whole point is a specific market, so quietly getting six rows instead of seven
+ *      would be the fixture lying by absence.
  */
-export async function buildVenueRead(): Promise<VenueRead> {
+/**
+ * Snapshot markets the venue sweep did not return, by id.
+ *
+ * Two reads are needed and neither is optional: the indexed row (`marketById`, which has
+ * no expiry filter) and a unified market from the SDK's registry sweep, which
+ * `snapshotMarket` requires for symbols and the materialized book. The sweep keeps
+ * unfinalized markets whatever their expiry, so an expired-but-unresolved market IS in it
+ * — verified against `0x…c067`, still present 7.5 days past expiry.
+ *
+ * An id that cannot be reached lands in `failures` rather than being dropped. A caller
+ * asked for a SPECIFIC market; returning a shorter list without saying so is the fixture
+ * lying by absence, and `capture:board` prints failures.
+ */
+async function snapshotByIds(
+  ec: EcContext,
+  ids: string[],
+  failures: { marketId: string; symbol?: string; reason: string }[],
+): Promise<MarketSnapshot[]> {
+  if (ids.length === 0) return []
+
+  // One sweep for all of them, not one per id.
+  const unified = await withRetry("loadMarkets", () => ec.exchange.loadMarkets(true))
+  const byId = new Map<string, (typeof unified)[string]>()
+  for (const m of Object.values(unified)) {
+    if (m.info.marketType === "BINARY") byId.set(String(m.info.marketId).toLowerCase(), m)
+  }
+
+  const out: MarketSnapshot[] = []
+  for (const id of ids) {
+    try {
+      const row = await marketById(ec.config.indexerUrl, id)
+      if (!row) throw new Error("no indexed Market row")
+      const market = byId.get(id.toLowerCase())
+      if (!market) throw new Error("not in the SDK registry sweep, so no unified market")
+      out.push(await snapshotMarket(ec, market, row))
+    } catch (e) {
+      failures.push({
+        marketId: id,
+        reason: `requested explicitly but could not be snapshotted: ${e instanceof Error ? e.message : String(e)}`,
+      })
+    }
+  }
+  return out
+}
+
+export async function buildVenueRead(
+  opts: { alsoMarketIds?: string[] } = {},
+): Promise<VenueRead> {
   const ec = exchange()
   const { snapshots, failures, venueId, assembledAt, usable } = await ingestVenue(ec, {
     minIntervalSec: MIN_INTERVAL_SEC,
   })
 
-  const graded = snapshots.map((snapshot) => ({ snapshot, assessment: gradeSnapshot(snapshot) }))
+  const extra = await snapshotByIds(ec, opts.alsoMarketIds ?? [], failures)
+  const all = [...snapshots, ...extra]
+
+  const graded = all.map((snapshot) => ({ snapshot, assessment: gradeSnapshot(snapshot) }))
 
   // Explain the first few. `Promise.all` would fire them concurrently and trip
   // the TPM ceiling on all of them at once, so these are sequential on purpose —
