@@ -1,7 +1,6 @@
 {
   "name": "next-app",
   "version": "0.0.1",
-  "type": "module",
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS=--max-old-space-size=3072 FATHOM_FIXTURE=1 next dev",
@@ -12,7 +11,7 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.mts"
+    "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
