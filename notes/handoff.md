@@ -804,6 +804,22 @@ built; what remains is verification and polish, not new subsystems.
    `PRIVATE_KEY` set in `.env`). Use a second MetaMask account rather than one holding anything
    real. The wallet address is in `.env`; it does not belong in a tracked file.
 
+## Deploying
+
+See **[deploy.md](deploy.md)** — Vercel to `fathom.samuelyahaya.com`, plus the local setup for
+recording a demo. The short version: deploy in **fixture mode** (`FATHOM_FIXTURE=1`, one
+variable, no keys), because a live pass is ~150 round trips that cannot finish inside a
+serverless function's budget, the `globalThis` stale-while-revalidate cache does not survive
+between invocations, and the indexer went down for hours on 2026-09-05. Root Directory
+`apps/web` with *Include files outside Root Directory* ON, or the workspace packages and the
+fixture are not in the build context.
+
+That work also found the repo could not be installed by anyone who cloned it — `workspace:*`
+ranges npm rejects, a root lockfile with no `next` or `react` in it, and a stale
+workspace-unaware `apps/web/bun.lock`. Fixed in `932ccc6`: one `bun.lock` at the root covering
+all four workspaces, `packageManager: bun@1.3.14` declared. Verified from a clean clone —
+`bun install --frozen-lockfile` resolves 615 packages and `next build` passes with no `.env`.
+
 ## Commands
 | Command | What it does |
 |---|---|
@@ -818,6 +834,8 @@ built; what remains is verification and polish, not new subsystems.
 | `npm run test:risk` | 89 assertions over synthetic snapshots plus the frozen fixture, no network |
 | `npm run retry:test` | Proves retry distinguishes transient from terminal |
 | `npm run typecheck` | Whole workspace, `scripts/` included |
+| `bun install` | From the repo root. One lockfile covers all four workspaces |
+| `cd apps/web && npm run check:expiry` | Asserts a past-expiry row cannot render unflagged at any width. No network |
 | `cd apps/web && npm run dev` | The dashboard, from the frozen board (`FATHOM_FIXTURE=1`), no network. Run this yourself; see the note above |
 | `cd apps/web && npm run dev:live` | The dashboard against the live venue |
 
