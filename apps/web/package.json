@@ -11,7 +11,8 @@
     "start": "NODE_OPTIONS=--max-old-space-size=3072 next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -41,6 +42,7 @@
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4",
+    "tsx": "4.19.2",
     "typescript": "^5"
   }
 }

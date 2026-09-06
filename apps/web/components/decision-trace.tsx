@@ -48,12 +48,19 @@ import type { DecisionTrace } from "@fathom/core"
  * is whether what follows the first sentence is already present in the finding.
  * Deliberately conservative: anything genuinely new survives.
  */
-function restatesFinding(reading: string | undefined, finding: string): boolean {
+function restatesFinding(
+  reading: string | undefined,
+  finding: string
+): boolean {
   if (!reading) return true
-  const tail = reading.includes(". ") ? reading.slice(reading.indexOf(". ") + 2) : reading
+  const tail = reading.includes(". ")
+    ? reading.slice(reading.indexOf(". ") + 2)
+    : reading
   const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
   if (norm(tail).length === 0) return true
-  return norm(finding).includes(norm(tail)) || norm(tail).includes(norm(finding))
+  return (
+    norm(finding).includes(norm(tail)) || norm(tail).includes(norm(finding))
+  )
 }
 
 /**
@@ -68,7 +75,8 @@ function restatesFinding(reading: string | undefined, finding: string): boolean 
  */
 function humanFallbackReason(raw: string): string {
   const r = raw.toLowerCase()
-  if (r.includes("offline")) return "Offline mode was requested, so the model was never called."
+  if (r.includes("offline"))
+    return "Offline mode was requested, so the model was never called."
   if (r.includes("no provider") || r.includes("not configured")) {
     return "No explanation provider is configured, so the narrator wrote this."
   }
@@ -87,7 +95,11 @@ function humanFallbackReason(raw: string): string {
   if (r.includes("guard") || r.includes("rejected")) {
     return "The guard rejected the model's prose, so the narrator wrote this instead."
   }
-  if (r.includes("fetch failed") || r.includes("timed out") || r.includes("etimedout")) {
+  if (
+    r.includes("fetch failed") ||
+    r.includes("timed out") ||
+    r.includes("etimedout")
+  ) {
     return "The provider was unreachable on this read, so the narrator wrote this instead."
   }
   return "The model could not be used on this read, so the narrator wrote this instead."
@@ -129,19 +141,20 @@ export function ExplanationSource({ trace }: { trace: DecisionTrace }) {
       <p className="text-sm leading-relaxed">
         {trace.explanation.source === "model" ? (
           <>
-            Written by <span className="font-data">{trace.explanation.model}</span>, constrained
-            to prose: its output schema has no verdict, confidence, or numeric field, so it
-            cannot alter anything above.
+            Written by{" "}
+            <span className="font-data">{trace.explanation.model}</span>,
+            constrained to prose: its output schema has no verdict, confidence,
+            or numeric field, so it cannot alter anything above.
           </>
         ) : (
           <>
-            Written by the deterministic narrator, from the same signals. The model was not
-            used.
+            Written by the deterministic narrator, from the same signals. The
+            model was not used.
           </>
         )}
       </p>
       {trace.explanation.fallbackReason ? (
-        <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
           {/* The provider's raw body used to land here verbatim, which meant a
               rate limit printed 42 words of JSON on the page and named the
               provider and model to anyone reading. The reason is worth stating;
@@ -150,8 +163,9 @@ export function ExplanationSource({ trace }: { trace: DecisionTrace }) {
         </p>
       ) : null}
       {trace.explanation.usage ? (
-        <p className="text-muted-foreground font-data mt-2 text-xs">
-          {trace.explanation.usage.inputTokens} in · {trace.explanation.usage.outputTokens} out
+        <p className="font-data mt-2 text-xs text-muted-foreground">
+          {trace.explanation.usage.inputTokens} in ·{" "}
+          {trace.explanation.usage.outputTokens} out
         </p>
       ) : null}
     </section>
@@ -161,7 +175,9 @@ export function ExplanationSource({ trace }: { trace: DecisionTrace }) {
 export function SignalTable({ trace }: { trace: DecisionTrace }) {
   return (
     <section>
-      <h2 className="section-mark mb-4">Signals, as measured and thresholded</h2>
+      <h2 className="section-mark mb-4">
+        Signals, as measured and thresholded
+      </h2>
       <ul className="divide-y border-t">
         {trace.signals.map((s) => (
           <li key={s.id} className="grid grid-cols-[auto_1fr] gap-4 py-5">
@@ -169,7 +185,9 @@ export function SignalTable({ trace }: { trace: DecisionTrace }) {
 
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h3 className="font-display text-base leading-none">{s.label}</h3>
+                <h3 className="font-display text-base leading-none">
+                  {s.label}
+                </h3>
                 <SeverityLabel severity={s.severity} />
               </div>
 
@@ -179,10 +197,10 @@ export function SignalTable({ trace }: { trace: DecisionTrace }) {
               {/* The model's reading, only when it is not the finding again. See
                   the note at the top of this file. */}
               {s.reading && !restatesFinding(s.reading, s.finding) ? (
-                <p className="text-muted-foreground relative pl-3.5 text-sm leading-relaxed">
+                <p className="relative pl-3.5 text-sm leading-relaxed text-muted-foreground">
                   <span
                     aria-hidden
-                    className="bg-border absolute top-1 bottom-1 left-0 w-0.5 rounded-full"
+                    className="absolute top-1 bottom-1 left-0 w-0.5 rounded-full bg-border"
                   />
                   {s.reading}
                 </p>
@@ -194,7 +212,7 @@ export function SignalTable({ trace }: { trace: DecisionTrace }) {
                   judge to squint at the one sentence that proves the number was
                   calibrated rather than guessed. Hierarchy comes from size and
                   position here, never from fading text below legibility. */}
-              <p className="text-muted-foreground pt-1 text-xs leading-relaxed">
+              <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
                 <span className="label-caps mr-1.5">basis</span>
                 {s.basis}
               </p>
@@ -203,7 +221,11 @@ export function SignalTable({ trace }: { trace: DecisionTrace }) {
                   disclosure, because these are the machinery and not the argument:
                   a reader consults them, then returns to the audit. The trigger
                   carries the count so its weight is known before it is opened. */}
-              <EvidenceSheet label={s.label} evidence={s.evidence} basis={s.basis} />
+              <EvidenceSheet
+                label={s.label}
+                evidence={s.evidence}
+                basis={s.basis}
+              />
             </div>
           </li>
         ))}
@@ -231,25 +253,29 @@ function EvidenceSheet({
   basis: string
 }) {
   const fields = Object.entries(evidence).filter(
-    ([, v]) => v !== null && v !== undefined && v !== "",
+    ([, v]) => v !== null && v !== undefined && v !== ""
   )
   if (fields.length === 0) return null
 
   return (
     <Sheet>
-      <SheetTrigger className="label-caps hover:text-foreground focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-1 focus-visible:outline-none">
+      <SheetTrigger className="label-caps cursor-pointer transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none">
         {fields.length} measured field{fields.length === 1 ? "" : "s"}
       </SheetTrigger>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="font-display">{label}</SheetTitle>
           <SheetDescription>
-            Every field the finding was computed from, exactly as the engine recorded it.
+            Every field the finding was computed from, exactly as the engine
+            recorded it.
           </SheetDescription>
         </SheetHeader>
         <dl className="divide-y border-t px-4">
           {fields.map(([k, v]) => (
-            <div key={k} className="flex items-baseline justify-between gap-4 py-2">
+            <div
+              key={k}
+              className="flex items-baseline justify-between gap-4 px-2 py-2"
+            >
               <dt className="label-caps">{k}</dt>
               <dd className="font-data text-right text-xs break-all">
                 {typeof v === "string" && v.startsWith("http") ? (
@@ -268,7 +294,8 @@ function EvidenceSheet({
             </div>
           ))}
         </dl>
-        <p className="text-muted-foreground px-4 pb-4 text-xs leading-relaxed">
+        
+        <p className="px-6 py-6 text-xs leading-relaxed text-muted-foreground">
           <span className="label-caps mr-1.5">basis</span>
           {basis}
         </p>

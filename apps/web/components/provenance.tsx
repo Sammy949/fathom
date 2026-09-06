@@ -79,7 +79,7 @@ export function Provenance({
   return (
     <dl className="divide-y border-t">
       {entries.map((e) => (
-        <div key={e.field} className="flex items-start gap-2 py-2 text-xs leading-4">
+        <div key={e.field} className="flex items-start gap-2 py-2 px-2 text-xs leading-4">
           <StateMark state={e.state} />
           <dt className="font-data w-20 shrink-0">{e.field}</dt>
           <dd className="text-muted-foreground min-w-0 flex-1">

@@ -8,7 +8,13 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      // `overflow-x-auto` is the shadcn default and is deliberately NOT used here.
+      // `MarketList` reflows below `sm` instead of scrolling: its columns need 416px of
+      // fixed width and the widest common phone offers 382px inside the page gutter, so a
+      // scrolling table would put the verdict — the one thing the board answers — off-screen
+      // behind a sideways swipe, and nest a horizontal scroller inside a vertical one.
+      // Any future table that genuinely wants to scroll can pass it via `className`.
+      className="relative w-full"
     >
       <table
         data-slot="table"
