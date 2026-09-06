@@ -185,6 +185,7 @@ Then open the site and check, in order:
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| **500 on every page, `ERR_REQUIRE_ESM`** | `apps/web` declared `"type": "module"`; Vercel's launcher `require()`s the page handler | Remove it. Hit this on the first deploy — see §9 |
 | `EUNSUPPORTEDPROTOCOL` at install | Vercel used npm, which cannot read `workspace:*` | `packageManager` missing from root `package.json` |
 | `Can't resolve '@fathom/core'` | Workspace packages not in the build context | Turn on *Include files outside Root Directory* |
 | `FATHOM_FIXTURE is set but … could not be read` | Fixture not in the build context, same cause | Same fix; check `fixtures/board.json` is committed |
@@ -192,6 +193,7 @@ Then open the site and check, in order:
 | `VENUE_ID is not set` | Live mode without a venue | Set it from `npm run snapshot`, or use fixture mode |
 | Board renders but every price chart says "too few buckets" | Fixture predates `DecisionTrace.prices` | Recapture the board |
 | Domain stuck on *Invalid Configuration* | DNS not propagated, or Cloudflare proxying | Wait; set the record to DNS-only |
+| `does not provide an export named …` from a script | A `.mts` gate importing `.tsx` in a CommonJS package scope | Name the script `.ts` so it matches the package |
 
 ---
 
@@ -203,6 +205,28 @@ Run from a fresh `git clone` to `/tmp`, with no `.env` and no `node_modules`:
   runs.
 - `next build` in `apps/web` → passes. 5 routes, 4 dynamic and 1 static.
 - The clone contains exactly one lockfile (`bun.lock`) and declares `bun@1.3.14`.
+
+**`next start`, NOT just `next build`.** This is the part that matters and the part the first
+version of this guide got wrong. A build passing means the code compiles; it does not mean the
+server can serve it. The first deploy returned 500 on every request —
+`ERR_REQUIRE_ESM`, because `apps/web` declared `"type": "module"` and Vercel's runtime launcher
+loads the page handler with `require()`. Neither `next build` nor `next dev` exercises that
+path. So the deploy check is:
+
+```bash
+cd apps/web
+FATHOM_FIXTURE=1 npm run build:fixture
+FATHOM_FIXTURE=1 npm run start          # then actually fetch the pages
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/markets
+```
+
+Verified after the fix: `/` at 200 in 0.27s, `/api/markets` at 200 reporting 7 markets
+(ALLOW 1 / RECHECK 2 / BLOCK 4), a market detail page at 200 in 0.10s.
+
+**Known and not fixed:** a missing market returns **HTTP 200** with 404 content. `notFound()`
+renders the correct page but the status line lies, so a crawler would index it as a real page.
+Cosmetic for a demo, wrong for anything indexed.
 
 **Not verified**, and worth knowing: nothing here has been run on Vercel itself. The install
 and build are the same commands their pipeline issues, and the settings in §3 are the ones
