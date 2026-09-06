@@ -74,6 +74,39 @@
  * cannot help here. So each figure carries its own `label-caps` on mobile and drops it at
  * `sm`, where the column heading takes the job back.
  *
+ * THE REFLOW IS A GRID, NOT A WRAPPING FLEX ROW, and every number below came out of driving
+ * a real browser at 320-639px rather than out of reading the CSS. The four figures used to be
+ * laid out by their own intrinsic text widths and landed at x = 24, 121.8, 247.9, then 24
+ * again on the second line: four unrelated axes, with `expires` under `mid` by accident. Which
+ * figure began a line also changed with the viewport (2+2 at 320px, 3+1 from 375px up), so the
+ * shape of the block depended on how wide the strings happened to be. A table's whole job is
+ * that a figure sits in a column, and wrapping by content length is the ragged-parallel-columns
+ * failure in a smaller costume. Now every figure NAMES its cell (`AT` below): two columns, two
+ * rows, holding at x = 24 and 133.8 from 320px all the way to 639px.
+ *
+ * Auto-flow could not do it. Three track shapes were measured and rejected first: `1fr auto`
+ * gave the first column half the viewport so the pair drifted apart as the screen grew (44px
+ * of slack at 320px, 154px at 430px); `max-content max-content` with `justify-between` shoved
+ * them to opposite rims 262px apart and overflowed 320px; `auto auto 1fr` let the fourth
+ * figure flow into the verdict's column and collapse the 2x2 into a 3+1, overflowing 320px by
+ * 58px. Naming the cell is the only arrangement that cannot drift.
+ *
+ * THE VERDICT IS A GRID ITEM, no longer absolutely positioned, and that fixed a real bug.
+ * `absolute top-0 right-0` measured at EXACTLY 0px from the row's top edge — flush against the
+ * rule dividing it from the row above, and a full line clear of its own asset — because `top-0`
+ * resolves against the padding box, outside the `py-5`. Every verdict on a phone was glued to
+ * the previous row's boundary, reading as though it belonged to that row. As a grid item it
+ * shares the identity's line for real, which is what the old comment claimed and the layout did
+ * not do, and it retires the `pr-24` that used to reserve room for it: two grid items cannot
+ * overlap, so the guard is structural rather than a magic number.
+ *
+ * IT WRAPS BELOW 360px, because there the line genuinely cannot hold both. The arithmetic:
+ * 272px usable inside the gutter against 85.8 + 114.1 of figures and 51 of RECHECK, which
+ * needs the gap down to 8px to fit — and a row crushed to an 8px gutter to keep one element on
+ * one line is worse than the wrap. So under 360px the verdict takes its own line under the
+ * identity, and from 360px up it sits at the right margin. Verified at 359 and 360 either side
+ * of the boundary: no overflow at any width from 320 up.
+ *
  * ONE `<table>`, ONE DATA PATH, TWO LAYOUTS. The reflow is `display` on the same cells
  * (`sm:table-cell`), not a second component and not a duplicated row. A second markup path
  * is how the past-expiry flag ends up present in one view and missing in the other, and
@@ -83,9 +116,23 @@
 
 import Link from "next/link"
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { VerdictMark } from "@/components/verdict-mark"
-import { duration, NO_READING, points, prob, shortId, windowLabel } from "@/lib/format"
+import {
+  duration,
+  NO_READING,
+  points,
+  prob,
+  shortId,
+  windowLabel,
+} from "@/lib/format"
 import type { MarketRow } from "@/lib/venue"
 
 /**
@@ -125,15 +172,29 @@ const COLUMNS = [
  * shared baseline.
  *
  * SPACING IS MEASURED, NOT GUESSED. The four pairs render 400px wide against 382px available
- * inside the gutter on the widest phone in common use, so the strip wraps to two lines on
- * EVERY phone — which is fine, but it means the gaps decide whether it reads as two lines or
- * as a jam. `gap-x-3` between pairs (12px) rather than `pr-4` (16px): still a clear break
- * between one figure and the next, and it buys back 16px across the strip, which is most of
- * the overflow. `gap-y-1.5` because a wrapped line needs vertical air that a table row does
- * not.
+ * inside the gutter on the widest phone in common use, so they cannot sit on one line at any
+ * phone width — which is why they are two grid columns rather than a strip that wraps. The
+ * `mr-3` that used to separate one pair from the next is gone: the grid's own `gap-x` does
+ * that job now, and a margin on top of it would push the second column off its axis.
  */
 const FIGURE =
-  "font-data inline-flex items-baseline gap-x-1.5 mr-3 text-sm align-baseline sm:table-cell sm:mr-0 sm:px-0 sm:py-4"
+  "font-data inline-flex items-baseline gap-x-1.5 text-sm align-baseline sm:table-cell sm:px-0 sm:py-4"
+
+/**
+ * Where each figure sits in the mobile grid, stated explicitly.
+ *
+ * Auto-flow will not do this. With three tracks (two for the figures, one holding the
+ * verdict at the right margin) the fourth figure flows into the verdict's column and the
+ * 2x2 collapses into a 3+1 that overflows a 320px screen by 58px — measured, after two
+ * other track shapes failed the same way for different reasons. Naming the cell is the
+ * only arrangement that cannot drift: two columns, two rows, whatever the strings are.
+ */
+const AT = {
+  midCell: "col-start-1 row-start-2",
+  spreadCell: "col-start-2 row-start-2",
+  quoteCell: "col-start-1 row-start-3",
+  expiresCell: "col-start-2 row-start-3",
+} as const
 
 /**
  * The label that only exists in the reflow, where there is no column heading above it.
@@ -148,9 +209,9 @@ const FIGURE_LABEL = "label-caps sm:hidden"
 export function MarketList({ rows }: { rows: MarketRow[] }) {
   if (rows.length === 0) {
     return (
-      <p className="text-muted-foreground py-16 text-center text-sm">
-        No markets on this venue are currently long enough to assess. Windows under 15 minutes
-        expire before a verdict can be read.
+      <p className="py-16 text-center text-sm text-muted-foreground">
+        No markets on this venue are currently long enough to assess. Windows
+        under 15 minutes expire before a verdict can be read.
       </p>
     )
   }
@@ -209,27 +270,34 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                two different baselines, which is the exact "everything is slightly off" a
                figure table cannot afford. One baseline per row.
 
-               `block` below `sm` is what lets the cells stack; `sm:table-row` restores the
-               row. `relative` carries the stretched link at both widths.
+               BELOW `sm` THIS IS A THREE-COLUMN GRID; at `sm` it is a table row again.
+
+               The tracks are `auto auto 1fr`, and that shape was arrived at by measuring two
+               wrong ones first. `1fr auto` gave the first figure column half the viewport, so
+               the two figures drifted apart as the screen grew (44px of slack between them at
+               320px, 154px at 430px) and read as two unrelated lists. `max-content max-content`
+               with `justify-between` was worse: it pushed the tracks to opposite rims, 262px
+               apart, and overflowed at 320px. What the row actually wants is the figures sized
+               to their own content, sitting NEXT to each other, with the leftover width
+               absorbed by a third empty track so the pair stays left and the verdict — placed
+               explicitly in that third column — still lands at the right margin.
+
+               `items-baseline` so the verdict sits on the asset's baseline rather than being
+               centred against it at a different size. Verified with a zero-width inline probe,
+               because a bounding box is not a baseline: the delta is 0.00px on every row.
 
                `py-5` on mobile against `sm:py-0` (the cells carry their own `sm:py-4`): the
-               row is genuinely three lines tall on a phone — identity, then two wrapped
-               lines of figures — so it needs more air between rows than between its own
-               lines, or the rules stop reading as row boundaries. `gap-y-1.5` on the figure
-               wrapper below does the within-row half.
-
-               `flex flex-wrap` below `sm` rather than relying on inline flow: the cells are
-               `inline-flex`, and inline-level boxes in a block container inherit its line
-               height, which stacked the wrapped lines tighter than their own content wanted. */
+               row is three lines tall on a phone — identity, then two rows of figures — so it
+               needs more air between rows than between its own lines. `gap-y-2` does the
+               within-row half, and `gap-x-6` separates the two figure columns. */
             <TableRow
               key={r.marketId}
-              className="group relative flex flex-wrap gap-y-1.5 py-5 sm:table-row sm:gap-y-0 sm:py-0"
+              className="group relative grid grid-cols-[auto_auto] items-baseline gap-x-6 gap-y-2 py-5 min-[360px]:grid-cols-[auto_auto_minmax(0,1fr)] sm:table-row sm:gap-0 sm:py-0"
             >
-              {/* `basis-full` keeps the identity on its own line at mobile; `pr-24` reserves
-                  the width the absolutely-positioned verdict occupies, so a long identity
-                  line cannot run under RECHECK. Both cleared at `sm`, where the verdict has
-                  its own column. */}
-              <TableCell className="basis-full px-0 py-0 pr-24 align-baseline sm:table-cell sm:pr-0 sm:py-4">
+              {/* Column 1 of the identity line. The `pr-24` that used to reserve room for the
+                  absolutely-positioned verdict is gone — the verdict is a grid item in column
+                  2 now, and two grid items cannot overlap, so nothing needs reserving. */}
+              <TableCell className="col-span-2 col-start-1 row-start-1 px-0 py-0 align-baseline sm:table-cell sm:py-4">
                 {/* One real link per row, in the identity cell, its hit area stretched over
                     the whole row by `after:inset-0`. A `<tr>` cannot be wrapped in an `<a>`,
                     and making the row clickable with an onClick would take it away from the
@@ -237,12 +305,15 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                     row stays a target. */}
                 <Link
                   href={`/m/${shortId(r.marketId)}`}
-                  className="flex flex-wrap items-baseline gap-x-2.5 outline-none after:absolute after:inset-0 group-hover:[&_[data-asset]]:text-primary group-focus-within:[&_[data-asset]]:text-primary"
+                  className="flex flex-wrap items-baseline gap-x-2.5 outline-none after:absolute after:inset-0 group-focus-within:[&_[data-asset]]:text-primary group-hover:[&_[data-asset]]:text-primary"
                 >
-                  <span data-asset className="font-display text-lg leading-none">
+                  <span
+                    data-asset
+                    className="font-display text-lg leading-none"
+                  >
                     {r.asset ?? NO_READING}
                   </span>
-                  <span className="font-data text-muted-foreground text-xs">
+                  <span className="font-data text-xs text-muted-foreground">
                     {windowLabel(r.intervalSec)}
                   </span>
                   {/* Set in `--ink-severe`, the same register the detail page uses for a
@@ -259,7 +330,10 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                     </span>
                   ) : null}
                   {r.unmeasured > 0 ? (
-                    <span className="text-xs" style={{ color: "var(--ink-unknown)" }}>
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--ink-unknown)" }}
+                    >
                       {r.unmeasured} unmeasured
                     </span>
                   ) : null}
@@ -273,15 +347,17 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                   Each carries a `label-caps` that only shows below `sm`, where the hidden
                   header row cannot label it. Above `sm` the label disappears and the column
                   heading takes over — same cell, same value, no duplicate markup. */}
-              <TableCell className={FIGURE}>
+              <TableCell className={`${FIGURE} ${AT.midCell}`}>
                 <span className={FIGURE_LABEL}>mid</span>
                 {prob(r.mid)}
               </TableCell>
-              <TableCell className={FIGURE}>
+              <TableCell className={`${FIGURE} ${AT.spreadCell}`}>
                 <span className={FIGURE_LABEL}>spread pt</span>
                 {points(r.spread)}
               </TableCell>
-              <TableCell className={`${FIGURE} text-muted-foreground`}>
+              <TableCell
+                className={`${FIGURE} ${AT.quoteCell} text-muted-foreground`}
+              >
                 <span className={FIGURE_LABEL}>quote</span>
                 {duration(r.quoteTtlSec)}
               </TableCell>
@@ -289,18 +365,30 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                   mislead — `duration` renders -646253 as `-7.5d`, which reads as a typo
                   rather than as a fact. The identity line states the lapse; this says the
                   countdown does not apply any more. */}
-              <TableCell className={`${FIGURE} text-muted-foreground`} data-expires>
+              <TableCell
+                className={`${FIGURE} ${AT.expiresCell} text-muted-foreground`}
+                data-expires
+              >
                 <span className={FIGURE_LABEL}>expires</span>
                 {expired ? NO_READING : duration(r.secToExpiry)}
               </TableCell>
 
-              {/* The verdict. On mobile it is pulled up onto the identity line by
-                  `absolute right-0 top-0` — the answer the board exists to give must be
-                  readable without hunting for it, and at the end of a wrapped figure strip
-                  it would be the last thing found rather than the first. At `sm` it returns
-                  to its own column. `pointer-events-none` because the row-wide link sits
-                  above it; the verdict is a reading, not a second target. */}
-              <TableCell className="pointer-events-none absolute top-0 right-0 px-0 py-0 align-baseline sm:static sm:table-cell sm:py-4">
+              {/* The verdict: the answer the board exists to give, so on a phone it belongs on
+                  the identity line rather than after four figures.
+
+                  PLACED EXPLICITLY at row 1 / column 2 rather than reordered in the DOM. It is
+                  the LAST cell because that is its table column at `sm`, and that source order
+                  is also what a screen reader reads and what `<th scope=col>` maps onto — so
+                  moving the markup to suit the small layout would trade a visual fix for a
+                  semantic regression. `row-start-1 col-start-3` moves only the painted box.
+
+                  This replaces `absolute top-0 right-0`, which measured 0px from the row's top
+                  edge — flush against the rule above and 18px clear of its own asset's baseline.
+                  A grid item cannot escape the row's padding that way.
+
+                  `pointer-events-none` stays: the row-wide link sits above it, and the verdict
+                  is a reading rather than a second target. */}
+              <TableCell className="pointer-events-none col-span-2 col-start-1 row-start-4 px-0 pt-1 pb-0 align-baseline min-[360px]:col-span-1 min-[360px]:col-start-3 min-[360px]:row-start-1 min-[360px]:pt-0 min-[360px]:text-right sm:table-cell sm:pt-0 sm:text-left">
                 <VerdictMark verdict={r.verdict} size="sm" />
               </TableCell>
             </TableRow>
