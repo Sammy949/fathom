@@ -29,7 +29,26 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-import { buildVenueRead } from "../apps/web/lib/venue";
+/**
+ * The VALUE comes through a dynamic import; the TYPE comes through a normal one.
+ *
+ * A static `import { buildVenueRead }` stopped resolving once apps/web dropped
+ * `type: module`: under tsx its `.ts` compiles to CommonJS, and Node's ESM lexer cannot
+ * see the named exports through that wrapper, so the import throws "does not provide an
+ * export named 'buildVenueRead'". A runtime `import()` resolves them correctly.
+ *
+ * `import type` is erased at compile time, so it never reaches that runtime boundary at
+ * all — which means the real `VenueRead` can still be used here rather than a hand-written
+ * structural copy. The first attempt at this file DID hand-write one, and it drifted from
+ * `VenueRead` within minutes (missing `confidence`, a bogus index signature, `marketId`
+ * optional when it is not). Describing a type you already have is how the description goes
+ * wrong.
+ */
+import type { buildVenueRead as BuildVenueRead } from "../apps/web/lib/venue";
+
+const { buildVenueRead } = (await import("../apps/web/lib/venue")) as {
+  buildVenueRead: typeof BuildVenueRead;
+};
 
 const R = "\x1b[0m";
 const BOLD = "\x1b[1m";
