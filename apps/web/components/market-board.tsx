@@ -32,7 +32,7 @@ const VERDICT_INK: Record<Verdict, string> = {
   BLOCK: "var(--verdict-block)",
 }
 
-export function MarketBoard({ rows }: { rows: MarketRow[] }) {
+export function MarketBoard({ rows, assembledAt }: { rows: MarketRow[]; assembledAt: number }) {
   const [only, setOnly] = useState<Verdict | null>(null)
   const [unmeasuredOnly, setUnmeasuredOnly] = useState(false)
 
@@ -102,7 +102,7 @@ export function MarketBoard({ rows }: { rows: MarketRow[] }) {
           </button>
         </p>
       ) : (
-        <MarketList rows={shown} />
+        <MarketList rows={shown} assembledAt={assembledAt} />
       )}
     </div>
   )

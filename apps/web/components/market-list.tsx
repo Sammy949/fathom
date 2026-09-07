@@ -115,6 +115,7 @@
  */
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
 import {
   Table,
@@ -206,7 +207,22 @@ const AT = {
  */
 const FIGURE_LABEL = "label-caps sm:hidden"
 
-export function MarketList({ rows }: { rows: MarketRow[] }) {
+export function MarketList({ rows, assembledAt }: { rows: MarketRow[]; assembledAt: number }) {
+  /**
+   * Live clock for expiry countdown.
+   *
+   * Ticks every second so rows compute their remaining time against NOW rather than showing
+   * a frozen delta from when the board was captured. A row that has expired says `past expiry`
+   * per-row, rather than reciting a stale countdown like `expires 54m` when the market settled
+   * hours ago. Same mechanism as ReadAge — staleness is this product's subject, so time has to
+   * count honestly.
+   */
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   if (rows.length === 0) {
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
@@ -253,16 +269,22 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
       <TableBody>
         {rows.map((r) => {
           /**
-           * Past expiry, and the board must say so.
+           * Past expiry, computed from ABSOLUTE time against the live clock.
            *
-           * Keyed off the DATA, not off how the row got here. `liveMarkets` filters
-           * `expiry: {_gt: now}` so ingestion cannot normally produce this, but
-           * `buildVenueRead({ alsoMarketIds })` appends markets by id for the capture, and a
-           * market can also lapse between a capture and someone reading it. Either way the
-           * row must not read as tradable, and testing the field means both cases are
-           * covered by one branch rather than by remembering to tag one of them.
+           * Before this change, `expired` was keyed off the frozen `secToExpiry` from when the
+           * board was captured, so a row said `expires 54m` when the market had actually settled
+           * hours ago. Now: absolute expiry = `assembledAt/1000 + secToExpiry` (both in the data),
+           * compared against `now` (ticking every second). A market that has expired says
+           * `past expiry` with the real elapsed time, per row, rather than the whole page lying
+           * about countdowns that stopped counting.
+           *
+           * This still tests the field rather than the path, so both cases are covered: markets
+           * appended by id for the capture (which may already be expired at capture time), and
+           * markets that lapse between a capture and someone reading it.
            */
-          const expired = r.secToExpiry <= 0
+          const absoluteExpiryMs = assembledAt + r.secToExpiry * 1000
+          const secToExpiry = Math.floor((absoluteExpiryMs - now) / 1000)
+          const expired = secToExpiry <= 0
 
           return (
             /* `align-baseline` on every cell, not `align-middle`. The asset is 18px display
@@ -319,14 +341,15 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
                   {/* Set in `--ink-severe`, the same register the detail page uses for a
                       blocking finding, because that is what this is: the window closed and
                       nothing can be done on it. It reads before the figures on purpose —
-                      "past expiry" changes what every number after it means. */}
+                      "past expiry" changes what every number after it means. Now computed from
+                      absolute time so it counts honestly against the live clock. */}
                   {expired ? (
                     <span
                       data-expired
                       className="text-xs font-medium"
                       style={{ color: "var(--ink-severe)" }}
                     >
-                      past expiry {duration(-r.secToExpiry)}
+                      past expiry {duration(-secToExpiry)}
                     </span>
                   ) : null}
                   {r.unmeasured > 0 ? (
@@ -364,13 +387,14 @@ export function MarketList({ rows }: { rows: MarketRow[] }) {
               {/* An expired market's countdown is the one figure that would actively
                   mislead — `duration` renders -646253 as `-7.5d`, which reads as a typo
                   rather than as a fact. The identity line states the lapse; this says the
-                  countdown does not apply any more. */}
+                  countdown does not apply any more. Now uses the live computed secToExpiry
+                  rather than the frozen r.secToExpiry. */}
               <TableCell
                 className={`${FIGURE} ${AT.expiresCell} text-muted-foreground`}
                 data-expires
               >
                 <span className={FIGURE_LABEL}>expires</span>
-                {expired ? NO_READING : duration(r.secToExpiry)}
+                {expired ? NO_READING : duration(secToExpiry)}
               </TableCell>
 
               {/* The verdict: the answer the board exists to give, so on a phone it belongs on

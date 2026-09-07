@@ -78,9 +78,15 @@ const check = (cond: boolean, msg: string) => {
   if (!cond) failures.push(msg);
 };
 
-/** The markup of one row, isolated. `[0]` is pre-table, `[1]` is the head row. */
-function rowOf(r: MarketRow): string {
-  const html = renderToStaticMarkup(createElement(MarketList, { rows: [r] }));
+/**
+ * The markup of one row, isolated. `[0]` is pre-table, `[1]` is the head row.
+ *
+ * `assembledAt` defaults to now — a board captured this instant — so most assertions read
+ * `secToExpiry` at face value. Pass an older one to model a FROZEN board, which is the case
+ * that actually shipped broken (see assertion 10).
+ */
+function rowOf(r: MarketRow, assembledAt = Date.now()): string {
+  const html = renderToStaticMarkup(createElement(MarketList, { rows: [r], assembledAt }));
   return html.split(/<tr\s/)[2] ?? "";
 }
 
@@ -191,7 +197,7 @@ for (const l of inlineLabels) {
 }
 
 // ── 9: the header row hides below sm, and the table does not scroll ──────────────
-const full = renderToStaticMarkup(createElement(MarketList, { rows: [expired, live] }));
+const full = renderToStaticMarkup(createElement(MarketList, { rows: [expired, live], assembledAt: Date.now() }));
 check(
   /<thead[^>]*class="[^"]*hidden[^"]*sm:table-header-group/.test(full),
   "the header row does not hide below sm — six column heads cannot fit a phone",
@@ -199,6 +205,36 @@ check(
 check(
   !/data-slot="table-container"[^>]*overflow-x-auto/.test(full),
   "the table scrolls horizontally; the verdict would sit off-screen behind a sideways swipe",
+);
+
+// ── 10: a FROZEN board must not recite a countdown that stopped counting ─────────
+// The case that actually shipped broken. Every row on the deployed board said `expires 54m`
+// twelve hours after capture, because `expired` was read off the frozen `secToExpiry`
+// instead of being computed against now. A market that was live AT CAPTURE and has expired
+// SINCE must flag itself, or the page states a countdown for a market that has settled.
+const HOUR = 3_600_000;
+const wasLiveAtCapture: MarketRow = { ...live, secToExpiry: 3_600 }; // 1h left when captured
+const staleRow = rowOf(wasLiveAtCapture, Date.now() - 12 * HOUR); // …read 12h later
+check(
+  staleRow.includes("data-expired"),
+  "a market that was live at capture but has since expired is NOT flagged — the row recites a frozen countdown",
+);
+const staleLapse = /past expiry ([^<]+)</.exec(staleRow)?.[1]?.trim();
+check(
+  staleLapse === "11h",
+  `expected the stale row's lapse to read 11h (12h elapsed minus the 1h it had left), got "${staleLapse}"`,
+);
+const staleCells = cellsOf(staleRow);
+check(
+  staleCells[4] === NO_READING,
+  `a stale row's expires cell shows "${staleCells[4]}"; a countdown that stopped counting must not be reprinted`,
+);
+
+// And the converse: a frozen board read BEFORE its markets expire is left alone.
+const stillLive = rowOf({ ...live, secToExpiry: 86_400 }, Date.now() - 1 * HOUR);
+check(
+  !stillLive.includes("data-expired"),
+  "a market with time left after a 1h-old capture was wrongly flagged expired",
 );
 
 // ── report ───────────────────────────────────────────────────────────────────────

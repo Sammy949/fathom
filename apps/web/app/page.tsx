@@ -1,4 +1,5 @@
 import { MarketBoard } from "@/components/market-board"
+import { ReadAge } from "@/components/read-age"
 import { SiteNav } from "@/components/site-nav"
 import { shortId } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
@@ -35,10 +36,37 @@ export default async function Home() {
           </p>
         </header>
 
+        {/* A FROZEN BOARD SAYS SO, above the table rather than in the chrome.
+
+            The nav already carries the read age, and that was not enough: `12.2h ago` in a
+            corner is a fact a reader can pass over, and every row underneath it still reads
+            as a live market. This states the whole condition once, in prose, immediately
+            before the thing it qualifies — and names WHY, because "this is a snapshot" invites
+            "then why isn't it live" and the answer is architectural rather than an oversight.
+
+            Not a pill, not a tinted chip, not an alert box with an icon. A rule and a line of
+            text: the same register as the calibration note in the footer, because it is the
+            same kind of statement. The `--ink-unknown` tone is the one this product already
+            uses for "measured, but not a reading you can act on". */}
+        {read.frozen ? (
+          <p
+            className="mb-8 border-l-2 py-1 pl-4 text-xs leading-relaxed"
+            style={{ borderColor: "var(--ink-unknown)", color: "var(--muted-foreground)" }}
+          >
+            <span className="text-foreground">This board is a frozen snapshot</span>, captured{" "}
+            <ReadAge at={read.assembledAt} className="font-data" /> and served without touching
+            the venue. One live pass is ~150 round trips and measured 46s, which does not fit a
+            serverless function&apos;s budget — so the deployed page shows a capture rather than
+            making you wait for one. Rows past their window are marked; verdicts describe the
+            venue as it stood at that moment. For live readings, run it locally against the
+            venue or call the API.
+          </p>
+        ) : null}
+
         {/* The verdict tally used to sit in a `dl` above the list, restating counts
             that the filter chips now carry as their own labels. One control, one
             source of truth. */}
-        <MarketBoard rows={read.rows} />
+        <MarketBoard rows={read.rows} assembledAt={read.assembledAt} />
 
         {/* Ingest failures are shown, not swallowed. A market the indexer listed
             but that could not be snapshotted is a fact about the read. */}

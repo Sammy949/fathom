@@ -35,6 +35,15 @@ export async function GET() {
         venueId: read.venueId,
         assembledAt: read.assembledAt,
         assembledAtIso: new Date(read.assembledAt).toISOString(),
+        /**
+         * True when this is the frozen board rather than a live venue read.
+         *
+         * A consumer deciding whether to act on a verdict needs this as much as a person
+         * looking at the page does: `assembledAt` alone says the read is old, not that it
+         * is a snapshot that will never advance. Absent (rather than false) on a live read,
+         * so an older client that does not know the field is unaffected.
+         */
+        ...(read.frozen ? { frozen: true } : {}),
         /** True when at least one market was gradeable. */
         usable: read.usable,
         /** True when any read degraded or any market went ungraded. */

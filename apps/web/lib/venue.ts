@@ -218,6 +218,16 @@ export interface VenueRead {
   /** True when at least one market is gradeable — what the UI checks. */
   usable: boolean
   degraded: boolean
+  /**
+   * True when this read came from the frozen board rather than the venue.
+   *
+   * Set at SERVE time, not at capture time: `capture:board` writes the file with a live
+   * pass, so the fact that a board is frozen is a property of how it is being read, not of
+   * what is in it. Carried on the data rather than exposed as an env check so that
+   * `/api/markets` reports it too — an agent reading a verdict has the same right to know
+   * the board is a snapshot as a person looking at the page does.
+   */
+  frozen?: boolean
 }
 
 /**
@@ -434,6 +444,9 @@ export async function getVenueRead(): Promise<VenueRead> {
           )
         }
       }
+      // Marked here rather than in the file: a board is frozen because of how it is being
+      // read, not because of what it contains. `capture:board` writes it with a live pass.
+      state.cached.data = { ...state.cached.data, frozen: true }
     }
     return state.cached.data
   }
