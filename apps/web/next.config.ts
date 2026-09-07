@@ -13,6 +13,33 @@ const nextConfig: NextConfig = {
   // route handler, and guarantees the API key path never reaches the client.
   serverExternalPackages: ["@somnia-chain/markets-sdk", "viem"],
 
+  /**
+   * Ship the frozen board INTO the serverless functions that read it.
+   *
+   * Next decides what each function needs by tracing imports statically. `lib/venue.ts`
+   * reads the fixture with `readFileSync` on a path computed at runtime, which no static
+   * analysis can see — and the file lives at the MONOREPO root, outside this app — so it was
+   * never copied into the lambda. Deployed, every page threw:
+   *
+   *   FATHOM_FIXTURE is set but /var/task/apps/web/fixtures/board.json could not be read
+   *   (ENOENT ...)
+   *
+   * The path is relative to `outputFileTracingRoot`, and both are needed: the root has to be
+   * the monorepo (matching `turbopack.root` above) or the `../../` in the glob escapes the
+   * tracing base and resolves to nothing.
+   *
+   * Listed per-route rather than with a `**` wildcard so only the three routes that actually
+   * call `getVenueRead` carry the file. A wildcard would put a ~100KB JSON into every
+   * function including the ones that never read it.
+   */
+  outputFileTracingRoot: path.join(__dirname, "..", ".."),
+  outputFileTracingIncludes: {
+    "/": ["./fixtures/board.json"],
+    "/m/[id]": ["./fixtures/board.json"],
+    "/api/markets": ["./fixtures/board.json"],
+    "/api/markets/[id]": ["./fixtures/board.json"],
+  },
+
   turbopack: {
     // MUST be the monorepo root, not this app. `@fathom/core` and `@fathom/ec`
     // live at ../../packages, and Turbopack refuses to resolve modules outside

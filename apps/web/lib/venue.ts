@@ -75,14 +75,38 @@ import {
 const FIXTURE_ENV = (process.env.FATHOM_FIXTURE ?? "").trim()
 
 /**
- * Where the frozen board lives.
+ * The committed board, IMPORTED rather than read from disk.
  *
- * `FATHOM_FIXTURE=1` walks UP from the working directory looking for
- * `fixtures/board.json`, rather than assuming a fixed number of `..` hops. Next
- * runs with cwd at `apps/web` while a workspace script runs from the repo root,
- * and hardcoding `../../fixtures` for the first silently resolved to
- * `/home/samy/fixtures` for the second. Same walk-up that `loadEnv` uses to find
- * `.env`, for the same reason. Any other value is taken as a literal path.
+ * This is a deploy fix, not a style choice. `readFileSync` on a path computed at runtime is
+ * invisible to a bundler: Next decides what each serverless function needs by tracing imports
+ * statically, so the fixture was never copied into the lambda and every deployed page threw
+ *
+ *   FATHOM_FIXTURE is set but /var/task/apps/web/fixtures/board.json could not be read
+ *
+ * `outputFileTracingIncludes` is the documented remedy and it did NOT work here — measured on
+ * Next 16.2.6, which builds with Turbopack: 694 files traced, the fixture among none of them.
+ * An import cannot have that problem, because the bundler resolves it at build time and the
+ * data ends up inside the function rather than beside it. It also means one less runtime
+ * failure mode: a missing fixture becomes a build error instead of a 500.
+ *
+ * The cost is ~70KB of JSON in the server bundle whenever this module is loaded, including in
+ * live mode where it is never read. Worth it: the alternative is a deploy that only fails once
+ * it is deployed.
+ */
+import BUNDLED_BOARD from "../../../fixtures/board.json"
+
+
+/**
+ * Where the frozen board lives, when it is read from DISK.
+ *
+ * Only reached for `FATHOM_FIXTURE=<path>`, i.e. an explicit alternate board. The default
+ * `FATHOM_FIXTURE=1` uses the STATIC IMPORT above instead, and the difference is a deploy
+ * bug rather than a preference — see the note on `BUNDLED_BOARD`.
+ *
+ * Walks UP from the working directory rather than assuming a fixed number of `..` hops.
+ * Next runs with cwd at `apps/web` while a workspace script runs from the repo root, and
+ * hardcoding `../../fixtures` for the first silently resolved to `/home/samy/fixtures` for
+ * the second. Same walk-up that `loadEnv` uses to find `.env`, for the same reason.
  */
 function fixturePath(): string {
   if (FIXTURE_ENV !== "1" && FIXTURE_ENV.toLowerCase() !== "true") return FIXTURE_ENV
@@ -97,6 +121,10 @@ function fixturePath(): string {
   // Nothing found: return the most likely path so the error names something real.
   return join(process.cwd(), "fixtures", "board.json")
 }
+
+/** True when `FATHOM_FIXTURE` asks for the committed board rather than a named file. */
+const wantsBundledBoard = FIXTURE_ENV === "1" || FIXTURE_ENV.toLowerCase() === "true"
+
 
 /**
  * How long a read stays fresh, and the floor between passes.
@@ -386,18 +414,25 @@ export async function getVenueRead(): Promise<VenueRead> {
   // constructed on this path, so no socket is opened and nothing needs closing.
   if (FIXTURE_ENV) {
     if (!state.cached) {
-      const path = fixturePath()
-      try {
-        state.cached = {
-          at: Date.now(),
-          data: JSON.parse(readFileSync(path, "utf8")) as VenueRead,
+      // The default board comes from the static import, which is inside the bundle and
+      // therefore cannot go missing at runtime. Only an explicitly NAMED board
+      // (`FATHOM_FIXTURE=/path/to/other.json`) touches the disk.
+      if (wantsBundledBoard) {
+        state.cached = { at: Date.now(), data: BUNDLED_BOARD as unknown as VenueRead }
+      } else {
+        const path = fixturePath()
+        try {
+          state.cached = {
+            at: Date.now(),
+            data: JSON.parse(readFileSync(path, "utf8")) as VenueRead,
+          }
+        } catch (e) {
+          throw new Error(
+            `FATHOM_FIXTURE names ${path}, which could not be read. Point it at a board written ` +
+              `by \`npm run capture:board\`, set FATHOM_FIXTURE=1 for the committed one, or unset ` +
+              `it to read live. (${e instanceof Error ? e.message : String(e)})`,
+          )
         }
-      } catch (e) {
-        throw new Error(
-          `FATHOM_FIXTURE is set but ${path} could not be read. Run \`npm run capture:board\` ` +
-            `once against the live venue, or unset FATHOM_FIXTURE to read live. ` +
-            `(${e instanceof Error ? e.message : String(e)})`,
-        )
       }
     }
     return state.cached.data
