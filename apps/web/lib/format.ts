@@ -40,7 +40,9 @@ export const pct = (v: number | null | undefined, dp = 0): string =>
 
 /** Share counts. Whole shares; the venue quotes in hundreds. */
 export const shares = (v: number | null | undefined): string =>
-  v === null || v === undefined ? NO_READING : Math.round(v).toLocaleString("en-US")
+  v === null || v === undefined
+    ? NO_READING
+    : Math.round(v).toLocaleString("en-US")
 
 /**
  * A duration, in the largest unit that stays legible.
@@ -132,3 +134,30 @@ export function ago(ms: number): string {
 
 /** Short marketId, matching how the venue's own symbols suffix them. */
 export const shortId = (id: string): string => id.slice(-6)
+
+/**
+ * Is this string a market id we are willing to resolve?
+ *
+ * The resolver matches by SUFFIX (`full.endsWith(wanted)`), which is what lets `/m/010fad`
+ * open the market whose bytes32 ends in those six characters. Unvalidated, that same rule
+ * accepts any string at all — and a ONE-character id resolves whenever exactly one market
+ * on the board happens to end in it. Measured against a live seven-market board, five of
+ * the seven traces came back from single characters (`1`, `7`, `9`, `a`, `f`), and `0`
+ * returned the `ambiguous-id` list of candidate ids.
+ *
+ * The disclosure is not the real problem: `/api/markets` publishes every trace by design,
+ * so nothing here is secret. The problem is that a one-character id is not an IDENTIFIER.
+ * Markets roll on fixed windows, so tomorrow a different market ends in `a`, and a cached
+ * or bookmarked short id silently starts naming a different market while still returning
+ * 200 with a confident verdict. For a product whose whole claim is that a verdict is
+ * traceable to a specific market, resolving a string that cannot identify one is the
+ * quiet-wrong-answer class this codebase exists to avoid — the same reason the resolver
+ * already refuses an ambiguous suffix rather than picking the first hit.
+ *
+ * So: exactly the two forms the UI actually produces. The 6-char suffix `shortId` emits,
+ * or a full 32-byte id with or without its `0x`. Anything else is rejected before the
+ * board is searched, which also means an id is validated identically for a person reading
+ * a page and an agent calling the API.
+ */
+export const isResolvableMarketId = (id: string): boolean =>
+  /^(?:0x)?[0-9a-f]{64}$/i.test(id) || /^[0-9a-f]{6}$/i.test(id)

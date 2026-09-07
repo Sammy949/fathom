@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { isResolvableMarketId } from "@/lib/format"
 import { getVenueRead } from "@/lib/venue"
 
 /**
@@ -15,17 +16,41 @@ export const dynamic = "force-dynamic"
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+
+  /**
+   * Reject the shape before searching the board. The resolver matches by suffix, so
+   * without this a single character resolves whenever exactly one market ends in it —
+   * five of seven traces on a live board, measured. A one-character string is not an
+   * identifier: the board rolls, and the same string names a different market tomorrow
+   * while still answering 200. See `isResolvableMarketId`.
+   */
+  if (!isResolvableMarketId(id)) {
+    return NextResponse.json(
+      {
+        error: "malformed-id",
+        detail:
+          // Truncated: the id is echoed so a caller can see what was rejected, but there
+          // is no reason to reflect an unbounded string back, however inert JSON is.
+          `"${id.slice(0, 72)}" is not a market id. Use the 6-character short id the board ` +
+          `links to (for example 010fad), or a full 32-byte id.`,
+      },
+      { status: 400, headers: { "cache-control": "no-store" } }
+    )
+  }
 
   let read
   try {
     read = await getVenueRead()
   } catch {
     return NextResponse.json(
-      { error: "venue-unreachable", detail: "No venue read has succeeded yet. Retry shortly." },
-      { status: 503, headers: { "cache-control": "no-store" } },
+      {
+        error: "venue-unreachable",
+        detail: "No venue read has succeeded yet. Retry shortly.",
+      },
+      { status: 503, headers: { "cache-control": "no-store" } }
     )
   }
 
@@ -42,7 +67,7 @@ export async function GET(
         detail: `"${id}" matches ${matches.length} markets on this board. Use more of the id.`,
         candidates: matches.map((m) => m.marketId),
       },
-      { status: 400, headers: { "cache-control": "no-store" } },
+      { status: 400, headers: { "cache-control": "no-store" } }
     )
   }
 
@@ -54,12 +79,12 @@ export async function GET(
         error: "not-found",
         detail: `No assessed market matches "${id}". Markets roll on fixed windows, so an id from an earlier board will not resolve.`,
       },
-      { status: 404, headers: { "cache-control": "no-store" } },
+      { status: 404, headers: { "cache-control": "no-store" } }
     )
   }
 
   return NextResponse.json(
     { capability: "read-only", venueId: read.venueId, market: trace },
-    { headers: { "cache-control": "no-store" } },
+    { headers: { "cache-control": "no-store" } }
   )
 }
