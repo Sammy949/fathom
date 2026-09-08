@@ -31,12 +31,21 @@
 name: Capture board
 
 on:
-  schedule:
-    # Hourly at :17. Deliberately NOT :00 — GitHub warns that scheduled workflows are
-    # delayed, and sometimes dropped entirely, when load spikes at the top of the hour.
-    # Hourly against Vercel's Hobby ceiling of 100 deployments/day leaves ample headroom
-    # (24 in the worst case where every pass differs).
-    - cron: "17 * * * *"
+  # THE SCHEDULE IS COMMENTED OUT ON PURPOSE — uncomment it as a separate one-line change
+  # once a manual run has been watched end to end.
+  #
+  # This is not caution theatre; it is forced by how GitHub works. Both `schedule` and
+  # `workflow_dispatch` only fire for workflow files that exist on the DEFAULT branch, so
+  # this cannot be rehearsed on a feature branch — merging is the only way to test it. With
+  # the cron live, merging at :16 would fire an unwatched, unattended, push-capable job sixty
+  # seconds later. Landing it inert makes the first run something a person chooses to start.
+  #
+  # When enabling: hourly at :17, deliberately NOT :00. GitHub delays and sometimes DROPS
+  # scheduled runs when load spikes at the top of the hour. Hourly against Vercel's Hobby
+  # ceiling of 100 deployments/day leaves ample headroom (24 worst case).
+  #
+  # schedule:
+  #   - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       min_verdicts:
