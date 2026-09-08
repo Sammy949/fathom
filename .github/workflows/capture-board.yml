@@ -52,6 +52,10 @@ on:
         description: "Refuse to write a board with fewer distinct verdicts than this (0 disables)"
         required: false
         default: "3"
+      stale_after_hours:
+        description: "Hours after which the floor relaxes to 2. Set very high to pin the floor."
+        required: false
+        default: "4"
 
 # One capture at a time. Two overlapping runs would race on the same file and could push
 # conflicting commits; a scheduled refresh has no reason to run concurrently with itself.
@@ -89,6 +93,11 @@ jobs:
           VENUE_ID: ${{ secrets.VENUE_ID }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           FATHOM_MIN_VERDICTS: ${{ inputs.min_verdicts || '3' }}
+          # Normally 4: once the committed board is older than this the floor drops to 2,
+          # because a stale board with a good tally is worse than a fresh one with a thinner
+          # tally. Exposed as an input so a deliberate hunt for a THREE-verdict board can pin
+          # the floor and refuse the relaxed path while it runs.
+          FATHOM_STALE_AFTER_HOURS: ${{ inputs.stale_after_hours || '4' }}
         run: |
           set +e
           npm run capture:board
