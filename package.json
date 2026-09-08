@@ -22,7 +22,8 @@
     "probe:book": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/probe-book.ts",
     "grade": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/grade.ts",
     "test:risk": "tsx scripts/test-risk.ts",
-    "explain": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/explain.ts"
+    "explain": "NODE_OPTIONS=--max-old-space-size=2048 tsx scripts/explain.ts",
+    "check:floor": "tsx scripts/check-capture-floor.ts"
   },
   "devDependencies": {
     "tsx": "4.19.2",

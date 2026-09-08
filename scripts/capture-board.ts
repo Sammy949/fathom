@@ -46,6 +46,12 @@ import { dirname, join } from "node:path";
  */
 import type { buildVenueRead as BuildVenueRead } from "../apps/web/lib/venue";
 
+import {
+  DEFAULT_STALE_AFTER_HOURS,
+  committedBoardAgeHours,
+  decideFloor,
+} from "./capture-floor";
+
 const { buildVenueRead } = (await import("../apps/web/lib/venue")) as {
   buildVenueRead: typeof BuildVenueRead;
 };
@@ -180,16 +186,36 @@ async function main(): Promise<void> {
    * distinct from exit 1 (a requested market was unreachable) so the workflow can tell
    * "the venue is uniform right now, try again later" from "something is broken".
    *
+   * The floor is NOT constant: once the committed board is older than
+   * `FATHOM_STALE_AFTER_HOURS` it drops to 2, because past that point a stale board with a
+   * good tally is worse than a fresh one with a thinner tally — every hourly row on it has
+   * lapsed. `decideFloor` owns that judgement and `check:floor` gates it. See
+   * `scripts/capture-floor.ts` for why four hours and why the relaxed floor is 2.
+   *
    * Deliberately a floor on DISTINCT verdicts rather than on specific ones. BLOCK is
    * guaranteed by the stuck market, so requiring 3 is exactly requiring that ALLOW and
    * RECHECK both appear — but saying it as a count keeps the check honest if that fixture
    * ever stops being reachable, instead of silently passing on a hardcoded assumption.
    */
-  const minVerdicts = Number(process.env.FATHOM_MIN_VERDICTS ?? 0) || 0;
-  if (minVerdicts > 0 && distinct < minVerdicts) {
+  const configuredFloor = Number(process.env.FATHOM_MIN_VERDICTS ?? 0) || 0;
+  const staleAfterHours =
+    Number(process.env.FATHOM_STALE_AFTER_HOURS ?? DEFAULT_STALE_AFTER_HOURS) ||
+    DEFAULT_STALE_AFTER_HOURS;
+  const decision = decideFloor({
+    configured: configuredFloor,
+    staleAfterHours,
+    ageHours: committedBoardAgeHours(OUT, Date.now()),
+  });
+
+  if (configuredFloor > 0) {
+    console.log(`  ${DIM}floor: ${decision.why}${R}`);
+  }
+
+  if (decision.floor > 0 && distinct < decision.floor) {
     console.error(
-      `\n${YEL}not written${R}: FATHOM_MIN_VERDICTS=${minVerdicts} but this pass produced ` +
-        `${distinct} distinct verdict(s) (${Object.keys(tally).join(", ") || "none"}). ` +
+      `\n${YEL}not written${R}: this pass produced ${distinct} distinct verdict(s) ` +
+        `(${Object.keys(tally).join(", ") || "none"}) against a floor of ${decision.floor}` +
+        `${decision.relaxed ? ` (relaxed from ${configuredFloor} for staleness)` : ""}. ` +
         `The existing board is untouched. This is the venue being uniform, not a failure — ` +
         `the next scheduled pass will try again.`,
     );
