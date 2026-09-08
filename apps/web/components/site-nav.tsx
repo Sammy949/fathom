@@ -85,7 +85,10 @@ export function SiteNav({
             consequential fact on a page of measurements, and this product grades markets on
             exactly that. */}
         <div className="ml-auto flex items-center gap-x-4 sm:gap-x-5">
-          <span className="flex items-baseline gap-1.5 text-xs text-muted-foreground">
+          {/* `whitespace-nowrap` because the age is now a COMPOUND phrase. `2.5h ago` could
+              not break; `2hr 30m ago` can, and a read age wrapped across two lines in a
+              32px bar is the kind of thing that only shows up on someone else's phone. */}
+          <span className="flex items-baseline gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
             read
             <ReadAge at={assembledAt} className="font-data text-foreground" />
           </span>

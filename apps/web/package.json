@@ -11,7 +11,8 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.ts"
+    "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.ts",
+    "check:age": "tsx --tsconfig tsconfig.json scripts/check-read-age.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -116,20 +116,52 @@ function trim(v: number, unit: string): string {
 }
 
 /**
- * Wall-clock age of a read, for the staleness indicator.
+ * Elapsed wall-clock time, as a person would say it out loud.
  *
- * DELEGATES TO `duration` rather than reimplementing its tiers, which is the whole fix. It
- * used to carry two of its own — seconds, then minutes forever — so a frozen board captured
- * the previous day rendered `1062m ago`, and a week-old one would read `10080m ago`. Four
- * digits of minutes is not a duration a person parses; it is arithmetic homework. `duration`
- * already has the ladder (s → m → h → d) and is calibrated for exactly this, so the two can
- * no longer disagree about how long an hour is.
+ * SEPARATE FROM `duration` ON PURPOSE, and the split is the point. `duration` formats a
+ * figure that sits in a table column next to other figures, so it holds one unit and stays
+ * narrow: `60m`, `23h`, `2d`. This formats a single phrase in running text — "read 1hr 14m
+ * ago" — where the reader is not comparing it to anything and the extra precision costs
+ * nothing.
+ *
+ * It rolls to hours at 60 minutes rather than at 90. `duration` keeps minutes to 90 because
+ * a countdown wants the finer unit as it runs down, but nobody says a read happened
+ * "74 minutes ago" — past the hour, people say "an hour and a bit". `74m ago` made a
+ * two-hour-old board read as a number to do arithmetic on rather than a length of time.
+ *
+ * The compound stops at two units, and the second one is dropped when it is zero, so a
+ * board captured on the hour reads `1hr` and not `1hr 0m`. Days carry hours rather than
+ * minutes: at that range the minutes are noise.
+ *
+ * Everything derives from ONE rounding to the minute, which is what keeps the carry cases
+ * honest. Rounding hours and minutes independently renders 86,390 seconds as `24hr`, an
+ * hour that should have become a day.
+ */
+export function elapsed(sec: number): string {
+  if (sec < 90) return `${Math.round(sec)}s`
+
+  const min = Math.round(sec / 60)
+  if (min < 60) return `${min}m`
+
+  const hr = Math.floor(min / 60)
+  if (hr < 24) {
+    const rem = min % 60
+    return rem ? `${hr}hr ${rem}m` : `${hr}hr`
+  }
+
+  const days = Math.floor(hr / 24)
+  const rem = hr % 24
+  return rem ? `${days}d ${rem}hr` : `${days}d`
+}
+
+/**
+ * Wall-clock age of a read, for the staleness indicator.
  *
  * Clamped at zero because a fixture's `assembledAt` can sit a second in the future relative
  * to a client clock, and "-1s ago" reads as a bug rather than as clock skew.
  */
 export function ago(ms: number): string {
-  return `${duration(Math.max(0, Math.round((Date.now() - ms) / 1000)))} ago`
+  return `${elapsed(Math.max(0, Math.round((Date.now() - ms) / 1000)))} ago`
 }
 
 /** Short marketId, matching how the venue's own symbols suffix them. */

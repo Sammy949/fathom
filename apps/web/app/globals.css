@@ -300,3 +300,25 @@
   --verdict-block: oklch(0.62 0.21 12);
 }
 
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   Every animation here is either feedback (a hover tone, a sheet sliding in) or
+   the loading skeleton's pulse. None of it carries meaning that is lost when it
+   stops, so honouring the preference costs nothing and the omission was simply
+   a gap.
+
+   `animation-iteration-count: 1` rather than `none`, deliberately. `none` would
+   strand `animate-pulse` at its FIRST keyframe, and the sheet's enter transition
+   at `opacity: 0` — content hidden by an animation that was asked not to run is
+   the one failure mode worse than the motion itself. Running each animation once
+   lands it on its final frame, so everything ends up visible and still.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
