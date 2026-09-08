@@ -167,6 +167,35 @@ async function main(): Promise<void> {
     );
   }
 
+  /**
+   * `FATHOM_MIN_VERDICTS` — refuse to write a board thinner than this. OFF by default.
+   *
+   * A warning is the right response when a PERSON runs this: they read the tally and decide
+   * whether to keep it. It is the wrong response for a robot on a schedule, which will
+   * happily overwrite a board showing all three verdicts with seven RECHECKs because the
+   * venue happened to roll a generation where nothing had traded yet. The board's verdict
+   * spread is the demo's whole point, and an unattended job must not be able to regress it.
+   *
+   * So CI sets `FATHOM_MIN_VERDICTS=3` and a thin pass exits 3 having written NOTHING —
+   * distinct from exit 1 (a requested market was unreachable) so the workflow can tell
+   * "the venue is uniform right now, try again later" from "something is broken".
+   *
+   * Deliberately a floor on DISTINCT verdicts rather than on specific ones. BLOCK is
+   * guaranteed by the stuck market, so requiring 3 is exactly requiring that ALLOW and
+   * RECHECK both appear — but saying it as a count keeps the check honest if that fixture
+   * ever stops being reachable, instead of silently passing on a hardcoded assumption.
+   */
+  const minVerdicts = Number(process.env.FATHOM_MIN_VERDICTS ?? 0) || 0;
+  if (minVerdicts > 0 && distinct < minVerdicts) {
+    console.error(
+      `\n${YEL}not written${R}: FATHOM_MIN_VERDICTS=${minVerdicts} but this pass produced ` +
+        `${distinct} distinct verdict(s) (${Object.keys(tally).join(", ") || "none"}). ` +
+        `The existing board is untouched. This is the venue being uniform, not a failure — ` +
+        `the next scheduled pass will try again.`,
+    );
+    process.exit(3);
+  }
+
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, `${JSON.stringify(read, null, 2)}\n`);
   console.log(

@@ -1,0 +1,123 @@
+# Refresh the frozen demo board on a schedule.
+#
+# WHY THIS EXISTS, AND WHY IT IS NOT A VERCEL CRON. The dashboard serves a committed
+# fixture rather than reading the venue per request: one live pass is ~150 round trips,
+# measured at 46s. That fits a Vercel function fine (Hobby allows 300s with Fluid compute),
+# but a Vercel cron on Hobby can only fire ONCE PER DAY, at an hour Vercel picks within a
+# ±59 minute window. A board refreshed daily is barely better than one baked at deploy time.
+#
+# GitHub Actions has no such ceiling: 5-minute minimum interval, and free with no minute cap
+# on public repositories. The runner also has no function timeout to fight. And because the
+# fixture is a committed file that Next bundles via a static import, "refresh the board" and
+# "deploy" are the same action — the push here is what makes Vercel rebuild. No datastore, no
+# marketplace integration, no new runtime failure mode.
+#
+# SAFETY, in three layers, because this runs unattended:
+#   1. `capture:board` exits 1 without writing if the stuck market (the guaranteed BLOCK)
+#      could not be reached. A board without it cannot show the engine's full range.
+#   2. `FATHOM_MIN_VERDICTS=3` makes it exit 3 without writing if the pass produced fewer
+#      than three distinct verdicts. The venue rolls generations where nothing has traded
+#      yet; without this, a scheduled run would quietly replace a board showing
+#      ALLOW/RECHECK/BLOCK with seven RECHECKs.
+#   3. The commit step only runs if the file actually changed, so a pass that reproduces the
+#      current board costs no deploy.
+# In every refusal case the committed board is left exactly as it was. Failing closed is the
+# whole design: the worst outcome is a slightly older board, never a worse one.
+#
+# TRIGGERS ARE `schedule` AND `workflow_dispatch` ONLY. This repository is public and this
+# workflow reads secrets. A `pull_request` trigger would let anyone open a PR from a fork and
+# run arbitrary code in a context that can read GROQ_API_KEY. Do not add one.
+
+name: Capture board
+
+on:
+  schedule:
+    # Hourly at :17. Deliberately NOT :00 — GitHub warns that scheduled workflows are
+    # delayed, and sometimes dropped entirely, when load spikes at the top of the hour.
+    # Hourly against Vercel's Hobby ceiling of 100 deployments/day leaves ample headroom
+    # (24 in the worst case where every pass differs).
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      min_verdicts:
+        description: "Refuse to write a board with fewer distinct verdicts than this (0 disables)"
+        required: false
+        default: "3"
+
+# One capture at a time. Two overlapping runs would race on the same file and could push
+# conflicting commits; a scheduled refresh has no reason to run concurrently with itself.
+concurrency:
+  group: capture-board
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    # A pass is ~46s when the venue is healthy, but the indexer has been observed down for
+    # hours. Cap the job so a hung read cannot occupy a runner indefinitely.
+    timeout-minutes: 10
+
+    permissions:
+      # The only write this job performs is committing the refreshed fixture.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      # `--frozen-lockfile` so a scheduled job can never silently drift the dependency tree.
+      # If the lockfile and manifests disagree, that is a change someone should make on
+      # purpose, in a PR, not something a cron discovers at 03:17.
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Capture the board
+        id: capture
+        env:
+          VENUE_ID: ${{ secrets.VENUE_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          FATHOM_MIN_VERDICTS: ${{ inputs.min_verdicts || '3' }}
+        run: |
+          set +e
+          npm run capture:board
+          code=$?
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          case $code in
+            0) echo "::notice::Board captured." ;;
+            1) echo "::warning::A requested market was unreachable — board left unchanged." ;;
+            3) echo "::notice::Venue too uniform for a demo board — left unchanged, will retry." ;;
+            *) echo "::error::capture:board failed with exit $code."; exit $code ;;
+          esac
+
+      # Only exit 0 wrote a file. 1 and 3 are the guards firing, which is a successful
+      # outcome for this workflow: the board was protected rather than replaced.
+      - name: Commit and push if the board changed
+        if: steps.capture.outputs.exit_code == '0'
+        run: |
+          if git diff --quiet -- fixtures/board.json; then
+            echo "::notice::Board is byte-identical to the committed one. No deploy needed."
+            exit 0
+          fi
+          summary=$(node -e '
+            const b = require("./fixtures/board.json");
+            const t = {};
+            for (const r of b.rows) t[r.verdict] = (t[r.verdict] ?? 0) + 1;
+            const parts = ["ALLOW", "RECHECK", "BLOCK"].map(v => `${v} ${t[v] ?? 0}`);
+            process.stdout.write(`${b.rows.length} markets · ${parts.join(" ")}`);
+          ')
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fixtures/board.json
+          git commit -m "chore: refresh the frozen board
+
+          $summary
+
+          Captured by the scheduled workflow. Guards passed: the stuck-market BLOCK case is
+          present and at least three distinct verdicts were graded, so this board can still
+          demonstrate the engine discriminating."
+          git push
+          echo "::notice::Pushed — $summary. Vercel will redeploy."
