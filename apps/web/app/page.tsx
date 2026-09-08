@@ -55,11 +55,12 @@ export default async function Home() {
           >
             <span className="text-foreground">This board is a frozen snapshot</span>, captured{" "}
             <ReadAge at={read.assembledAt} className="font-data" /> and served without touching
-            the venue. One live pass is ~150 round trips and measured 46s, which does not fit a
-            serverless function&apos;s budget — so the deployed page shows a capture rather than
-            making you wait for one. Rows past their window are marked; verdicts describe the
-            venue as it stood at that moment. For live readings, run it locally against the
-            venue or call the API.
+            the venue. One live pass is ~150 round trips, measured at 46s and up to four minutes
+            when the model narrates every market — too long to hold a request open, and its
+            stale-while-revalidate cache cannot be shared between serverless invocations, so
+            every reader would risk paying for the cold one. A scheduled job recaptures the board
+            instead. Rows past their window are marked; verdicts describe the venue as it stood
+            at that moment. For live readings, run it locally against the venue or call the API.
           </p>
         ) : null}
 
