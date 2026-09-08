@@ -36,6 +36,63 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
   )
 }
 
+type SheetSide = "top" | "right" | "bottom" | "left"
+
+/**
+ * BELOW `sm` A SIDE SHEET IS A BOTTOM DRAWER, and above it, the side panel it was.
+ *
+ * Two problems, one fix. The panel carried a 480px MINIMUM WIDTH, unconditional —
+ * so on any phone narrower than that it was wider than the screen: the content ran off the
+ * edge and the close button could sit outside the viewport. And a 75%-width panel sliding
+ * in from the right is a desktop idiom; on a phone the thing that reads as "more detail,
+ * dismissible" is a sheet that comes up from the bottom edge, under the thumb.
+ *
+ * So the drawer is the BASE and the panel is the `sm:` enhancement, rather than the panel
+ * being patched with mobile overrides. That ordering matters: overrides layered on top of
+ * `data-[side=right]:` rules land at the same specificity and are then decided by the order
+ * Tailwind happens to emit them in, which is not something to depend on. Written this way
+ * the mobile rules are unconditional and only the `sm:` ones can win, which is exactly the
+ * cascade this needs.
+ *
+ * Capped at `85svh` — `svh`, not `vh`, so the drawer does not sit under a mobile browser's
+ * collapsing address bar — with `overflow-y-auto` on the callers so long evidence scrolls
+ * inside it rather than pushing the close button off screen.
+ *
+ * NO DRAG HANDLE. The grabber pill at the top of a drawer promises drag-to-dismiss, and
+ * this is a Base UI Dialog, which does not drag. A control that invites a gesture it cannot
+ * answer is worse than no control; the close button and the backdrop both work.
+ *
+ * `top` and `bottom` are untouched: they are already edge drawers at every width.
+ */
+const SHEET_BASE =
+  "fixed z-50 flex flex-col bg-popover bg-clip-padding text-sm text-popover-foreground " +
+  "transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0"
+
+const AS_DRAWER =
+  "inset-x-0 bottom-0 top-auto h-auto max-h-[85svh] w-full border-t " +
+  "data-starting-style:translate-y-[2.5rem] data-ending-style:translate-y-[2.5rem]"
+
+const SHEET_SIDE: Record<SheetSide, string> = {
+  right:
+    AS_DRAWER +
+    " sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-none sm:w-3/4 sm:min-w-120 sm:max-w-sm" +
+    " sm:border-t-0 sm:border-l" +
+    " sm:data-starting-style:translate-y-0 sm:data-ending-style:translate-y-0" +
+    " sm:data-starting-style:translate-x-[2.5rem] sm:data-ending-style:translate-x-[2.5rem]",
+  left:
+    AS_DRAWER +
+    " sm:inset-y-0 sm:left-0 sm:right-auto sm:h-full sm:max-h-none sm:w-3/4 sm:min-w-120 sm:max-w-sm" +
+    " sm:border-t-0 sm:border-r" +
+    " sm:data-starting-style:translate-y-0 sm:data-ending-style:translate-y-0" +
+    " sm:data-starting-style:translate-x-[-2.5rem] sm:data-ending-style:translate-x-[-2.5rem]",
+  bottom:
+    "inset-x-0 bottom-0 h-auto max-h-[85svh] border-t" +
+    " data-starting-style:translate-y-[2.5rem] data-ending-style:translate-y-[2.5rem]",
+  top:
+    "inset-x-0 top-0 h-auto max-h-[85svh] border-b" +
+    " data-starting-style:translate-y-[-2.5rem] data-ending-style:translate-y-[-2.5rem]",
+}
+
 function SheetContent({
   className,
   children,
@@ -43,7 +100,7 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: SheetPrimitive.Popup.Props & {
-  side?: "top" | "right" | "bottom" | "left"
+  side?: SheetSide
   showCloseButton?: boolean
 }) {
   return (
@@ -52,10 +109,7 @@ function SheetContent({
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         data-side={side}
-        className={cn(
-          "min-w-120 fixed z-50 flex flex-col bg-popover bg-clip-padding text-sm text-popover-foreground transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
-          className
-        )}
+        className={cn(SHEET_BASE, SHEET_SIDE[side], className)}
         {...props}
       >
         {children}

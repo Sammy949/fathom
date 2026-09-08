@@ -12,7 +12,8 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "check:expiry": "tsx --tsconfig tsconfig.json scripts/check-expiry-flag.ts",
-    "check:age": "tsx --tsconfig tsconfig.json scripts/check-read-age.ts"
+    "check:age": "tsx --tsconfig tsconfig.json scripts/check-read-age.ts",
+    "check:loading": "tsx --tsconfig tsconfig.json scripts/check-loading-shells.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
