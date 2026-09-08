@@ -6,6 +6,7 @@ import {
   RequiredChecks,
   SignalTable,
 } from "@/components/decision-trace"
+import { ExpiresIn } from "@/components/expires-in"
 import { GateLadder } from "@/components/gate-ladder"
 import { PriceTrace } from "@/components/price-trace"
 import { ProvenanceSheet } from "@/components/provenance"
@@ -184,7 +185,6 @@ export default async function MarketPage({
                 value: shares(ev("thinnerSideShares")),
                 unit: "sh",
               },
-              { label: "expires in", value: duration(row.secToExpiry) },
             ].map((f) => (
               <div key={f.label}>
                 <p className="label-caps mb-1.5">{f.label}</p>
@@ -199,6 +199,14 @@ export default async function MarketPage({
                 </p>
               </div>
             ))}
+            {/* Last cell, same shape as the five above, but it owns its own label:
+                a closed window has to change the words, not just the number. See
+                ExpiresIn — the countdown counts against the live clock rather than
+                reprinting the delta frozen into the board at capture. */}
+            <ExpiresIn
+              assembledAt={trace.assembledAt}
+              secToExpiry={row.secToExpiry}
+            />
           </div>
 
           <h2 className="section-mark mt-8 mb-4">The same book, as owned</h2>

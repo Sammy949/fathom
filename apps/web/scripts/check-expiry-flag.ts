@@ -33,10 +33,14 @@
  *   8. each figure carries an inline label that only shows below `sm`, where the header
  *      row is hidden and cannot label it
  *   9. the table does not scroll horizontally
+ *  10. a FROZEN board does not recite a countdown that stopped counting
+ *  11. the DETAIL page's figure obeys 1-3, 5 and 10 as well — it did not, and shipped
+ *      saying "expires in 6m" for a market that had settled seven minutes earlier
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { ExpiresIn } from "@/components/expires-in";
 import { MarketList } from "@/components/market-list";
 import { NO_READING, prob } from "@/lib/format";
 import type { MarketRow } from "@/lib/venue";
@@ -237,8 +241,67 @@ check(
   "a market with time left after a 1h-old capture was wrongly flagged expired",
 );
 
+// ── 11: the DETAIL page's figure, which learned none of the above ───────────────
+// The list has counted against the live clock since `dda18a7`. The detail page's figure
+// grid did not, so the same market read `past expiry` in the table and `expires in 6m` on
+// its own page — measured on the deployed `/m/017269` seven minutes after it settled. One
+// fact, two surfaces, two answers. These assertions are the list's, applied one surface out.
+const figureOf = (secToExpiry: number | null, assembledAt = Date.now()): string =>
+  renderToStaticMarkup(createElement(ExpiresIn, { assembledAt, secToExpiry }));
+
+/** The figure's label and value, stripped of markup. */
+const partsOf = (html: string): { label: string; value: string } => {
+  const ps = [...html.matchAll(/<p[^>]*>(.*?)<\/p>/gs)].map((m) =>
+    m[1]!.replace(/<[^>]+>/g, "").trim(),
+  );
+  return { label: ps[0] ?? "", value: ps[1] ?? "" };
+};
+
+const liveFig = partsOf(figureOf(3_600));
+check(liveFig.label === "expires in", `a live market's figure is labelled "${liveFig.label}"`);
+check(liveFig.value === "60m", `a live market's figure reads "${liveFig.value}", expected 60m`);
+check(
+  !figureOf(3_600).includes("var(--ink-severe)"),
+  "a live market's countdown carries severe ink it should not",
+);
+
+// The case that shipped: live at capture, expired by the time it is read.
+const staleFig = partsOf(figureOf(3_600, Date.now() - 12 * HOUR));
+check(
+  staleFig.label === "past expiry",
+  `a market that expired since capture is still labelled "${staleFig.label}" — the figure recites a frozen countdown`,
+);
+check(
+  staleFig.value === "11h",
+  `expected the lapse as 11h (12h elapsed minus the 1h it had left), got "${staleFig.value}"`,
+);
+check(
+  !staleFig.value.startsWith("-"),
+  `the lapse renders as "${staleFig.value}" — a negative duration reads as a typo, not a fact`,
+);
+check(
+  figureOf(3_600, Date.now() - 12 * HOUR).includes("var(--ink-severe)"),
+  "the closed-window figure is not in --ink-severe; a blocking fact must not render as a quiet one",
+);
+
+// Already expired at capture (a market appended by id), and the boundary.
+check(partsOf(figureOf(-646_253)).label === "past expiry", "a row expired AT capture is not flagged");
+check(partsOf(figureOf(0)).label === "past expiry", "secToExpiry === 0 was not treated as expired");
+
+// A missing reading is not an expired one. Collapsing the two would be the quiet
+// wrong answer the product exists to avoid.
+const absentFig = partsOf(figureOf(null));
+check(
+  absentFig.label === "expires in" && absentFig.value === NO_READING,
+  `a missing expiry rendered as "${absentFig.label} / ${absentFig.value}", expected the no-reading mark`,
+);
+
 // ── report ───────────────────────────────────────────────────────────────────────
 console.log(`  expired row   mark "past expiry ${lapse}", expires cell "${cells[4]}", severe ink`);
+console.log(
+  `  detail figure live "${liveFig.label} ${liveFig.value}", ` +
+    `stale "${staleFig.label} ${staleFig.value}" in severe ink`,
+);
 console.log(`  live row      no mark, expires cell "${liveCells[4]}"`);
 console.log(`  boundary (0)  flagged`);
 console.log(`  reflow        4 figure cells, 4 sm:hidden labels, header hidden below sm`);
