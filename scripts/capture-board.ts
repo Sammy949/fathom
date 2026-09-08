@@ -84,7 +84,30 @@ const OUT = join(import.meta.dirname, "..", "fixtures", "board.json");
  * calls it, the market resolves and this entry stops being interesting. That is why
  * `fixtures/stuck-market-c067.json` exists separately and `test:risk` grades it.
  */
-const ALSO_INCLUDE = ["0x000000000000000000000000000000000000000000000000000000000000c067"];
+const ALSO_INCLUDE: string[] = [];
+
+/**
+ * `0x…c067` USED TO LIVE HERE, AND IT IS GONE. Re-read on chain 2026-09-08 at block
+ * 483,110,892: `isVoided()` is now **true** (it was false), `status()` is 5 (it was 2,
+ * Locked), and the pool has RECYCLED — `marketNonce` moved 164 → 165 and
+ * `getBinaryPoolParams().market` now returns `0xcc4A9adE…` where it returned
+ * `0x27f6DE3d…` at capture. Someone called `voidExpired()`, which is permissionless, and
+ * the 1503 tUSDC was redeemed. This was always the one claim that could decay, and it did.
+ *
+ * The consequence for THIS script mattered more than the lost row: the id was no longer in
+ * the SDK registry sweep, so every pass exited 1 and the board could not refresh at all.
+ * A guard that permanently blocks the thing it is guarding is not protecting anything.
+ *
+ * The evidence is NOT deleted. `fixtures/stuck-market-c067.json` still holds the full
+ * frozen state — status 2, unresolved, unvoided, 1503 tUSDC backing, a settlement window
+ * lapsed 10 days — and `test:risk` still grades it, so the engine's BLOCK on that shape is
+ * still exercised on every run. The market simply cannot be pointed at live any more, and
+ * saying otherwise on camera would be claiming a fact that a judge with an RPC can
+ * disprove in one call.
+ *
+ * The guard below is deliberately UNCHANGED. If a market is ever requested by id again, a
+ * board without it is still a failed capture. Nothing is currently requested.
+ */
 
 async function main(): Promise<void> {
   if (process.env.FATHOM_FIXTURE) {
