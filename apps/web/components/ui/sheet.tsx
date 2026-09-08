@@ -65,7 +65,7 @@ type SheetSide = "top" | "right" | "bottom" | "left"
  * `top` and `bottom` are untouched: they are already edge drawers at every width.
  */
 const SHEET_BASE =
-  "fixed z-50 flex flex-col bg-popover bg-clip-padding text-sm text-popover-foreground " +
+  "fixed z-50 flex flex-col overflow-hidden bg-popover bg-clip-padding text-sm text-popover-foreground " +
   "transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0"
 
 const AS_DRAWER =
@@ -112,7 +112,16 @@ function SheetContent({
         className={cn(SHEET_BASE, SHEET_SIDE[side], className)}
         {...props}
       >
-        {children}
+        {/* THE PANEL DOES NOT SCROLL; THIS DOES. The close button is positioned against the
+            popup, so while the popup was itself the scroll container the button scrolled away
+            with the content — a long provenance list pushed it off the top and left the
+            backdrop as the only way out. Invisible on a full-height desktop panel, immediate
+            on an 85svh drawer. `min-h-0` because a flex child will not shrink below its own
+            content without it, which is the usual reason a nested scroller silently does
+            nothing at all. */}
+        <div data-slot="sheet-body" className="min-h-0 flex-1 overflow-y-auto">
+          {children}
+        </div>
         {showCloseButton && (
           <SheetPrimitive.Close
             data-slot="sheet-close"

@@ -122,7 +122,7 @@ export function ProvenanceSheet({
         provenance · {entries.length} reads
         {degraded > 0 ? `, ${degraded} unreachable` : ""}
       </SheetTrigger>
-      <SheetContent className="overflow-y-auto">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle className="font-display">Provenance</SheetTitle>
           <SheetDescription>

@@ -262,7 +262,7 @@ function EvidenceSheet({
       <SheetTrigger className="label-caps cursor-pointer transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none">
         {fields.length} measured field{fields.length === 1 ? "" : "s"}
       </SheetTrigger>
-      <SheetContent className="overflow-y-auto">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle className="font-display">{label}</SheetTitle>
           <SheetDescription>
