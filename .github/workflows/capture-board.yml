@@ -31,19 +31,19 @@
 name: Capture board
 
 on:
-  # THE SCHEDULE IS COMMENTED OUT ON PURPOSE — uncomment it as a separate one-line change
-  # once a manual run has been watched end to end.
+  # Hourly at :17, deliberately NOT :00 — GitHub delays and sometimes DROPS scheduled runs
+  # when load spikes at the top of the hour. Hourly against Vercel's Hobby ceiling of 100
+  # deployments/day leaves ample headroom (24 worst case).
   #
-  # This is not caution theatre; it is forced by how GitHub works. Both `schedule` and
-  # `workflow_dispatch` only fire for workflow files that exist on the DEFAULT branch, so
-  # this cannot be rehearsed on a feature branch — merging is the only way to test it. With
-  # the cron live, merging at :16 would fire an unwatched, unattended, push-capable job sixty
-  # seconds later. Landing it inert makes the first run something a person chooses to start.
+  # This block landed COMMENTED OUT and was enabled as a separate one-line change once a
+  # manual run had been watched end to end. Keep that order if it is ever reworked: both
+  # `schedule` and `workflow_dispatch` only fire for workflow files present on the DEFAULT
+  # branch, so a change here cannot be rehearsed on a feature branch — merging is the only
+  # way to test it, and with the cron live, merging at :16 fires an unwatched, unattended,
+  # push-capable job sixty seconds later.
   #
-  # When enabling: hourly at :17, deliberately NOT :00. GitHub delays and sometimes DROPS
-  # scheduled runs when load spikes at the top of the hour. Hourly against Vercel's Hobby
-  # ceiling of 100 deployments/day leaves ample headroom (24 worst case).
-  #
+  # To stop it: Actions → this workflow → Disable. Note GitHub auto-disables scheduled
+  # workflows on public repos after 60 days with no repository activity.
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
