@@ -44,8 +44,8 @@ on:
   # scheduled runs when load spikes at the top of the hour. Hourly against Vercel's Hobby
   # ceiling of 100 deployments/day leaves ample headroom (24 worst case).
   #
-  # schedule:
-  #   - cron: "17 * * * *"
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       min_verdicts:
