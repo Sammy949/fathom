@@ -133,6 +133,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { VerdictMark } from "@/components/verdict-mark"
+import { WayIn } from "@/components/way-in"
 import {
   duration,
   NO_READING,
@@ -234,39 +235,6 @@ const AT = {
  */
 const FIGURE_LABEL = "label-caps sm:hidden"
 
-/**
- * The way-in mark, drawn once and used at both widths.
- *
- * Not an icon-pack import — `lucide` is already a dependency and this is deliberately not it.
- * Three points and a 1.5 round-capped stroke is the weight every other mark on this page is
- * drawn at, so the one glyph on the board belongs to the board.
- *
- * SIX BY TEN, AND THE TEN IS THE ALIGNMENT — in the mobile `View` mark, where this sits inline.
- * An `<svg>` is a replaced inline element, so its baseline is its own bottom edge: at 10px tall
- * it stands from the text baseline to roughly the cap height of the type beside it, landing in
- * the cap band rather than floating against the middle. That is why the height is stated here
- * and not left to `1em` — `align-middle` on a 10px glyph next to caps sits about 1.5px low, and
- * "nearly centred" is the failure this page is least allowed to make. The desktop hover mark
- * does not use that baseline at all: it is out of flow and centred on its cell.
- */
-function WayIn({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="6"
-      height="10"
-      viewBox="0 0 6 10"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M1 1 L5 5 L1 9" />
-    </svg>
-  )
-}
 
 export function MarketList({ rows, assembledAt }: { rows: MarketRow[]; assembledAt: number }) {
   /**
