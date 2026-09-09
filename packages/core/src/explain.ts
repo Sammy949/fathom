@@ -288,6 +288,41 @@ export interface GuardFailure {
  * to the deterministic narrator, and the reason is surfaced in the trace so a
  * rejection is visible rather than silent.
  */
+/**
+ * Plain punctuation, applied to model prose before anything else looks at it.
+ *
+ * The model reaches for typographic characters the rest of this product does not use, and
+ * two of them cause real problems rather than aesthetic ones:
+ *
+ *   U+2011 NON-BREAKING HYPHEN. It arrived in "2.7\u2011point", "order\u2011flow",
+ *     "short\u2011lived" — measured, 5 of them in the visible text of one board. It looks
+ *     identical to a hyphen and behaves differently: the browser will not break a line at
+ *     it, so a long compound pushes a measure wider than it should, and it defeats
+ *     find-in-page and copy-paste for anyone searching the ordinary spelling. Nobody types
+ *     it, so nobody can search for it.
+ *   EM AND EN DASHES used as a clause break. House style here is a comma, a colon, or two
+ *     sentences; a dash-heavy paragraph is also the single loudest signal that a machine
+ *     wrote the text, which is a poor look on the one block of prose this product admits a
+ *     model wrote.
+ *
+ * A numeric range keeps a dash, as a plain hyphen: "0.021\u20130.029" is a range, not a
+ * clause break, and turning it into "0.021, 0.029" would read as two values.
+ *
+ * This runs BEFORE `guardExplanation`, so the guard sees exactly the string a reader will,
+ * and before the fallback comparison, so normalising can never itself trip a check.
+ */
+export function plainPunctuation(s: string): string {
+  return (
+    s
+      // non-breaking hyphen: always an ordinary hyphen
+      .replace(/\u2011/g, "-")
+      // a dash between digits is a range
+      .replace(/(\d)\s*[\u2013\u2014]\s*(\d)/g, "$1-$2")
+      // anything else is a clause break
+      .replace(/\s*[\u2013\u2014]\s*/g, ", ")
+  );
+}
+
 export function guardExplanation(
   text: { headline: string; summary: string; perSignal: { signalId: string; reading: string }[] },
   a: Assessment,
@@ -501,8 +536,11 @@ export async function explainAssessment(
       summary?: unknown;
       per_signal?: unknown;
     };
-    const headline = typeof raw.headline === "string" ? raw.headline : "";
-    const summary = typeof raw.summary === "string" ? raw.summary : "";
+    // Punctuation is normalised at the boundary, so every consumer — the page, the API,
+    // the frozen board — gets the same plain characters, and the guard below reads the
+    // exact string a reader will see.
+    const headline = typeof raw.headline === "string" ? plainPunctuation(raw.headline) : "";
+    const summary = typeof raw.summary === "string" ? plainPunctuation(raw.summary) : "";
     const perSignal = Array.isArray(raw.per_signal)
       ? raw.per_signal
           .filter(
@@ -511,7 +549,7 @@ export async function explainAssessment(
               typeof (p as { signal_id?: unknown }).signal_id === "string" &&
               typeof (p as { reading?: unknown }).reading === "string",
           )
-          .map((p) => ({ signalId: p.signal_id, reading: p.reading }))
+          .map((p) => ({ signalId: p.signal_id, reading: plainPunctuation(p.reading) }))
       : [];
 
     if (!headline || !summary || perSignal.length === 0) {
