@@ -23,6 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { WayIn } from "@/components/way-in"
 import { ago } from "@/lib/format"
 
 const STATE_LABEL: Record<string, string> = {
@@ -118,9 +119,18 @@ export function ProvenanceSheet({
 
   return (
     <Sheet>
-      <SheetTrigger className="label-caps hover:text-foreground focus-visible:ring-ring cursor-pointer transition-colors focus-visible:ring-1 focus-visible:outline-none">
-        provenance · {entries.length} reads
-        {degraded > 0 ? `, ${degraded} unreachable` : ""}
+      {/* The caret, for the same reason as the one on a signal's measured fields: this
+          is the page's other control wearing `label-caps`, which is otherwise a static
+          data label, and a line that only says `provenance · 7 reads` reads as a
+          caption. Two sheet triggers on one page must also open the same way — one
+          carrying the mark and the other not is worse than neither having it. 8px
+          against 11px mono caps, sitting on its own bottom edge; see `WayIn`. */}
+      <SheetTrigger className="label-caps hover:text-foreground focus-visible:ring-ring inline-flex cursor-pointer items-baseline gap-x-1.5 transition-colors focus-visible:ring-1 focus-visible:outline-none">
+        <span>
+          provenance · {entries.length} reads
+          {degraded > 0 ? `, ${degraded} unreachable` : ""}
+        </span>
+        <WayIn height={8} />
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>

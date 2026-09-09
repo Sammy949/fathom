@@ -39,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { WayIn } from "@/components/way-in"
 import type { DecisionTrace } from "@fathom/core"
 
 /**
@@ -259,8 +260,24 @@ function EvidenceSheet({
 
   return (
     <Sheet>
-      <SheetTrigger className="label-caps cursor-pointer transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none">
+      {/* THE COUNT WAS THE ONLY THING SAYING THIS OPENED, and a count is not an
+          affordance. `8 measured fields` set in `label-caps` reads exactly like the
+          `basis` label two lines above it, which is a static data label — so the one
+          control in this block wore the costume of the text around it and nobody had
+          a reason to press it. The caret is what separates a control from a caption.
+
+          `items-baseline` with the mark at 8px: `label-caps` is 11px mono, whose caps
+          stand about 8px off the baseline, and an `<svg>` sits on its own bottom edge
+          (see `WayIn`), so the chevron fills the cap band instead of floating against
+          the middle of the line.
+
+          It points RIGHT because that is where the panel comes from — the sheet enters
+          from the right edge — so the mark describes the movement rather than
+          decorating the label. Visible at rest, not on hover: this is the affordance
+          itself, and hiding an affordance until hover only works where hover exists. */}
+      <SheetTrigger className="label-caps inline-flex cursor-pointer items-baseline gap-x-1.5 transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none">
         {fields.length} measured field{fields.length === 1 ? "" : "s"}
+        <WayIn height={8} />
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
