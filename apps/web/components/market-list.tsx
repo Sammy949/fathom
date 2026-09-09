@@ -84,6 +84,13 @@
  * failure in a smaller costume. Now every figure NAMES its cell (`AT` below): two columns, two
  * rows, holding at x = 24 and 133.8 from 320px all the way to 639px.
  *
+ * THOSE TWO NUMBERS ARE FROM BEFORE THE `p-2` REMOVAL and have not been re-measured: the cell
+ * padding they were taken with is gone (see `FIGURE`), so column 1 now starts at 24 — on the
+ * identity's own margin, which is the point of removing it — and column 2 sits 8px left of
+ * 133.8. What holds regardless of the numbers is the invariant they were measuring: both
+ * figure lines share one pair of column axes at every width, because each figure names its
+ * cell.
+ *
  * Auto-flow could not do it. Three track shapes were measured and rejected first: `1fr auto`
  * gave the first column half the viewport so the pair drifted apart as the screen grew (44px
  * of slack at 320px, 154px at 430px); `max-content max-content` with `justify-between` shoved
@@ -177,9 +184,18 @@ const COLUMNS = [
  * phone width — which is why they are two grid columns rather than a strip that wraps. The
  * `mr-3` that used to separate one pair from the next is gone: the grid's own `gap-x` does
  * that job now, and a margin on top of it would push the second column off its axis.
+ *
+ * `p-0`, AND IT IS LOAD-BEARING. `TableCell` ships shadcn's `p-2`, and the `sm:px-0 sm:py-4`
+ * here only overrode it from `sm` up — different variant, so `tailwind-merge` kept both and
+ * the base `p-2` stayed live below `sm`, where this cell is a grid item rather than a table
+ * cell. It cost 8px on every side of every figure: the figures began 8px right of the asset
+ * above them, so column 1 did not share the identity's left margin, and each figure line
+ * carried 16px of vertical padding on top of the grid's own `gap-y`, which is most of what
+ * made the block read as loose. Reported as two separate complaints — "align the lefts" and
+ * "reduce the gap" — and they were one merge behaviour.
  */
 const FIGURE =
-  "font-data inline-flex items-baseline gap-x-1.5 text-sm align-baseline sm:table-cell sm:px-0 sm:py-4"
+  "font-data inline-flex items-baseline gap-x-1.5 p-0 text-sm align-baseline sm:table-cell sm:px-0 sm:py-4"
 
 /**
  * Where each figure sits in the mobile grid, stated explicitly.
@@ -189,10 +205,21 @@ const FIGURE =
  * 2x2 collapses into a 3+1 that overflows a 320px screen by 58px — measured, after two
  * other track shapes failed the same way for different reasons. Naming the cell is the
  * only arrangement that cannot drift: two columns, two rows, whatever the strings are.
+ *
+ * THE FIRST FIGURE LINE CARRIES A TOP MARGIN, and that is one grid gap doing two jobs being
+ * split into two. `row-gap` is a single value for every gap in the grid, so the 6px that
+ * correctly separates the two figure lines from each other was also all that separated the
+ * whole figure block from the identity above it — and those are different joints. Inside the
+ * block the lines are one object and want to sit tight; between the identity and the block
+ * there is a real break, because the first line answers the question and the rest is the
+ * evidence for it. `mt-2` on row 2 only adds 8px there, for 14px against the block's own 6px,
+ * and it is a margin rather than a larger `gap-y` precisely so the two figure lines keep the
+ * spacing they already have. `sm:mt-0` because at `sm` these are table cells in one row and
+ * there is no vertical joint to tune.
  */
 const AT = {
-  midCell: "col-start-1 row-start-2",
-  spreadCell: "col-start-2 row-start-2",
+  midCell: "col-start-1 row-start-2 mt-2 sm:mt-0",
+  spreadCell: "col-start-2 row-start-2 mt-2 sm:mt-0",
   quoteCell: "col-start-1 row-start-3",
   expiresCell: "col-start-2 row-start-3",
 } as const
@@ -206,6 +233,40 @@ const AT = {
  * neighbour or the pairing inverts.
  */
 const FIGURE_LABEL = "label-caps sm:hidden"
+
+/**
+ * The way-in mark, drawn once and used at both widths.
+ *
+ * Not an icon-pack import — `lucide` is already a dependency and this is deliberately not it.
+ * Three points and a 1.5 round-capped stroke is the weight every other mark on this page is
+ * drawn at, so the one glyph on the board belongs to the board.
+ *
+ * SIX BY TEN, AND THE TEN IS THE ALIGNMENT — in the mobile `View` mark, where this sits inline.
+ * An `<svg>` is a replaced inline element, so its baseline is its own bottom edge: at 10px tall
+ * it stands from the text baseline to roughly the cap height of the type beside it, landing in
+ * the cap band rather than floating against the middle. That is why the height is stated here
+ * and not left to `1em` — `align-middle` on a 10px glyph next to caps sits about 1.5px low, and
+ * "nearly centred" is the failure this page is least allowed to make. The desktop hover mark
+ * does not use that baseline at all: it is out of flow and centred on its cell.
+ */
+function WayIn({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="6"
+      height="10"
+      viewBox="0 0 6 10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M1 1 L5 5 L1 9" />
+    </svg>
+  )
+}
 
 export function MarketList({ rows, assembledAt }: { rows: MarketRow[]; assembledAt: number }) {
   /**
@@ -310,11 +371,32 @@ export function MarketList({ rows, assembledAt }: { rows: MarketRow[]; assembled
 
                `py-5` on mobile against `sm:py-0` (the cells carry their own `sm:py-4`): the
                row is three lines tall on a phone — identity, then two rows of figures — so it
-               needs more air between rows than between its own lines. `gap-y-2` does the
-               within-row half, and `gap-x-6` separates the two figure columns. */
+               needs more air between rows than between its own lines. `gap-y-1.5` does the
+               within-row half, and `gap-x-6` separates the two figure columns.
+
+               THE WITHIN-ROW GAP WAS NEVER WHAT IT SAID IT WAS. `gap-y-2` declared 8px, but
+               each figure cell was also carrying a live `p-2` (see `FIGURE`), so the real
+               distance between the identity and the figures under it was 8 + 8 = 16px, and
+               between the two figure lines 8 + 16 = 24px — against 40px between neighbouring
+               markets. At a 24:40 ratio the three lines of one market barely group, which is
+               what "reduce the gap" was pointing at. Removing that padding is the fix; the
+               declared gap comes down to 6px alongside it, so the lines of one market now sit
+               6px apart inside a 40px break. Proximity is what groups them, and the gap inside
+               a group has to be unmistakably smaller than the gap around it.
+
+               `gap-y-1.5` IS THE FIGURE BLOCK'S OWN SPACING, not the row's. The joint between
+               the identity and the block beneath it is wider, and it is set by `mt-2` on the
+               first figure line rather than here (see `AT`): 6px inside the block, 14px above
+               it, 40px between markets. One `row-gap` cannot say all three. */
             <TableRow
               key={r.marketId}
-              className="group relative grid grid-cols-[auto_auto] items-baseline gap-x-6 gap-y-2 py-5 min-[360px]:grid-cols-[auto_auto_minmax(0,1fr)] sm:table-row sm:gap-0 sm:py-0"
+              /* `hover:bg-muted` at full strength, not the shadcn default's `/50`. Measured on
+                 this palette that default lands at oklch 0.978 against a 0.992 ground — a
+                 1.4% lightness step, which is why a mobile tester had no idea the row was a
+                 target and why the desktop answer was nearly as quiet. Full `muted` is 0.965:
+                 still a whisper, still ink-on-paper, but a step you can actually see. No lift,
+                 no shadow, no border glow — the row is a line in a document and stays one. */
+              className="group hover:bg-muted relative grid grid-cols-[auto_auto] items-baseline gap-x-6 gap-y-1.5 py-5 min-[360px]:grid-cols-[auto_auto_minmax(0,1fr)] sm:table-row sm:gap-0 sm:py-0"
             >
               {/* Column 1 of the identity line. The `pr-24` that used to reserve room for the
                   absolutely-positioned verdict is gone — the verdict is a grid item in column
@@ -411,9 +493,93 @@ export function MarketList({ rows, assembledAt }: { rows: MarketRow[]; assembled
                   A grid item cannot escape the row's padding that way.
 
                   `pointer-events-none` stays: the row-wide link sits above it, and the verdict
-                  is a reading rather than a second target. */}
-              <TableCell className="pointer-events-none col-span-2 col-start-1 row-start-4 px-0 pt-1 pb-0 align-baseline min-[360px]:col-span-1 min-[360px]:col-start-3 min-[360px]:row-start-1 min-[360px]:pt-0 min-[360px]:text-right sm:table-cell sm:pt-0 sm:text-left">
+                  is a reading rather than a second target.
+
+                  `sm:relative` AND NOT `relative`, which is the whole trick to the hover mark
+                  below. From `sm` up this cell is the containing block for that mark, so it
+                  pins to the cell's own right edge — the last column's edge, which is the
+                  table's far end. Below `sm` the cell must NOT be positioned, because the
+                  mobile `View` mark inside it anchors to the ROW instead, and giving this cell
+                  a position would reel it in to the verdict's box. */}
+              <TableCell className="pointer-events-none col-span-2 col-start-1 row-start-4 px-0 pt-1 pb-0 align-baseline min-[360px]:col-span-1 min-[360px]:col-start-3 min-[360px]:row-start-1 min-[360px]:pt-0 min-[360px]:text-right sm:relative sm:table-cell sm:pt-0 sm:text-left">
                 <VerdictMark verdict={r.verdict} size="sm" />
+                {/* THE ROW IS A LINK, AND ON A PHONE NOTHING SAID SO. Reported by someone
+                    testing on mobile: they did not know a row could be opened. On a pointer
+                    device the row answers that on hover — the ground shifts and the asset takes
+                    the accent ink — and touch has no hover to answer with, so the affordance has
+                    to be visible at rest.
+
+                    A WORD, THEN A MARK. A lone arrow asks the reader to infer what it does; the
+                    verb says it. `View` sits in the body face at the muted tone — not
+                    `label-caps`, which this file reserves for the NAME OF A FIGURE, and this is
+                    an action rather than a data label.
+
+                    THE CHEVRON IS DRAWN HERE, six units wide, rather than imported. `lucide` is
+                    already a dependency and this is deliberately not it: a 1.5-weight
+                    round-capped stroke matching the marks this page already draws is three lines
+                    of path, and it means the one icon on the board belongs to the board.
+
+                    IT SITS BOTTOM-RIGHT, under the verdict, so the two things a reader wants
+                    from a row — the answer, and the way in — share a right margin and bracket
+                    the figures between them.
+
+                    IT COSTS NO WIDTH ON ANY LINE IT COULD BREAK, and that is why it is
+                    `absolute` rather than a grid item. As a cell in the third track it would
+                    sit on the second figure line, whose column 2 ends about 248px in; at 320px
+                    the row's content ends at 296px and `View ›` needs ~52px, so the two would
+                    collide by roughly 4px on the narrowest phone in use. Out of flow it cannot
+                    overlap anything and cannot widen the row at any viewport. `bottom-5` is
+                    `py-5`, so its lower edge lands on the last line of the block: the figures
+                    from 360px up, and the verdict's own line below 360px where that layout
+                    already wraps. */}
+                <span
+                  aria-hidden
+                  className="text-muted-foreground absolute right-0 bottom-5 flex items-center gap-x-1 text-xs sm:hidden"
+                >
+                  View
+                  <WayIn />
+                </span>
+
+                {/* THE SAME MARK, EARNED BY HOVER, ON A POINTER DEVICE. The desktop row already
+                    answers "this opens" with a ground shift and the asset taking accent ink;
+                    neither says WHERE it opens, and a direction is the part a chevron carries.
+                    It follows the verdict because the verdict is the last column, so the eye
+                    finishes the row on it.
+
+                    ONE AXIS, AT THE TABLE'S FAR END. Inline after the verdict it sat wherever
+                    that word happened to stop — `ALLOW`, `RECHECK` and `BLOCK` are three
+                    different widths, so a column of hovering marks would step in and out by
+                    about 15px down the board. That is the ragged-parallel-columns failure in
+                    miniature: a repeated element whose position is decided by the length of the
+                    string beside it. `absolute right-2` against the cell's `sm:relative` pins
+                    every one of them to one axis near the last column's right edge, whatever
+                    the verdict says.
+
+                    THE 8px IS THE POINT OF `right-2` RATHER THAN `right-0`. Flush at the
+                    column's edge the mark sat ON the table's own right margin, reading as
+                    something that had run out of room rather than something placed — the same
+                    reason no other text on this page arrives at an edge with no gutter. 8px
+                    lifts it clear while keeping the shared axis.
+
+                    `top-1/2 -translate-y-1/2` centres it on the cell rather than trusting a
+                    baseline it no longer shares, and out of flow it cannot reflow the cell
+                    under the pointer at the moment of hovering — the one place a layout must
+                    not move.
+
+                    THE INK CARRIES THE RESTRAINT, NOT THE OPACITY. Left to inherit, the mark
+                    took the cell's `foreground` — near-white on the dark ground, near-black on
+                    paper — and read as a second headline beside the verdict, which is the
+                    actual answer. The fix that matters is the TONE: `text-muted-foreground`,
+                    the same ink every secondary reading on this page uses. It resolves to full
+                    opacity, so the glyph is crisp rather than washed; 70% was tried first and
+                    took a 6px stroke past quiet into faint. Dimming a mark that is already the
+                    quiet colour just makes it hard to see.
+
+                    Opacity only: no lift, no slide, no glow. 150ms is under the threshold where
+                    a hover state starts to feel like an animation rather than a response, and
+                    `motion-reduce` drops even that. `sm:block` because below `sm` the `View`
+                    mark above is already doing this job, where there is no hover to do it. */}
+                <WayIn className="text-muted-foreground absolute top-1/2 right-2 hidden -translate-y-1/2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none sm:block" />
               </TableCell>
             </TableRow>
           )
