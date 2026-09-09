@@ -50,7 +50,7 @@ export default function Loading() {
           <h1 className="font-display max-w-3xl text-3xl leading-tight">
             Due diligence for event contracts on DreamDEX.
           </h1>
-          <p className="text-muted-foreground mt-4 max-w-3xl text-sm leading-relaxed">
+          <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-relaxed">
             Reading the venue: order books, trades, oracle bindings and the resting book per
             order. This takes a moment on a cold read.
           </p>

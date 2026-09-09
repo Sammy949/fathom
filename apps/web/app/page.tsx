@@ -70,7 +70,12 @@ export default async function Home() {
               What is left is the pair a reader cannot get from the board itself: how many
               signals and where they come from, and the one guarantee that makes the rest
               worth reading. */}
-          <p className="text-muted-foreground mt-4 max-w-3xl text-sm leading-relaxed">
+          {/* `mt-3`, not `mt-4`. The headline sets 30px on `leading-tight`, so its line
+              box already carries about 4px of space below the baseline before this margin
+              starts; 16px on top of that read as a break between two blocks rather than a
+              deck belonging to its headline. 12px keeps them one unit. The board's loading
+              shell holds the same value, or the deck would step when the read lands. */}
+          <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-relaxed">
             Eight signals per market, measured on chain. A language model writes the
             explanations and cannot change a verdict.
           </p>
