@@ -1,33 +1,37 @@
 /**
  * The decision trace — the Stage 5 deliverable, rendered.
  *
- * Structured as an exhibit rather than a feed: for each signal, the measured
- * value, then the threshold that was applied and why THAT threshold on THIS
- * venue, then the model's plain reading. The calibration basis is the unusual
- * part and it is not tucked into a tooltip — a judge should be able to see that
- * a 2.6-point spread is called normal *because the venue's measured median is
- * 2.6*, not because someone picked a number.
+ * Structured as an exhibit rather than a feed: for each signal, the measured value, then
+ * the threshold that was applied and — on the signals that shaped the verdict — why THAT
+ * threshold on THIS venue. The calibration basis is the unusual part, and a judge should
+ * be able to see that a 2.6-point spread is called normal *because the venue's measured
+ * median is 2.6*, not because someone picked a number.
  *
- * The rule path follows, in evaluation order, so the verdict is inspectable
- * rather than asserted. Then the explanation's provenance: model or fallback,
- * stated plainly, with the reason when it fell back.
+ * The rule path follows, in evaluation order, so the verdict is inspectable rather than
+ * asserted. Then the explanation's provenance: model or fallback, stated plainly, with
+ * the reason when it fell back.
  *
- * TWO DENSITY DECISIONS, both taken after reading the page's actual word count
- * (1,131 words, 74% of it prose) rather than by feel:
+ * THREE DENSITY DECISIONS, each taken from a measurement of the rendered page rather
+ * than by feel. The page ran 951 words on average across all eight markets, and 41% of
+ * that was text identical on every one of them.
  *
- * 1. THE READING IS DROPPED WHEN IT RESTATES THE FINDING. Measured on a live
- *    render: 8 of 8 per-signal readings began "{Label} is within this venue's
- *    normal range." and then repeated the engine's finding verbatim, because that
- *    is literally the deterministic narrator's template. The same sentence twice
- *    is not emphasis, it is noise, and it made the page look padded in exactly the
- *    place where it should look rigorous. Guarded at the render layer rather than
- *    only in the narrator, so a model that happens to restate is caught too.
- * 2. EVIDENCE MOVES OUT OF FLOW ENTIRELY. Forty key-value pairs across eight
- *    signals, many of them internal field names, were the single densest thing on
- *    screen. They live in a Sheet per signal now: the machinery is consultable
- *    without leaving the audit, and the argument stops competing with the receipts.
- *    The reasoning itself (rules, required checks) is deliberately NOT hidden this
- *    way, because that is the product rather than its appendix.
+ * 1. THE PER-SIGNAL READING IS GONE. It was the model paraphrasing, one signal at a
+ *    time, the summary it had already written at the top of the page. Measured across
+ *    the whole board: 42 of 64 signals carried no reading at all, so five markets showed
+ *    none and three showed six to eight, with nothing in the UI deciding which — the
+ *    model's output decided. An element that appears on some markets and not others,
+ *    for no reason a reader can see, reads as broken even when each line is fine. The
+ *    model still speaks, in the headline and summary up top and in `Explanation` at the
+ *    foot; it no longer narrates over the engine's own findings. (This retires the
+ *    `restatesFinding` guard, which was catching nothing: it tested exact substrings and
+ *    the readings were paraphrases.)
+ * 2. THE BASIS IS GATED BY RELEVANCE, not hidden. See the note at its render site.
+ * 3. EVIDENCE MOVES OUT OF FLOW ENTIRELY. Forty key-value pairs across eight signals,
+ *    many of them internal field names, were the single densest thing on screen. They
+ *    live in a Sheet per signal now: the machinery is consultable without leaving the
+ *    audit, and the argument stops competing with the receipts. The reasoning itself
+ *    (rules, required checks) is deliberately NOT hidden this way, because that is the
+ *    product rather than its appendix.
  */
 
 import { DepthMark, SeverityLabel } from "@/components/sounding"
@@ -41,28 +45,6 @@ import {
 } from "@/components/ui/sheet"
 import { WayIn } from "@/components/way-in"
 import type { DecisionTrace } from "@fathom/core"
-
-/**
- * True when the model's reading says nothing the finding did not already say.
- *
- * The narrator's template is `{Label} {severity phrase}. {finding}`, so the test
- * is whether what follows the first sentence is already present in the finding.
- * Deliberately conservative: anything genuinely new survives.
- */
-function restatesFinding(
-  reading: string | undefined,
-  finding: string
-): boolean {
-  if (!reading) return true
-  const tail = reading.includes(". ")
-    ? reading.slice(reading.indexOf(". ") + 2)
-    : reading
-  const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
-  if (norm(tail).length === 0) return true
-  return (
-    norm(finding).includes(norm(tail)) || norm(tail).includes(norm(finding))
-  )
-}
 
 /**
  * Why the explanation fell back, in a sentence a reader can use.
@@ -176,9 +158,13 @@ export function ExplanationSource({ trace }: { trace: DecisionTrace }) {
 export function SignalTable({ trace }: { trace: DecisionTrace }) {
   return (
     <section>
-      <h2 className="section-mark mb-4">
-        Signals, as measured and thresholded
-      </h2>
+      {/* "Signals, as measured and thresholded" was the last heading on this page still
+          speaking the codebase's language rather than a reader's. Every other one is
+          plain — "Before acting", "Where the evaluation stopped", "The book, as
+          displayed" — and `thresholded` is a word nobody says out loud. What the heading
+          needs to carry is not the verb but the reason these readings mean anything: they
+          are judged against THIS venue's measured range, not against a real-money book. */}
+      <h2 className="section-mark mb-4">The signals, measured against this venue</h2>
       <ul className="divide-y border-t">
         {trace.signals.map((s) => (
           <li key={s.id} className="grid grid-cols-[auto_1fr] gap-4 py-5">
@@ -195,28 +181,34 @@ export function SignalTable({ trace }: { trace: DecisionTrace }) {
               {/* The finding: what was measured, in the engine's own words. */}
               <p className="text-sm leading-relaxed">{s.finding}</p>
 
-              {/* The model's reading, only when it is not the finding again. See
-                  the note at the top of this file. */}
-              {s.reading && !restatesFinding(s.reading, s.finding) ? (
-                <p className="relative pl-3.5 text-sm leading-relaxed text-muted-foreground">
-                  <span
-                    aria-hidden
-                    className="absolute top-1 bottom-1 left-0 w-0.5 rounded-full bg-border"
-                  />
-                  {s.reading}
+              {/* Why this threshold, on this venue — ON THE SIGNALS THAT DECIDED,
+                  and in the sheet for the rest.
+
+                  MEASURED: `basis` is identical on all eight markets for a given
+                  signal, so it is documentation of the method rather than a finding
+                  about this market, and printing all eight put 271 words — 28% of the
+                  page — of unchanging methodology in front of a reader on every single
+                  market. It is also where nearly all the internal vocabulary lives
+                  (`getAllOpenOrdersOffChain`, close-to-close, taker-side skew), so it
+                  set the reading level for the whole page.
+
+                  It is NOT hidden, because the calibration IS the claim: a threshold
+                  nobody can audit is a guess with a number on it. It is gated by
+                  relevance. A signal that measured `ok` did not shape the verdict, so
+                  its methodology is one click away in the sheet, which already repeats
+                  this exact string at its foot. A signal that came back `elevated`,
+                  `severe` or unreadable is doing the deciding, and there the proof
+                  stays on the surface where the reader is already asking "says who?".
+
+                  Set at the full secondary tone rather than a fraction of it: at `/80`
+                  this sat near 3.4:1 on paper at 12px, which is asking a judge to
+                  squint at the one line that proves the number was calibrated. */}
+              {s.severity !== "ok" ? (
+                <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
+                  <span className="label-caps mr-1.5">basis</span>
+                  {s.basis}
                 </p>
               ) : null}
-
-              {/* Why this threshold, on this venue. The load-bearing line, so it
-                  is set at the full secondary tone rather than a fraction of it:
-                  at `/80` this sat near 3.4:1 on paper at 12px, which is asking a
-                  judge to squint at the one sentence that proves the number was
-                  calibrated rather than guessed. Hierarchy comes from size and
-                  position here, never from fading text below legibility. */}
-              <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
-                <span className="label-caps mr-1.5">basis</span>
-                {s.basis}
-              </p>
 
               {/* The receipts, out of flow. A Sheet rather than an inline
                   disclosure, because these are the machinery and not the argument:

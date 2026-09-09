@@ -138,12 +138,26 @@ export function GateLadder({ trace }: { trace: DecisionTrace }) {
                   </span>
                 </div>
 
-                {/* On the deciding gate, the engine's own sentence. On every other
-                    gate, what it checks - which is what makes the sequence legible
-                    rather than a list of words. */}
-                <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                  {state === "stopped" ? decisive?.because : g.checks}
-                </p>
+                {/* ONE SENTENCE PER LADDER, ON THE GATE THAT DECIDED.
+
+                    Every gate used to carry its `checks` line. That is seven sentences,
+                    123 words, and — measured — byte-identical on all eight markets,
+                    because the strings are constants in this file. It was documentation
+                    of the engine reprinted on every market page, and it buried the one
+                    line that is actually about THIS market: the engine's own `because`
+                    on the gate that stopped.
+
+                    The labels carry the rest. "Can settle", "The book is readable",
+                    "Nothing blocking" say what they check; a reader scanning a ladder
+                    wants the shape and the fracture, not a paragraph per rung. The
+                    `checks` strings stay in `GATES` as the fallback for a decisive rule
+                    that arrives without a sentence, and as the description of what each
+                    gate means for anyone reading this file. */}
+                {state === "stopped" ? (
+                  <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                    {decisive?.because ?? g.checks}
+                  </p>
+                ) : null}
               </div>
             </li>
           )

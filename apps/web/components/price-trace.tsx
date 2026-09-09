@@ -132,9 +132,12 @@ export function PriceTrace({
     return (
       <div className={cn("max-w-[22rem]", className)}>
         <p className="label-caps mb-1.5">price</p>
+        {/* The chart says it cannot draw, and nothing more. The engine's sentence for
+            WHY a move cannot be read belongs to the Volatility signal, which measured it;
+            printing it here as well put the same sentence on the page twice. */}
         <p className="text-muted-foreground text-xs leading-relaxed">
           {insufficientNote ??
-            `Only ${sorted.length} price ${sorted.length === 1 ? "bucket" : "buckets"} printed, fewer than the 3 needed to read a move.`}
+            `${sorted.length} print${sorted.length === 1 ? "" : "s"} so far, too few to draw a move.`}
         </p>
       </div>
     )

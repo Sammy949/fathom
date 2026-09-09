@@ -21,6 +21,12 @@ import { Skeleton } from "@/components/ui/skeleton"
  * fetched rather than making them watch grey boxes. That is the same reasoning as the
  * board skeleton keeping its headline.
  *
+ * AND THEY ARE IN THE PAGE'S ORDER. The page was reordered to answer before it argues
+ * (before acting, then the deciding gate, then the book and the settlement, then the
+ * signals); this shell was not, and a skeleton that lays its blocks out in one order while
+ * the content arrives in another makes the reader watch the layout rearrange. The order
+ * here tracks `page.tsx` exactly, and has to keep tracking it.
+ *
  * Widths are chosen against the real page: an asset is 3-4 characters, a symbol and short
  * id run about 30, the headline is one line of display type and the summary two of body.
  * Wrong by a little costs a small settle; wrong by a lot looks like a different page.
@@ -76,8 +82,33 @@ export default function Loading() {
           <Skeleton className="mt-2 h-3 w-2/3 max-w-3xl" />
         </header>
 
+        {/* THE SHELL FOLLOWS THE PAGE'S ORDER, and that is not a detail: a skeleton whose
+            blocks arrive in a different sequence than the content is worse than no
+            skeleton, because the reader watches the layout rearrange itself. The page now
+            answers before it argues — what to do, which gate stopped it, then the
+            evidence — so the shell opens on those two headings rather than on the book. */}
+        <section className="py-8">
+          <h2 className="section-mark mb-4">Before acting</h2>
+          <Skeleton className="h-3 w-full max-w-xl" />
+          <Skeleton className="mt-2.5 h-3 w-2/3 max-w-xl" />
+        </section>
+
+        {/* The ladder: a rung is a mark and a line of text, so the shell draws that shape
+            rather than plain bars. Four of the seven, for the same reason the signal
+            skeleton draws four of eight — enough to read as a sequence without pretending
+            to know how many gates this market reaches. */}
+        <section className="pb-8">
+          <h2 className="section-mark mb-4">Where the evaluation stopped</h2>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-[1.25rem_1fr] gap-3 py-3">
+              <Skeleton className="mt-1 size-1.5" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          ))}
+        </section>
+
         {/* The two readings of the book. Headings real, figures pending. */}
-        <section className="border-b py-8">
+        <section className="border-y py-8">
           <h2 className="section-mark mb-4">The book, as displayed</h2>
           <BookGrid />
           <h2 className="section-mark mt-8 mb-4">The same book, as owned</h2>

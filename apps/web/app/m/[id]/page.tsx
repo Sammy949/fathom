@@ -142,13 +142,15 @@ export default async function MarketPage({
                 the gate ladder and the signal table both carry further down, in the
                 one slot where a trader looks for the market's own price history and
                 never found it. */}
+              {/* No `insufficientNote`: it used to be handed the volatility signal's
+                  finding, so the exact sentence "Only 1 price bucket exists, fewer than
+                  the 3 needed to judge a move" printed twice on the same page, once in
+                  this chart slot and once in the Volatility signal. The chart says only
+                  that it cannot draw; the reason belongs to the signal that measured it. */}
               <PriceTrace
                 points={trace.prices}
                 intervalSec={row.intervalSec}
                 assembledAt={trace.assembledAt}
-                insufficientNote={
-                  trace.signals.find((s) => s.id === "volatility")?.finding
-                }
               />
             </div>
           </div>
@@ -162,13 +164,70 @@ export default async function MarketPage({
           </p>
         </header>
 
+        {/* ── the audit spine ──────────────────────────────────────────────────
+            ORDER IS THE ARGUMENT, and this is its second correction. The page once
+            ran signals-first, which put the blocks a trader can act on furthest from
+            the top; that was fixed. What remained was subtler: the book and the
+            settlement note still sat between the verdict and the reasoning, so
+            "Before acting" — the only block that tells a reader what to DO — landed
+            tenth on the page, below two sections of evidence for a claim it had not
+            made yet.
+
+            So the spine now runs answer, then reasoning, then evidence:
+            verdict (header) → what must be true before acting → what could not be
+            measured → which gate stopped it → the book in two readings → how it
+            settles → the eight signals → how we know.
+
+            Everything sits in one column at full measure. The 14rem sticky rail that
+            used to hold provenance was content flung to the far edge with a gulf in
+            the middle; provenance is machinery, so it moved into a sheet at the foot
+            of the page. */}
+        <div className="mt-10 space-y-12">
+          <RequiredChecks trace={trace} />
+
+          {/* WHICH SIGNALS COULD NOT BE READ, on the pages where the ladder does not
+              already say so.
+
+              Measured across the board: 5 of 8 markets stop at the `incomplete-observation`
+              gate, and there the ladder prints the engine's own "2 signals could not be
+              measured (volatility, manipulation), so this cannot be cleared for execution"
+              two inches below this section, which said the same thing in different words.
+              On the market that stopped at a severe signal instead, the unmeasured ones are
+              a real qualification nothing else states, and it renders.
+
+              The rule id is matched here as well as in the ladder, which is a small
+              duplication accepted deliberately: the alternative is passing render state
+              between two sections that are otherwise independent. */}
+          {trace.unmeasured.length > 0 &&
+          trace.rules[0]?.rule !== "incomplete-observation" ? (
+            <section>
+              <h2 className="section-mark mb-3">Not measured</h2>
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {trace.unmeasured.join(", ")} could not be read. Unmeasured is
+                not the same as acceptable, which is why this market cannot be
+                cleared for execution.
+              </p>
+            </section>
+          ) : null}
+
+          {/* The gate ladder replaces the numbered rule list. Same information, minus
+              the raw rule ids that list printed in mono, and it shows the one thing
+              nothing else did: which checks were never reached because an earlier gate
+              already decided. */}
+          <GateLadder trace={trace} />
+        </div>
+
         {/* ── the book, in two readings ─────────────────────────────────────────
           Split deliberately, because the gap between them is the product. Every
           venue interface can show the top strip. Only a per-order chain read can
           show the bottom one, and on this venue the two describe very different
           books: a healthy-looking two-sided ladder that belongs to one address
-          and expires in seconds. */}
-        <section className="border-b py-8">
+          and expires in seconds.
+
+          `border-t` is new: this block used to sit directly under the header and
+          borrowed its bottom rule. It now opens the evidence half of the page, after
+          the ladder, so it draws its own. */}
+        <section className="border-y py-8">
           <h2 className="section-mark mb-4">The book, as displayed</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
             {[
@@ -221,7 +280,14 @@ export default async function MarketPage({
               { label: "quote life", value: duration(dv("medianTtlSec")) },
               { label: "firm to expiry", value: pct(share(dv("firmShares"))) },
               { label: "pullable", value: pct(share(dv("pullableShares"))) },
-              { label: "past expiry", value: pct(share(dv("phantomShares"))) },
+              // NOT "past expiry", which is what this said. Two cells five centimetres
+              // apart both read `past expiry` and meant different things: in the displayed
+              // book it is how long ago the MARKET's window closed (`8h`), here it is the
+              // share of displayed DEPTH resting on orders that have already lapsed (`0%`).
+              // One label, one meaning. "expired depth" also sits in the same family as
+              // `firm to expiry` and `pullable`, which are the other two ways this same
+              // pool of shares is described.
+              { label: "expired depth", value: pct(share(dv("phantomShares"))) },
             ].map((f) => (
               <div key={f.label}>
                 <p className="label-caps mb-1.5">{f.label}</p>
@@ -229,13 +295,19 @@ export default async function MarketPage({
               </div>
             ))}
           </div>
+          {/* WHY THIS BLOCK EXISTS, in one sentence rather than three. The cut
+              dropped "the materialized book, the indexer's rows, and every
+              aggregated view" to just the last of those — three names for the same
+              fact, two of which are this codebase's vocabulary rather than the
+              reader's. The two field names stay: they are the proof that this is a
+              per-order chain read and not a nicer rendering of the same summary
+              every other interface shows. */}
           <p className="mt-5 max-w-2xl text-xs leading-relaxed text-muted-foreground">
             <span className="font-data">owner</span> and{" "}
-            <span className="font-data">expireTimestampNs</span> exist per order
-            on the chain read and are summed away by the materialized book, the
-            indexer&apos;s rows, and every aggregated view. Firmness is only
-            ever until an order&apos;s own expiry: the expired-order sweep is
-            permissionless, so nothing here is a standing commitment.
+            <span className="font-data">expireTimestampNs</span> exist per order on
+            the chain read, and every aggregated view sums them away. Firmness runs
+            only to an order&apos;s own expiry, so nothing here is a standing
+            commitment.
           </p>
         </section>
 
@@ -265,42 +337,7 @@ export default async function MarketPage({
           </section>
         ) : null}
 
-        {/* ── the audit spine ──────────────────────────────────────────────────
-            ORDER IS THE ARGUMENT, and it used to run backwards. The page opened
-            with the verdict, then eight signals and forty evidence fields, and
-            only then reached the rule path and "before acting" — so the two blocks
-            a trader can actually act on sat furthest from the top. The spec's own
-            flow is: show the verdict, say what must be true before acting, say why,
-            then produce the evidence. That is the order now, shortest and most
-            consequential first.
-
-            Everything sits in one column at full measure. The 14rem sticky rail
-            that used to hold provenance was content flung to the far edge with a
-            gulf in the middle; provenance is machinery, so it moved into a sheet at
-            the foot of the page. */}
-        <div className="mt-10 space-y-12">
-          <RequiredChecks trace={trace} />
-
-          {/* Two facts that qualify the verdict and belong beside the checks
-              rather than in a margin: what could not be measured, and how long ago
-              anything traded. */}
-          {trace.unmeasured.length > 0 ? (
-            <section>
-              <h2 className="section-mark mb-3">Not measured</h2>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                {trace.unmeasured.join(", ")} could not be read. Unmeasured is
-                not the same as acceptable, which is why this market cannot be
-                cleared for execution.
-              </p>
-            </section>
-          ) : null}
-
-          {/* The gate ladder replaces the numbered rule list. Same information, minus
-              the raw rule ids that list printed in mono, and it shows the one thing
-              nothing else did: which checks were never reached because an earlier gate
-              already decided. */}
-          <GateLadder trace={trace} />
-
+        <div className="mt-12 space-y-12">
           <SignalTable trace={trace} />
 
           {/* How we know, last: the explanation's provenance, then the per-field
