@@ -133,10 +133,12 @@ until then, which is expected rather than a failure.
 
 ## 6. Before recording the demo: recapture the board
 
-The committed fixture is the demo's content, so it should be a board worth showing. As of
-writing it is **8 rows, all RECHECK**, captured 2026-09-04 — every verdict correct, but a board
-that is one verdict eight times cannot demonstrate the engine discriminating, which is the
-central claim.
+The committed fixture is the demo's content, so it should be a board worth showing. The
+all-RECHECK board this section used to warn about is gone: the hourly job
+(`.github/workflows/capture-board.yml`) has been refreshing it since 2026-09-08, and the board
+committed at `79a6240` is **8 rows,
+ALLOW 2 / RECHECK 4 / BLOCK 2**, captured 2026-09-08T21:50Z. That is the tally the central
+claim needs, so the job below is now to confirm it is still true rather than to fix it.
 
 ```bash
 npm run capture:board
@@ -145,14 +147,17 @@ npm run capture:board
 It prints a per-market table and a tally. What you want:
 
 - **All three verdicts present.** ALLOW, RECHECK and BLOCK. It warns when only two appear.
-- **The stuck market included** — `0x…c067`, appended by id because `liveMarkets` filters
-  `expiry > now` and cannot see it. It is the guaranteed BLOCK: Locked on-chain with 1503 tUSDC
-  stranded past a settlement window that closed days ago, while the indexer still reports
-  `clobStatus: "Trading"`. The capture **fails** rather than writing a board without it.
-- **`8/8 model-explained`**, not `2/8`. The capture raises the explain budget itself.
+- **A BLOCK that is not the stuck market.** `0x…c067` used to be pinned in `ALSO_INCLUDE` as a
+  guaranteed BLOCK; it was voided on 2026-09-08, `ALSO_INCLUDE` is now empty, and the pin had
+  been failing every capture on the way out (`0c3caca`). The evidence survives as
+  `fixtures/stuck-market-c067.json`, which `test:risk` still grades, but the board's BLOCKs now
+  have to come from live venue state. They do: the current board has two.
+- **A high `N/N model-explained`.** The capture raises the explain budget itself, but the WSL
+  transport flake still drops rows onto the deterministic narrator — the committed board is
+  **2 of 8**, and an earlier one was 5 of 7 on the fallback. Correct behaviour either way, and it
+  undercuts any beat about the model writing the prose. Re-run if you plan to make that point.
 
-Measured on 2026-09-05 the live board gave ALLOW 3 / RECHECK 3, so a mixed capture is
-achievable — it depends on venue state. If the tally is thin, wait and run it again rather than
+The tally depends on venue state, so if it comes back thin, wait and run it again rather than
 freezing it. Commit the result: `git add fixtures/board.json`.
 
 Then push, and Vercel redeploys. Confirm the deployed board shows what you captured before

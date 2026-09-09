@@ -2,6 +2,55 @@
 
 Running log of state + decisions + next actions. Newest at top.
 
+## 2026-09-09 — the repo has a README, and the standing "unseen in a browser" caveat is retired
+
+**`README.md` exists at the root** (`40a036a`). It was the only obvious thing a public repo was
+missing: the entry point covered what Fathom is, the structural guarantee (the explanation
+schema carries no verdict, confidence or numeric field, so no model can override the engine),
+the eight signals and the verdict mapping, the two findings that constrain adding a ninth (the
+constant-metric rule, and never reading depth from indexer `Order` rows), the layout, fixture
+mode, the gates, config by variable name, and the deploy. `apps/web/README.md` is deliberately
+left alone; it is still the shadcn template text and nothing links to it.
+
+Written against the code rather than against this log, which caught the two corrections below.
+`notes/` stays the long-form record; the README does not duplicate it, it points at it.
+
+**RETIRE THE "NEVER SEEN IN A BROWSER" CAVEAT. IT IS NO LONGER TRUE AND IT HAS BEEN WRONG FOR A
+WHILE.** Every entry below from 2026-09-02 onward carries some version of "not verified: any of
+this in a browser", and "look at the dashboard in a browser" sat at the top of the next steps
+for a week. Samuel checks the deployed UI himself, continuously — that is where the countdown
+bug, the sheet's scrolling close button and the phone-width overflow came from, and those are
+commits `68752aa`, `90ba837` and `dec6f48`. The caveat was written when it was true, was never
+struck when it stopped being, and had started to read as an open risk in a document whose job is
+to say what is open. Dated entries below are left as history; the forward-looking sections are
+corrected. **The rule going forward: an agent's server-rendered gate is evidence about markup,
+not a claim that nobody has looked at the page. Do not re-add it.**
+
+**Two stale claims in these notes, both found by checking rather than by reading.**
+
+1. **The fixture is no longer all-RECHECK.** The 09-05 entry's next-step 2 and `deploy.md` §6
+   both said the committed board could not demonstrate the engine discriminating. The hourly job
+   has been refreshing it since 09-08, and the board at `79a6240` is **8 rows,
+   ALLOW 2 / RECHECK 4 / BLOCK 2**, captured 2026-09-08T21:50Z — all three verdicts, which is
+   exactly what the discrimination claim needs. Confirmed on the deployed `/api/markets`, whose
+   `counts` match the committed file. Corrected in `deploy.md`.
+2. **`deploy.md` §6 still required the stuck market in every capture.** It was voided on 09-08,
+   `ALSO_INCLUDE` is empty, and the pin had been failing every capture on the way out
+   (`0c3caca`). The board's BLOCKs now come from live venue state, and it currently has two.
+   Also corrected there.
+
+Worth noting the local tree was **2 commits behind origin** when this started: the capture cron
+pushes straight to `main`, so a session that has been open a while is stale in a file it may
+well be about to describe. Pull before reading `fixtures/board.json` as current.
+
+### Verified
+
+`npm run test:risk` (89, offline). The deployed site answered 200 and its `/api/markets`
+returned `capability: "read-only"`, `frozen: true` and the 2/4/2 tally quoted above. Every
+relative link in the README resolves to a file that exists, and the file carries no key,
+hostname, wallet or absolute path. The live demo URL is in there with Samuel's explicit
+say-so — it is the one exception to the no-personal-hostnames rule, and it is his to grant.
+
 ## 2026-09-05 — the indexer's database is down, and the repo did not build from a clean clone
 
 Two findings that matter more than the day's UI work, so they go first.
@@ -780,16 +829,17 @@ Repo initialized at `/home/samy/dev/fathom`, notes committed.
 Deadline **Sep 8 19:00 WAT** — three days. Stages 1–5 (the cut line) are complete and Stage 3 is
 built; what remains is verification and polish, not new subsystems.
 
-1. **Look at the dashboard in a browser.** `FATHOM_FIXTURE=1 npm run dev`, no network needed. It
-   is the largest untested surface in the project and it is 20% of the score. Every check so far
-   has been server-rendered markup or static SVG, so nothing interactive has been exercised:
-   hover, focus rings, the theme switch, both sheets, the price chart's hover readout, and the
-   `<640px` layout — where the board now scrolls horizontally rather than hiding columns. Run this
-   yourself; a dev server from a tool call has crashed WSL twice.
-2. **Recapture the board once the indexer's database recovers.** The committed fixture is 8
-   markets all RECHECK, which cannot demonstrate the engine discriminating — the one thing the
-   frozen board exists to prove. `npm run capture:board` and read the tally it prints; if it is
-   not mixed, run it again later. Blocked on the outage logged at the top, not on us.
+1. ~~**Look at the dashboard in a browser.**~~ **Done, and continuously.** Samuel checks the
+   deployed UI himself; the countdown, sheet-close and phone-width fixes came out of exactly
+   that. See the 09-09 entry: do not re-add this as an open item, and do not report a
+   server-rendered gate as though it were the only look the page has had. What an agent still
+   should not do is start the dev server from a tool call — that has crashed WSL twice.
+   `FATHOM_FIXTURE=1 npm run dev` needs no network when you want it locally.
+2. ~~**Recapture the board.**~~ **Handled by the hourly job**
+   (`.github/workflows/capture-board.yml`), which has been refreshing it since 09-08. The
+   committed board is ALLOW 2 / RECHECK 4 / BLOCK 2 across 8 rows — all three verdicts. It fired
+   on 1 of 7 slots when measured, so it is a backstop rather than a guarantee: read the tally
+   before trusting a frozen board on camera, and pull first, since the cron pushes to `main`.
 3. **Stage 6 (stretch)** — gated `placeLimit` execution. Needs the funding steps below.
 4. Consider a **consecutive-timeout breaker** on the indexer client. Six attempts × 20s of an
    unanswerable request is ~2 minutes to learn nothing; bailing after two identical upstream
