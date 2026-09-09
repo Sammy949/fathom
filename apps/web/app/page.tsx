@@ -44,19 +44,22 @@ export default async function Home() {
           <h1 className="font-display max-w-2xl text-3xl leading-tight">
             Due diligence for event contracts on DreamDEX.
           </h1>
-          {/* THREE SHORT SENTENCES, PLAIN VERBS. The first draft of this deck read
-              "Eight signals read per market from the chain, thresholded against this
-              venue's own measured range, resolve to allow, recheck or block" — one
-              sentence carrying the whole mechanism, with twenty words of subject before
-              its verb and "thresholded" doing the load-bearing work. `thresholded` is
-              this codebase's word, not a reader's; "compared with what is normal on this
-              venue" says the same thing and says it to anyone. What the sentences do now:
-              what is measured, what it decides, and who wrote the words. */}
+          {/* EIGHTEEN WORDS, AND THE TWO CUTS ARE THE POINT.
+
+              The deck ran 45 words across three sentences: the method, then "that decides
+              the verdict: allow, recheck or block", then the model's constraint. Two of
+              those three were already on the screen. The verdicts are the filter chips
+              directly beneath this line and a whole column of the table under them, so
+              naming them here is a caption for something the reader is looking at. The
+              calibration ("compared with what is normal on this venue") is the footer's
+              own note, stated there in more detail than a deck can carry.
+
+              What is left is the pair a reader cannot get from the board itself: how many
+              signals and where they come from, and the one guarantee that makes the rest
+              worth reading. */}
           <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
-            Eight signals per market, measured on chain and compared with what is normal on
-            this venue. That decides the verdict: allow, recheck or block. A language model
-            writes the explanation and cannot change it, because its output schema has no
-            field for a verdict.
+            Eight signals per market, measured on chain. A language model writes the
+            explanations and cannot change a verdict.
           </p>
         </header>
 
