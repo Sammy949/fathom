@@ -22,11 +22,27 @@
  *   4. the two shells differ substantially, not by a word
  *   5. neither shell hides content behind an animation — no opacity-0 start state
  */
+import { readFileSync } from "node:fs"
+
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 
 import BoardLoading from "@/app/loading"
 import MarketLoading from "@/app/m/[id]/loading"
+
+/**
+ * The board headline, read from the shell rather than pinned here.
+ *
+ * This gate used to assert the literal "Every verdict here is computed in code", and the
+ * moment that copy was rewritten the gate failed for a change that was correct. A guard
+ * that has to be edited whenever the words change is not measuring the invariant; the
+ * invariant is that the SHELL and the PAGE say the same thing, and that the market shell
+ * says none of it. So the headline is extracted from the board shell and then required to
+ * appear in `app/page.tsx` verbatim, which is the assertion that actually matters: a
+ * skeleton whose headline differs from the page's makes the sentence rewrite itself in
+ * front of the reader when the read lands.
+ */
+const HEADLINE = /<h1[^>]*>([^<]+)<\/h1>/
 
 const R = "\x1b[0m"
 const DIM = "\x1b[2m"
@@ -51,21 +67,41 @@ console.log(`\n${BOLD}check:loading${R} ${DIM}the two waits are two pages${R}\n`
 
 // 1. The market shell says which route is coming.
 const marketText = text(market)
-for (const landmark of ["all markets", "The book, as displayed", "Settlement", "confidence"]) {
+// "Before acting" and the ladder are asserted too, because the shell's job is the page's
+// SHAPE: the page answers before it argues, and a skeleton that opens on the book instead
+// makes the reader watch three sections rearrange when the read lands.
+for (const landmark of [
+  "all markets",
+  "Before acting",
+  "Where the evaluation stopped",
+  "The book, as displayed",
+  "Settlement",
+  "confidence",
+]) {
   check(marketText.includes(landmark), `the market shell shows "${landmark}"`)
 }
 
 // 2. And says nothing that belongs to the board.
-const boardOnly = ["Every verdict here is computed in code", "spread pt", "Reading the venue"]
+const boardHeadline = (board.match(HEADLINE)?.[1] ?? "").trim()
+check(boardHeadline.length > 0, "the board shell has a headline at all", boardHeadline)
+
+const boardOnly = [boardHeadline, "spread pt", "Reading the venue"]
 for (const s of boardOnly) {
   check(!marketText.includes(s), `the market shell does NOT show "${s}"`)
 }
 
-// 3. The board shell is unchanged, which is what makes assertion 2 mean anything.
+// 3. The board shell's headline is the PAGE's headline, verbatim. This is what makes
+//    assertion 2 mean anything, and it is read from source rather than pinned to a string
+//    so that rewriting the copy cannot fail the gate while the two files still agree.
 const boardText = text(board)
+const pageSource = readFileSync(
+  new URL("../app/page.tsx", import.meta.url),
+  "utf8",
+)
 check(
-  boardText.includes("Every verdict here is computed in code"),
-  "the board shell still shows the board headline",
+  pageSource.includes(boardHeadline),
+  "the board shell's headline is the board page's headline, verbatim",
+  `shell: ${boardHeadline}`,
 )
 check(boardText.includes("market") && boardText.includes("verdict"), "the board shell still labels its columns")
 

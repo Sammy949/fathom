@@ -76,10 +76,17 @@ const fontMono = localFont({
   display: "swap",
 })
 
+/**
+ * The card a link to this site unfurls into, and the tab's name.
+ *
+ * It says what Fathom does before what is true about it, for the same reason the page's
+ * own headline now does: "every verdict computed in code" is the guarantee, not the
+ * product. Kept in step with `app/page.tsx` and the two loading shells.
+ */
 export const metadata = {
-  title: "Fathom: risk verdicts for DreamDEX Event Contracts",
+  title: "Fathom: due diligence for DreamDEX event contracts",
   description:
-    "Every verdict computed in code, every number traced to a measurement. ALLOW / RECHECK / BLOCK with an inspectable decision trace.",
+    "Eight risk signals read per market from the chain and thresholded against the venue's own measured range, resolving to allow, recheck or block. Every number traces to a measurement, and the decision trace is inspectable.",
 }
 
 export default function RootLayout({

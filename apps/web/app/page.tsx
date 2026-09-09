@@ -27,12 +27,36 @@ export default async function Home() {
             enough to be a sentence, and the read age lives in the nav rather than
             being said twice. */}
         <header className="mb-10">
+          {/* WHAT THIS IS, before what is true about it.
+
+              The headline used to read "Every verdict here is computed in code", with the
+              model's constraint beneath it. Both sentences are true and neither says what
+              Fathom does: a reader who has never seen it learns that something is computed
+              in code, and not that this grades prediction-market contracts for whether they
+              can be traded at all. The strongest fact about a product is not the same as
+              what the product is, and the first line has to be the second one.
+
+              So: the job, the subject, and the output, in that order. Due diligence is the
+              spec's own framing (a judgment layer over a prediction market, not a dashboard
+              and not a trading bot), event contracts on DreamDEX is the subject, and allow /
+              recheck / block is what a reader gets. The model's constraint stays, moved to
+              the deck where it belongs: it is the guarantee, not the pitch. */}
           <h1 className="font-display max-w-2xl text-3xl leading-tight">
-            Every verdict here is computed in code.
+            Due diligence for event contracts on DreamDEX.
           </h1>
+          {/* THREE SHORT SENTENCES, PLAIN VERBS. The first draft of this deck read
+              "Eight signals read per market from the chain, thresholded against this
+              venue's own measured range, resolve to allow, recheck or block" — one
+              sentence carrying the whole mechanism, with twenty words of subject before
+              its verb and "thresholded" doing the load-bearing work. `thresholded` is
+              this codebase's word, not a reader's; "compared with what is normal on this
+              venue" says the same thing and says it to anyone. What the sentences do now:
+              what is measured, what it decides, and who wrote the words. */}
           <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
-            A language model writes the explanations and cannot change a verdict: its output
-            schema has no field for one.
+            Eight signals per market, measured on chain and compared with what is normal on
+            this venue. That decides the verdict: allow, recheck or block. A language model
+            writes the explanation and cannot change it, because its output schema has no
+            field for a verdict.
           </p>
         </header>
 
@@ -47,7 +71,14 @@ export default async function Home() {
             Not a pill, not a tinted chip, not an alert box with an icon. A rule and a line of
             text: the same register as the calibration note in the footer, because it is the
             same kind of statement. The `--ink-unknown` tone is the one this product already
-            uses for "measured, but not a reading you can act on". */}
+            uses for "measured, but not a reading you can act on".
+
+            CUT FROM 77 WORDS TO 40. The long version explained the capture architecture —
+            round-trip counts, the 46s-to-four-minutes range, where to get live readings — above
+            a board the reader had not looked at yet. Three facts are load-bearing and they are
+            the three that survive: it is a snapshot, it is this old, and expired rows say so.
+            The rest is a build note, and it lives in the README where a judge who wants it will
+            look. */}
         {read.frozen ? (
           <p
             className="mb-8 border-l-2 py-1 pl-4 text-xs leading-relaxed"
@@ -55,10 +86,8 @@ export default async function Home() {
           >
             <span className="text-foreground">This board is a frozen snapshot</span>, captured{" "}
             <ReadAge at={read.assembledAt} className="font-data" /> and served without touching
-            the venue. A live pass is ~150 round trips and takes 46 seconds to four minutes,
-            which is too long to hold a request open, so a scheduled job recaptures the board
-            instead. Rows past their window are marked; verdicts describe the venue as it stood
-            at that moment. For live readings, run it locally against the venue or call the API.
+            the venue. A live pass is ~150 round trips, too slow to hold a request open, so a
+            scheduled job recaptures it. Rows past their window are marked.
           </p>
         ) : null}
 

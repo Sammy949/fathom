@@ -37,10 +37,15 @@ export default function Loading() {
 
       <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
         {/* The headline is a fixed string, not data. Showing it immediately means the
-            page says what it IS while it works out what it knows. */}
+            page says what it IS while it works out what it knows.
+
+            IT HAS TO BE THE PAGE'S HEADLINE, character for character. This shell renders
+            first and the real page replaces it; a different sentence in the two makes the
+            headline visibly rewrite itself the moment the read lands, which is worse than
+            a blank. Changed with `app/page.tsx`, always. */}
         <header className="mb-10">
           <h1 className="font-display max-w-2xl text-3xl leading-tight">
-            Every verdict here is computed in code.
+            Due diligence for event contracts on DreamDEX.
           </h1>
           <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
             Reading the venue: order books, trades, oracle bindings and the resting book per
