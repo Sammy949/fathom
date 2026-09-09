@@ -175,6 +175,12 @@ alone.
 `PRIVATE_KEY` and `DRY_RUN` matter only for gated testnet execution, which is Stage 6 and not
 built. Use a wallet holding nothing on any mainnet.
 
+`ANALYTICS_SCRIPT_URL` and `ANALYTICS_WEBSITE_ID` add a self-hosted Umami beacon to the
+dashboard. Both describe private infrastructure, so they are blank in the template and set
+only in `apps/web/.env.local` and the Vercel project. Leave them blank and
+`apps/web/components/analytics.tsx` renders nothing — no third-party script, no behaviour
+change. It is gated to production builds, so `npm run dev` never reports.
+
 ## Deploying
 
 Full walkthrough in [`notes/deploy.md`](notes/deploy.md). Deploy in fixture mode
