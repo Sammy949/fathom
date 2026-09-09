@@ -41,7 +41,20 @@ export default async function Home() {
               and not a trading bot), event contracts on DreamDEX is the subject, and allow /
               recheck / block is what a reader gets. The model's constraint stays, moved to
               the deck where it belongs: it is the guarantee, not the pitch. */}
-          <h1 className="font-display max-w-2xl text-3xl leading-tight">
+          {/* `max-w-3xl`, MEASURED OFF THE FONT FILES RATHER THAN GUESSED. Read from the
+              real advance widths in `public/fonts` at the sizes these render at: the
+              headline sets 721.2px in Zodiak at 30px and the deck 745.5px in Instrument
+              Sans at 14px, against the 672px `max-w-2xl` allowed them. So both wrapped,
+              and the deck wrapped badly — 632.9px fits up to "cannot", and " change" does
+              not, which stranded "change a verdict." alone on a second line. `text-wrap:
+              pretty` on every `p` is supposed to prevent exactly that and did not, because
+              it rebalances a rag, it does not widen a measure that is too narrow.
+
+              768px clears both with 22px to spare, and the page's own content box is 960px
+              at this breakpoint, so nothing is being pushed against the gutter. Below about
+              an 832px viewport the container is narrower than 768 anyway and both lines
+              wrap on their own, balanced by `text-wrap: balance` on the headline. */}
+          <h1 className="font-display max-w-3xl text-3xl leading-tight">
             Due diligence for event contracts on DreamDEX.
           </h1>
           {/* EIGHTEEN WORDS, AND THE TWO CUTS ARE THE POINT.
@@ -57,7 +70,7 @@ export default async function Home() {
               What is left is the pair a reader cannot get from the board itself: how many
               signals and where they come from, and the one guarantee that makes the rest
               worth reading. */}
-          <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
+          <p className="text-muted-foreground mt-4 max-w-3xl text-sm leading-relaxed">
             Eight signals per market, measured on chain. A language model writes the
             explanations and cannot change a verdict.
           </p>

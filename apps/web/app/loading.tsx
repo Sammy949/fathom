@@ -44,10 +44,13 @@ export default function Loading() {
             headline visibly rewrite itself the moment the read lands, which is worse than
             a blank. Changed with `app/page.tsx`, always. */}
         <header className="mb-10">
-          <h1 className="font-display max-w-2xl text-3xl leading-tight">
+          {/* `max-w-3xl` tracks the page: this headline is the page's headline, so a
+              different measure here would rewrap the same sentence the instant the read
+              lands. See the note in `app/page.tsx` for where 768px comes from. */}
+          <h1 className="font-display max-w-3xl text-3xl leading-tight">
             Due diligence for event contracts on DreamDEX.
           </h1>
-          <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed">
+          <p className="text-muted-foreground mt-4 max-w-3xl text-sm leading-relaxed">
             Reading the venue: order books, trades, oracle bindings and the resting book per
             order. This takes a moment on a cold read.
           </p>
