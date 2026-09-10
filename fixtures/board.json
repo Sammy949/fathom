@@ -1,114 +1,114 @@
 {
   "rows": [
     {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192df",
-      "symbol": "BTC-0-10SEP26-1430/tUSDC",
+      "marketId": "0x00000000000000000000000000000000000000000000000000000000000195a9",
+      "symbol": "BTC-0-10SEP26-1830-95A9/tUSDC",
       "asset": "BTC",
       "intervalSec": 900,
-      "verdict": "BLOCK",
-      "confidence": 0.85,
+      "verdict": "RECHECK",
+      "confidence": 0.7,
       "action": "do_not_execute",
-      "mid": 0.909,
-      "spread": 0.02200000000000002,
-      "lastTradeAgeSec": 20,
-      "secToExpiry": 300,
-      "quoteTtlSec": 30.282,
-      "owners": 4,
-      "unmeasured": 0
+      "mid": 0.9504999999999999,
+      "spread": 0.02100000000000002,
+      "lastTradeAgeSec": 100,
+      "secToExpiry": 242,
+      "quoteTtlSec": 25.032,
+      "owners": 1,
+      "unmeasured": 1
     },
     {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192e0",
-      "symbol": "ETH-0-10SEP26-1430/tUSDC",
+      "marketId": "0x00000000000000000000000000000000000000000000000000000000000195aa",
+      "symbol": "ETH-0-10SEP26-1830-95AA/tUSDC",
       "asset": "ETH",
       "intervalSec": 900,
       "verdict": "RECHECK",
-      "confidence": 0.8,
+      "confidence": 0.6,
       "action": "do_not_execute",
-      "mid": 0.9555,
+      "mid": 0.9515,
       "spread": 0.02100000000000002,
-      "lastTradeAgeSec": 108,
-      "secToExpiry": 300,
-      "quoteTtlSec": 30.281,
+      "lastTradeAgeSec": null,
+      "secToExpiry": 242,
+      "quoteTtlSec": 24.531,
+      "owners": 3,
+      "unmeasured": 2
+    },
+    {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000001957b",
+      "symbol": "BTC-0-10SEP26-1900/tUSDC",
+      "asset": "BTC",
+      "intervalSec": 3600,
+      "verdict": "BLOCK",
+      "confidence": 0.98,
+      "action": "do_not_execute",
+      "mid": null,
+      "spread": null,
+      "lastTradeAgeSec": 154,
+      "secToExpiry": 2042,
+      "quoteTtlSec": 29.031,
       "owners": 3,
       "unmeasured": 0
     },
     {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192b2",
-      "symbol": "ETH-0-10SEP26-1500/tUSDC",
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000001957c",
+      "symbol": "ETH-0-10SEP26-1900/tUSDC",
       "asset": "ETH",
       "intervalSec": 3600,
       "verdict": "RECHECK",
-      "confidence": 0.7,
+      "confidence": 0.8,
       "action": "do_not_execute",
-      "mid": 0.6950000000000001,
-      "spread": 0.027999999999999914,
-      "lastTradeAgeSec": 66,
-      "secToExpiry": 2100,
-      "quoteTtlSec": 29.281,
-      "owners": 2,
-      "unmeasured": 0
-    },
-    {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192b1",
-      "symbol": "BTC-0-10SEP26-1500/tUSDC",
-      "asset": "BTC",
-      "intervalSec": 3600,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
-      "action": "do_not_execute",
-      "mid": 0.6094999999999999,
-      "spread": 0.029000000000000026,
-      "lastTradeAgeSec": 111,
-      "secToExpiry": 2100,
-      "quoteTtlSec": 30.281,
+      "mid": 0.241,
+      "spread": 0.025999999999999995,
+      "lastTradeAgeSec": 77,
+      "secToExpiry": 2042,
+      "quoteTtlSec": 17.031,
       "owners": 1,
       "unmeasured": 0
     },
     {
-      "marketId": "0x000000000000000000000000000000000000000000000000000000000001914b",
-      "symbol": "BTC-0-10SEP26-1600/tUSDC",
+      "marketId": "0x0000000000000000000000000000000000000000000000000000000000019415",
+      "symbol": "BTC-0-10SEP26-2000/tUSDC",
       "asset": "BTC",
+      "intervalSec": 14400,
+      "verdict": "RECHECK",
+      "confidence": 0.61,
+      "action": "do_not_execute",
+      "mid": 0.2575,
+      "spread": 0.027000000000000024,
+      "lastTradeAgeSec": 3676,
+      "secToExpiry": 5642,
+      "quoteTtlSec": 25.031,
+      "owners": 1,
+      "unmeasured": 1
+    },
+    {
+      "marketId": "0x0000000000000000000000000000000000000000000000000000000000019416",
+      "symbol": "ETH-0-10SEP26-2000/tUSDC",
+      "asset": "ETH",
       "intervalSec": 14400,
       "verdict": "BLOCK",
       "confidence": 0.85,
       "action": "do_not_execute",
-      "mid": 0.14200000000000002,
-      "spread": 0.023999999999999994,
-      "lastTradeAgeSec": 497,
-      "secToExpiry": 5700,
-      "quoteTtlSec": 25.781,
+      "mid": 0.9435,
+      "spread": 0.020999999999999908,
+      "lastTradeAgeSec": 2641,
+      "secToExpiry": 5642,
+      "quoteTtlSec": 16.03,
       "owners": 1,
       "unmeasured": 0
-    },
-    {
-      "marketId": "0x000000000000000000000000000000000000000000000000000000000001914c",
-      "symbol": "ETH-0-10SEP26-1600/tUSDC",
-      "asset": "ETH",
-      "intervalSec": 14400,
-      "verdict": "RECHECK",
-      "confidence": 0.52,
-      "action": "do_not_execute",
-      "mid": 0.155,
-      "spread": 0.02400000000000002,
-      "lastTradeAgeSec": 3466,
-      "secToExpiry": 5700,
-      "quoteTtlSec": 29.281,
-      "owners": 1,
-      "unmeasured": 2
     },
     {
       "marketId": "0x00000000000000000000000000000000000000000000000000000000000188eb",
       "symbol": "BTC-0-11SEP26/tUSDC",
       "asset": "BTC",
       "intervalSec": 86400,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
+      "verdict": "BLOCK",
+      "confidence": 0.85,
       "action": "do_not_execute",
-      "mid": 0.20800000000000002,
-      "spread": 0.025999999999999995,
-      "lastTradeAgeSec": 8693,
-      "secToExpiry": 34500,
-      "quoteTtlSec": 22.28,
+      "mid": null,
+      "spread": null,
+      "lastTradeAgeSec": 11740,
+      "secToExpiry": 20042,
+      "quoteTtlSec": 23.03,
       "owners": 1,
       "unmeasured": 0
     },
@@ -117,25 +117,25 @@
       "symbol": "ETH-0-11SEP26/tUSDC",
       "asset": "ETH",
       "intervalSec": 86400,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
+      "verdict": "BLOCK",
+      "confidence": 0.85,
       "action": "do_not_execute",
-      "mid": 0.298,
-      "spread": 0.026000000000000023,
-      "lastTradeAgeSec": 8608,
-      "secToExpiry": 34500,
-      "quoteTtlSec": 19.28,
+      "mid": 0.365,
+      "spread": 0.028000000000000025,
+      "lastTradeAgeSec": 1072,
+      "secToExpiry": 20042,
+      "quoteTtlSec": 24.03,
       "owners": 1,
       "unmeasured": 0
     }
   ],
   "traces": {
-    "0x00000000000000000000000000000000000000000000000000000000000192df": {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192df",
-      "symbol": "BTC-0-10SEP26-1430/tUSDC",
-      "assembledAt": 1789050300718,
-      "verdict": "BLOCK",
-      "confidence": 0.85,
+    "0x00000000000000000000000000000000000000000000000000000000000195a9": {
+      "marketId": "0x00000000000000000000000000000000000000000000000000000000000195a9",
+      "symbol": "BTC-0-10SEP26-1830-95A9/tUSDC",
+      "assembledAt": 1789064758968,
+      "verdict": "RECHECK",
+      "confidence": 0.7,
       "action": "do_not_execute",
       "signals": [
         {
@@ -155,16 +155,16 @@
           "id": "resolution",
           "label": "Resolution",
           "severity": "ok",
-          "finding": "Bound to oracle question 53530, not voided or superseded; settlement is publicly auditable.",
+          "finding": "Bound to oracle question 53639, not voided or superseded; settlement is publicly auditable.",
           "evidence": {
-            "oracleQuestionId": "53530",
+            "oracleQuestionId": "53639",
             "supersededBy": null,
             "oracleVoided": null,
             "reuseCount": 1,
             "pastExpirySec": null,
             "settlementWindowSec": 300,
             "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53530?view=graph"
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53639?view=graph"
           },
           "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
           "reading": ""
@@ -173,133 +173,136 @@
           "id": "liquidity",
           "label": "Liquidity",
           "severity": "ok",
-          "finding": "Spread is 2.2 points on a 0.909 mid with 990 shares near the touch, in line with this venue.",
+          "finding": "Spread is 2.1 points on a 0.950 mid with 990 shares near the touch, in line with this venue.",
           "evidence": {
-            "bid": 0.898,
-            "ask": 0.92,
-            "mid": 0.909,
-            "spreadPoints": 0.022,
-            "spreadOverMid": 0.024,
+            "bid": 0.94,
+            "ask": 0.961,
+            "mid": 0.95,
+            "spreadPoints": 0.021,
+            "spreadOverMid": 0.022,
             "nearBidShares": 990,
             "nearAskShares": 990,
             "thinnerSideShares": 990
           },
           "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": "The 2.2-point spread on a 0.909 mid and near-touch depth indicate normal, healthy liquidity for this venue."
+          "reading": "Liquidity is solid with a 2.1-point spread on a 0.95 mid and 990 shares near the touch."
         },
         {
           "id": "depth",
           "label": "Depth durability",
           "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 30s and nothing displayed is past expiry. 1990 shares across 9 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 25s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
           "evidence": {
-            "orders": 9,
-            "owners": 4,
-            "totalShares": 1990,
-            "topOwnerShare": 0.995,
-            "concentration": 0.99,
-            "medianTtlSec": 30.3,
-            "minTtlSec": 28.3,
+            "orders": 6,
+            "owners": 1,
+            "totalShares": 1980,
+            "topOwnerShare": 1,
+            "concentration": 1,
+            "medianTtlSec": 25,
+            "minTtlSec": 22,
             "firmShares": 0,
-            "pullableShares": 1990,
+            "pullableShares": 1980,
             "unverifiedShares": 0,
             "phantomShares": 0,
-            "topOwner": "0x3689397e39d4042a667a3288bd1f62b588c85b5a",
+            "topOwner": "0x10569abc222f70c3dc12ad4be040180ddc25479e",
             "topOwnerClass": "upgradeable"
           },
           "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": "All 1990 shares are owned by a single, upgradeable address and are fully withdrawable, meaning there is no committed depth."
+          "reading": "Depth is short-lived, median TTL 25 s, and all 1980 shares are owned by a single address, fully withdrawable."
         },
         {
           "id": "volatility",
           "label": "Volatility",
-          "severity": "severe",
-          "finding": "Implied probability jumped 40.9 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
+          "severity": "unknown",
+          "finding": "Only 2 price buckets exist, fewer than the 3 needed to judge a move.",
           "evidence": {
-            "maxStepPoints": 0.409,
-            "netChangePoints": 0.626,
-            "samples": 3,
-            "spanSec": 300,
-            "volumeShares": 10
+            "samples": 2,
+            "required": 3
           },
           "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "A 40.9-point jump between trades far exceeds the typical ~13-point move, signalling unusually high price volatility."
+          "reading": "Volatility could not be measured because only 2 price buckets were available, fewer than the required 3."
         },
         {
           "id": "staleness",
           "label": "Staleness",
           "severity": "ok",
-          "finding": "Last trade 0 min ago, 2% of the window.",
+          "finding": "Last trade 2 min ago, 11% of the window.",
           "evidence": {
-            "lastTradeAgeSec": 20,
-            "ageVsWindow": 0.022,
+            "lastTradeAgeSec": 100,
+            "ageVsWindow": 0.111,
             "windowSec": 900
           },
           "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": "The most recent trade occurred seconds ago, showing the market is actively trading."
+          "reading": "The last trade was 2 min ago, representing 11% of the window."
         },
         {
           "id": "window",
           "label": "Window",
           "severity": "elevated",
-          "finding": "5 min of trading left, 67% of the window elapsed.",
+          "finding": "4 min of trading left, 73% of the window elapsed.",
           "evidence": {
-            "secToExpiry": 300,
-            "windowElapsed": 0.667,
+            "secToExpiry": 242,
+            "windowElapsed": 0.731,
             "windowSec": 900
           },
           "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": "Only five minutes remain, with about two-thirds of the window already elapsed, so time pressure is increasing."
+          "reading": "Only 4 min of trading remain with 73% of the window already elapsed."
         },
         {
           "id": "manipulation",
           "label": "Order flow",
-          "severity": "ok",
-          "finding": "Flow is roughly balanced (skew 0.60) over 5 trades. 2 shares came from opposite-side buyers minting a pair rather than a seller.",
+          "severity": "elevated",
+          "finding": "every recent fill is aggressive selling (skew -1.00) across 3 trades.",
           "evidence": {
-            "fills": 5,
-            "takerBuyShares": 8,
-            "takerSellShares": 2,
-            "skew": 0.6,
+            "fills": 3,
+            "takerBuyShares": 0,
+            "takerSellShares": 20.69,
+            "skew": -1,
             "depthImbalance": 0,
-            "mintedShares": 2,
-            "vwap": 0.6573
+            "mintedShares": 20.69,
+            "vwap": 0.8639
           },
           "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": "Order flow is roughly balanced and only a small amount of shares were minted, suggesting no immediate manipulation risk."
+          "reading": "All three recent fills were aggressive sells (skew -1.00)."
         }
       ],
       "rules": [
         {
-          "rule": "severe:volatility",
-          "because": "Implied probability jumped 40.9 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue."
+          "rule": "incomplete-observation",
+          "because": "1 signal could not be measured (volatility), so this cannot be cleared for execution."
+        },
+        {
+          "rule": "elevated:window",
+          "because": "4 min of trading left, 73% of the window elapsed."
+        },
+        {
+          "rule": "elevated:manipulation",
+          "because": "every recent fill is aggressive selling (skew -1.00) across 3 trades."
         }
       ],
       "requiredChecks": [
-        "Wait for the next few trades to see whether the move holds or reverts",
-        "Re-check on-chain status immediately before acting; the window may lock first"
+        "Wait for more trades to establish a price history before treating the move as known",
+        "Re-check on-chain status immediately before acting; the window may lock first",
+        "Check whether one-sided flow is a single participant before following it"
       ],
-      "unmeasured": [],
+      "unmeasured": [
+        "volatility"
+      ],
       "prices": [
         {
-          "t": 1789049940,
-          "close": 0.293,
-          "volume": 0
+          "t": 1789064100,
+          "close": 0.457,
+          "volume": 2.51
         },
         {
-          "t": 1789050180,
-          "close": 0.702,
-          "volume": 9
-        },
-        {
-          "t": 1789050240,
-          "close": 0.919,
-          "volume": 1
+          "t": 1789064640,
+          "close": 0.92,
+          "volume": 18.18
         }
       ],
       "explanation": {
-        "headline": "Volatility spikes while the market nears expiry, with adequate liquidity and balanced order flow.",
-        "summary": "The market shows a 40.9-point price jump between trades, far above the venue norm of about 13 points, indicating heightened risk. Liquidity remains normal with a tight 2.2-point spread and plenty of shares near the best price, while depth is concentrated in a single, fully withdrawable owner. With only five minutes left (about two-thirds of the window elapsed) and recent activity, the engine advises waiting for further trades and confirming on-chain status before acting.",
+        "headline": "73% of the 15-minute window elapsed, leaving 4 min, and recent trades show aggressive selling",
+        "summary": "Liquidity is tight with a 2.1-point spread on a 0.95 mid and 990 shares near the price. Depth is concentrated in a single owner and all 1980 shares are fully withdrawable, while recent order flow has been entirely aggressive selling. With 73% of the window elapsed and only 4 min left, and volatility unmeasurable, price movement remains uncertain.",
         "perSignal": [
           {
             "signalId": "venue",
@@ -311,79 +314,525 @@
           },
           {
             "signalId": "liquidity",
-            "reading": "The 2.2-point spread on a 0.909 mid and near-touch depth indicate normal, healthy liquidity for this venue."
+            "reading": "Liquidity is solid with a 2.1-point spread on a 0.95 mid and 990 shares near the touch."
           },
           {
             "signalId": "depth",
-            "reading": "All 1990 shares are owned by a single, upgradeable address and are fully withdrawable, meaning there is no committed depth."
+            "reading": "Depth is short-lived, median TTL 25 s, and all 1980 shares are owned by a single address, fully withdrawable."
           },
           {
             "signalId": "volatility",
-            "reading": "A 40.9-point jump between trades far exceeds the typical ~13-point move, signalling unusually high price volatility."
+            "reading": "Volatility could not be measured because only 2 price buckets were available, fewer than the required 3."
           },
           {
             "signalId": "staleness",
-            "reading": "The most recent trade occurred seconds ago, showing the market is actively trading."
+            "reading": "The last trade was 2 min ago, representing 11% of the window."
           },
           {
             "signalId": "window",
-            "reading": "Only five minutes remain, with about two-thirds of the window already elapsed, so time pressure is increasing."
+            "reading": "Only 4 min of trading remain with 73% of the window already elapsed."
           },
           {
             "signalId": "manipulation",
-            "reading": "Order flow is roughly balanced and only a small amount of shares were minted, suggesting no immediate manipulation risk."
+            "reading": "All three recent fills were aggressive sells (skew -1.00)."
           }
         ],
         "source": "model",
         "model": "groq:openai/gpt-oss-120b",
         "usage": {
-          "inputTokens": 2392,
-          "outputTokens": 1975
+          "inputTokens": 2470,
+          "outputTokens": 1584
         }
       },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53530?view=graph",
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53639?view=graph",
       "provenance": [
         {
           "field": "onchain",
           "state": "ok",
-          "readAt": 1789050301508
+          "readAt": 1789064759557
         },
         {
           "field": "book",
           "state": "ok",
-          "readAt": 1789050301648
+          "readAt": 1789064759649
         },
         {
           "field": "prices",
           "state": "ok",
-          "readAt": 1789050303274
+          "readAt": 1789064760528
         },
         {
           "field": "move",
           "state": "ok",
-          "readAt": 1789050303274
+          "readAt": 1789064760528
         },
         {
           "field": "flow",
           "state": "ok",
-          "readAt": 1789050303418
+          "readAt": 1789064760957
         },
         {
           "field": "freshness",
           "state": "ok",
-          "readAt": 1789050303418
+          "readAt": 1789064760957
         },
         {
           "field": "resolution",
           "state": "ok",
-          "readAt": 1789050303926
+          "readAt": 1789064761315
         }
       ]
     },
-    "0x00000000000000000000000000000000000000000000000000000000000192e0": {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192e0",
-      "symbol": "ETH-0-10SEP26-1430/tUSDC",
-      "assembledAt": 1789050300719,
+    "0x00000000000000000000000000000000000000000000000000000000000195aa": {
+      "marketId": "0x00000000000000000000000000000000000000000000000000000000000195aa",
+      "symbol": "ETH-0-10SEP26-1830-95AA/tUSDC",
+      "assembledAt": 1789064758969,
+      "verdict": "RECHECK",
+      "confidence": 0.6,
+      "action": "do_not_execute",
+      "signals": [
+        {
+          "id": "venue",
+          "label": "Venue",
+          "severity": "ok",
+          "finding": "On the DreamDEX event-contracts venue.",
+          "evidence": {
+            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "question": "ETH closes at or above its opening price"
+          },
+          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
+          "reading": "The market runs on the DreamDEX event-contracts venue."
+        },
+        {
+          "id": "resolution",
+          "label": "Resolution",
+          "severity": "ok",
+          "finding": "Bound to oracle question 53640, not voided or superseded; settlement is publicly auditable.",
+          "evidence": {
+            "oracleQuestionId": "53640",
+            "supersededBy": null,
+            "oracleVoided": null,
+            "reuseCount": 1,
+            "pastExpirySec": null,
+            "settlementWindowSec": 300,
+            "lapsedSec": null,
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53640?view=graph"
+          },
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
+          "reading": "Settlement will follow oracle 53640 and is publicly auditable via the provided URL."
+        },
+        {
+          "id": "liquidity",
+          "label": "Liquidity",
+          "severity": "ok",
+          "finding": "Spread is 2.1 points on a 0.952 mid with 990 shares near the touch, in line with this venue.",
+          "evidence": {
+            "bid": 0.941,
+            "ask": 0.962,
+            "mid": 0.952,
+            "spreadPoints": 0.021,
+            "spreadOverMid": 0.022,
+            "nearBidShares": 990,
+            "nearAskShares": 990,
+            "thinnerSideShares": 990
+          },
+          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
+          "reading": "Liquidity is normal for this venue, with a tight spread and ample shares near the touch."
+        },
+        {
+          "id": "depth",
+          "label": "Depth durability",
+          "severity": "ok",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 25s and nothing displayed is past expiry. 1990 shares across 8 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "evidence": {
+            "orders": 8,
+            "owners": 3,
+            "totalShares": 1990,
+            "topOwnerShare": 0.995,
+            "concentration": 0.99,
+            "medianTtlSec": 24.5,
+            "minTtlSec": 17,
+            "firmShares": 0,
+            "pullableShares": 1990,
+            "unverifiedShares": 0,
+            "phantomShares": 0,
+            "topOwner": "0xb8fd7d44e1dd3dbe619c6ce37c25d9933bd4e0f5",
+            "topOwnerClass": "upgradeable"
+          },
+          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
+          "reading": "Depth is shallow and controlled by a single owner, but all shares can be withdrawn instantly."
+        },
+        {
+          "id": "volatility",
+          "label": "Volatility",
+          "severity": "unknown",
+          "finding": "No trades have printed, so there is no price history to measure a move against.",
+          "evidence": {
+            "samples": 0,
+            "required": 3
+          },
+          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
+          "reading": "Volatility cannot be assessed because there are no trades to form a price history."
+        },
+        {
+          "id": "staleness",
+          "label": "Staleness",
+          "severity": "elevated",
+          "finding": "This market has never traded, so its quoted mid reflects a maker's opening guess rather than any consensus.",
+          "evidence": {
+            "neverTraded": true,
+            "secToExpiry": 242
+          },
+          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
+          "reading": "The quoted mid reflects only the maker's opening guess, not any market consensus."
+        },
+        {
+          "id": "window",
+          "label": "Window",
+          "severity": "elevated",
+          "finding": "4 min of trading left, 73% of the window elapsed.",
+          "evidence": {
+            "secToExpiry": 242,
+            "windowElapsed": 0.731,
+            "windowSec": 900
+          },
+          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
+          "reading": "Only about 4 min remain before the market locks, with 73% of the window already elapsed."
+        },
+        {
+          "id": "manipulation",
+          "label": "Order flow",
+          "severity": "unknown",
+          "finding": "No trades yet, so there is no flow to assess.",
+          "evidence": {
+            "fills": 0
+          },
+          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
+          "reading": "Order flow cannot be evaluated until the first trade occurs."
+        }
+      ],
+      "rules": [
+        {
+          "rule": "incomplete-observation",
+          "because": "2 signals could not be measured (volatility, manipulation), so this cannot be cleared for execution."
+        },
+        {
+          "rule": "elevated:staleness",
+          "because": "This market has never traded, so its quoted mid reflects a maker's opening guess rather than any consensus."
+        },
+        {
+          "rule": "elevated:window",
+          "because": "4 min of trading left, 73% of the window elapsed."
+        }
+      ],
+      "requiredChecks": [
+        "Wait for more trades to establish a price history before treating the move as known",
+        "Wait for more fills before reading flow direction",
+        "Treat the quoted mid as indicative until a fresh trade prints",
+        "Re-check on-chain status immediately before acting; the window may lock first"
+      ],
+      "unmeasured": [
+        "volatility",
+        "manipulation"
+      ],
+      "prices": [],
+      "explanation": {
+        "headline": "Market is near expiry with 73% of window elapsed and has never traded.",
+        "summary": "The market has seen no trades, leaving the mid price based solely on the maker's initial quote (staleness elevated, neverTraded true). With 73% of the 15-minute window elapsed and only 4 min remaining, time pressure is high. Liquidity is normal with a 2.1-point spread on a 0.952 mid, and depth orders are short-lived but fully withdrawable.",
+        "perSignal": [
+          {
+            "signalId": "venue",
+            "reading": "The market runs on the DreamDEX event-contracts venue."
+          },
+          {
+            "signalId": "resolution",
+            "reading": "Settlement will follow oracle 53640 and is publicly auditable via the provided URL."
+          },
+          {
+            "signalId": "liquidity",
+            "reading": "Liquidity is normal for this venue, with a tight spread and ample shares near the touch."
+          },
+          {
+            "signalId": "depth",
+            "reading": "Depth is shallow and controlled by a single owner, but all shares can be withdrawn instantly."
+          },
+          {
+            "signalId": "volatility",
+            "reading": "Volatility cannot be assessed because there are no trades to form a price history."
+          },
+          {
+            "signalId": "staleness",
+            "reading": "The quoted mid reflects only the maker's opening guess, not any market consensus."
+          },
+          {
+            "signalId": "window",
+            "reading": "Only about 4 min remain before the market locks, with 73% of the window already elapsed."
+          },
+          {
+            "signalId": "manipulation",
+            "reading": "Order flow cannot be evaluated until the first trade occurs."
+          }
+        ],
+        "source": "model",
+        "model": "groq:openai/gpt-oss-120b",
+        "usage": {
+          "inputTokens": 2495,
+          "outputTokens": 1833
+        }
+      },
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53640?view=graph",
+      "provenance": [
+        {
+          "field": "onchain",
+          "state": "ok",
+          "readAt": 1789064759617
+        },
+        {
+          "field": "book",
+          "state": "ok",
+          "readAt": 1789064759712
+        },
+        {
+          "field": "prices",
+          "state": "ok",
+          "readAt": 1789064760859
+        },
+        {
+          "field": "move",
+          "state": "ok",
+          "readAt": 1789064760859
+        },
+        {
+          "field": "flow",
+          "state": "ok",
+          "readAt": 1789064761214
+        },
+        {
+          "field": "freshness",
+          "state": "ok",
+          "readAt": 1789064761214
+        },
+        {
+          "field": "resolution",
+          "state": "ok",
+          "readAt": 1789064761575
+        }
+      ]
+    },
+    "0x000000000000000000000000000000000000000000000000000000000001957b": {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000001957b",
+      "symbol": "BTC-0-10SEP26-1900/tUSDC",
+      "assembledAt": 1789064758969,
+      "verdict": "BLOCK",
+      "confidence": 0.98,
+      "action": "do_not_execute",
+      "signals": [
+        {
+          "id": "venue",
+          "label": "Venue",
+          "severity": "ok",
+          "finding": "On the DreamDEX event-contracts venue.",
+          "evidence": {
+            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "question": "BTC closes at or above its opening price"
+          },
+          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series."
+        },
+        {
+          "id": "resolution",
+          "label": "Resolution",
+          "severity": "ok",
+          "finding": "Bound to oracle question 53630, not voided or superseded; settlement is publicly auditable.",
+          "evidence": {
+            "oracleQuestionId": "53630",
+            "supersededBy": null,
+            "oracleVoided": null,
+            "reuseCount": 0,
+            "pastExpirySec": null,
+            "settlementWindowSec": 300,
+            "lapsedSec": null,
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53630?view=graph"
+          },
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal."
+        },
+        {
+          "id": "liquidity",
+          "label": "Liquidity",
+          "severity": "severe",
+          "finding": "Only one side of the book is quoted (no ask), so a position could be opened but not closed.",
+          "evidence": {
+            "bidLevels": 5,
+            "askLevels": 0,
+            "missing": "ask"
+          },
+          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail."
+        },
+        {
+          "id": "depth",
+          "label": "Depth durability",
+          "severity": "ok",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 29s and nothing displayed is past expiry. 1635 shares across 5 orders, held by 3 owners, the largest 61%. 100% is withdrawable at will, none of it committed.",
+          "evidence": {
+            "orders": 5,
+            "owners": 3,
+            "totalShares": 1635,
+            "topOwnerShare": 0.606,
+            "concentration": 0.49,
+            "medianTtlSec": 29,
+            "minTtlSec": 22,
+            "firmShares": 0,
+            "pullableShares": 1635,
+            "unverifiedShares": 0,
+            "phantomShares": 0,
+            "topOwner": "0x6f129437c004c1a0047ffaf5e8f4b2d778ea8551",
+            "topOwnerClass": "upgradeable"
+          },
+          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations."
+        },
+        {
+          "id": "volatility",
+          "label": "Volatility",
+          "severity": "severe",
+          "finding": "Implied probability jumped 48.0 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
+          "evidence": {
+            "maxStepPoints": 0.48,
+            "netChangePoints": 0.478,
+            "samples": 4,
+            "spanSec": 1320,
+            "volumeShares": 1419
+          },
+          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal."
+        },
+        {
+          "id": "staleness",
+          "label": "Staleness",
+          "severity": "ok",
+          "finding": "Last trade 3 min ago, 4% of the window.",
+          "evidence": {
+            "lastTradeAgeSec": 154,
+            "ageVsWindow": 0.043,
+            "windowSec": 3600
+          },
+          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series."
+        },
+        {
+          "id": "window",
+          "label": "Window",
+          "severity": "ok",
+          "finding": "34 min of trading left, 43% of the window elapsed.",
+          "evidence": {
+            "secToExpiry": 2042,
+            "windowElapsed": 0.433,
+            "windowSec": 3600
+          },
+          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action."
+        },
+        {
+          "id": "manipulation",
+          "label": "Order flow",
+          "severity": "ok",
+          "finding": "Flow is roughly balanced (skew 0.40) over 9 trades. 26 shares came from opposite-side buyers minting a pair rather than a seller.",
+          "evidence": {
+            "fills": 9,
+            "takerBuyShares": 993,
+            "takerSellShares": 426,
+            "skew": 0.4,
+            "depthImbalance": null,
+            "mintedShares": 26,
+            "vwap": 0.206
+          },
+          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric."
+        }
+      ],
+      "rules": [
+        {
+          "rule": "severe:liquidity",
+          "because": "Only one side of the book is quoted (no ask), so a position could be opened but not closed."
+        },
+        {
+          "rule": "severe:volatility",
+          "because": "Implied probability jumped 48.0 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue."
+        }
+      ],
+      "requiredChecks": [
+        "Confirm you can exit at a price close to entry before sizing a position",
+        "Wait for the next few trades to see whether the move holds or reverts"
+      ],
+      "unmeasured": [],
+      "prices": [
+        {
+          "t": 1789063260,
+          "close": 0.512,
+          "volume": 2
+        },
+        {
+          "t": 1789063500,
+          "close": 0.227,
+          "volume": 1
+        },
+        {
+          "t": 1789064340,
+          "close": 0.51,
+          "volume": 1390
+        },
+        {
+          "t": 1789064580,
+          "close": 0.99,
+          "volume": 26
+        }
+      ],
+      "explanation": {
+        "headline": "Only one side of the book is quoted (no ask), so a position could be opened but not closed.",
+        "summary": "2 signals are blocking: liquidity, volatility. Confidence 0.98 reflects how much of the market could be observed, not any view on its outcome.",
+        "perSignal": [],
+        "source": "fallback",
+        "fallbackReason": "model output rejected: machine-syntax (prose contains the field reference \"bidLevels=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"askLevels=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"maxStepPoints=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"lastTradeAgeSec=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"windowElapsed=\"; readers have not seen our schema)"
+      },
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53630?view=graph",
+      "provenance": [
+        {
+          "field": "onchain",
+          "state": "ok",
+          "readAt": 1789064759559
+        },
+        {
+          "field": "book",
+          "state": "ok",
+          "readAt": 1789064759651
+        },
+        {
+          "field": "prices",
+          "state": "ok",
+          "readAt": 1789064760142
+        },
+        {
+          "field": "move",
+          "state": "ok",
+          "readAt": 1789064760142
+        },
+        {
+          "field": "flow",
+          "state": "ok",
+          "readAt": 1789064760587
+        },
+        {
+          "field": "freshness",
+          "state": "ok",
+          "readAt": 1789064760587
+        },
+        {
+          "field": "resolution",
+          "state": "ok",
+          "readAt": 1789064760947
+        }
+      ]
+    },
+    "0x000000000000000000000000000000000000000000000000000000000001957c": {
+      "marketId": "0x000000000000000000000000000000000000000000000000000000000001957c",
+      "symbol": "ETH-0-10SEP26-1900/tUSDC",
+      "assembledAt": 1789064758969,
       "verdict": "RECHECK",
       "confidence": 0.8,
       "action": "do_not_execute",
@@ -399,22 +848,291 @@
             "question": "ETH closes at or above its opening price"
           },
           "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
+          "reading": "Trading takes place on the DreamDEX event-contracts venue as expected."
+        },
+        {
+          "id": "resolution",
+          "label": "Resolution",
+          "severity": "ok",
+          "finding": "Bound to oracle question 53631, not voided or superseded; settlement is publicly auditable.",
+          "evidence": {
+            "oracleQuestionId": "53631",
+            "supersededBy": null,
+            "oracleVoided": null,
+            "reuseCount": 0,
+            "pastExpirySec": null,
+            "settlementWindowSec": 300,
+            "lapsedSec": null,
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53631?view=graph"
+          },
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
+          "reading": "The contract is bound to oracle question 53631, which is active and auditable."
+        },
+        {
+          "id": "liquidity",
+          "label": "Liquidity",
+          "severity": "ok",
+          "finding": "Spread is 2.6 points on a 0.241 mid with 990 shares near the touch, in line with this venue.",
+          "evidence": {
+            "bid": 0.228,
+            "ask": 0.254,
+            "mid": 0.241,
+            "spreadPoints": 0.026,
+            "spreadOverMid": 0.108,
+            "nearBidShares": 990,
+            "nearAskShares": 990,
+            "thinnerSideShares": 990
+          },
+          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
+          "reading": "A spread of 2.6 points on a 0.241 mid with 990 shares near each side matches normal venue conditions."
+        },
+        {
+          "id": "depth",
+          "label": "Depth durability",
+          "severity": "ok",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 17s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "evidence": {
+            "orders": 6,
+            "owners": 1,
+            "totalShares": 1980,
+            "topOwnerShare": 1,
+            "concentration": 1,
+            "medianTtlSec": 17,
+            "minTtlSec": 13,
+            "firmShares": 0,
+            "pullableShares": 1980,
+            "unverifiedShares": 0,
+            "phantomShares": 0,
+            "topOwner": "0xf93df2b599662d21b42c7db8cfb530864a19cf59",
+            "topOwnerClass": "upgradeable"
+          },
+          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
+          "reading": "Orders have a median TTL of 17 seconds and are fully withdrawable, indicating no locked depth."
+        },
+        {
+          "id": "volatility",
+          "label": "Volatility",
+          "severity": "elevated",
+          "finding": "Implied probability moved 17.2 points in one step, above the venue's typical 10.",
+          "evidence": {
+            "maxStepPoints": 0.172,
+            "netChangePoints": -0.103,
+            "samples": 6,
+            "spanSec": 1140,
+            "volumeShares": 87
+          },
+          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
+          "reading": "The 17.2-point price step exceeds the typical ~10-point move, signaling heightened short-term volatility."
+        },
+        {
+          "id": "staleness",
+          "label": "Staleness",
+          "severity": "ok",
+          "finding": "Last trade 1 min ago, 2% of the window.",
+          "evidence": {
+            "lastTradeAgeSec": 77,
+            "ageVsWindow": 0.021,
+            "windowSec": 3600
+          },
+          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
+          "reading": "The last trade occurred 77 seconds ago, representing only 2 % of the hour window, so activity is recent."
+        },
+        {
+          "id": "window",
+          "label": "Window",
+          "severity": "ok",
+          "finding": "34 min of trading left, 43% of the window elapsed.",
+          "evidence": {
+            "secToExpiry": 2042,
+            "windowElapsed": 0.433,
+            "windowSec": 3600
+          },
+          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
+          "reading": "There are 34 min left in the 60-minute window, with 43 % already elapsed."
+        },
+        {
+          "id": "manipulation",
+          "label": "Order flow",
+          "severity": "elevated",
+          "finding": "every recent fill is aggressive buying (skew 1.00) across 8 trades.",
+          "evidence": {
+            "fills": 8,
+            "takerBuyShares": 87,
+            "takerSellShares": 0,
+            "skew": 1,
+            "depthImbalance": 0,
+            "mintedShares": 0,
+            "vwap": 0.2499
+          },
+          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
+          "reading": "Eight recent fills were all aggressive buys, giving a skew of 1.00 and suggesting one-sided order flow."
+        }
+      ],
+      "rules": [
+        {
+          "rule": "elevated:volatility",
+          "because": "Implied probability moved 17.2 points in one step, above the venue's typical 10."
+        },
+        {
+          "rule": "elevated:manipulation",
+          "because": "every recent fill is aggressive buying (skew 1.00) across 8 trades."
+        }
+      ],
+      "requiredChecks": [
+        "Wait for the next few trades to see whether the move holds or reverts",
+        "Check whether one-sided flow is a single participant before following it"
+      ],
+      "unmeasured": [],
+      "prices": [
+        {
+          "t": 1789063500,
+          "close": 0.353,
+          "volume": 1
+        },
+        {
+          "t": 1789063620,
+          "close": 0.345,
+          "volume": 1
+        },
+        {
+          "t": 1789064160,
+          "close": 0.173,
+          "volume": 3
+        },
+        {
+          "t": 1789064460,
+          "close": 0.231,
+          "volume": 1
+        },
+        {
+          "t": 1789064520,
+          "close": 0.285,
+          "volume": 1
+        },
+        {
+          "t": 1789064640,
+          "close": 0.25,
+          "volume": 80
+        }
+      ],
+      "explanation": {
+        "headline": "The market shows normal liquidity but elevated volatility and one-sided buying pressure.",
+        "summary": "Liquidity is adequate with a 2.6-point spread on a 0.241 mid and 990 shares near each side. However, volatility is elevated, as the implied probability moved 17.2 points in one step, exceeding the venue’s typical 10-point move, and recent order flow consists of eight aggressive buys with a skew of 1.00. The market is still early in its 60-minute window, with 34 min left and the last trade only 77 seconds ago.",
+        "perSignal": [
+          {
+            "signalId": "venue",
+            "reading": "Trading takes place on the DreamDEX event-contracts venue as expected."
+          },
+          {
+            "signalId": "resolution",
+            "reading": "The contract is bound to oracle question 53631, which is active and auditable."
+          },
+          {
+            "signalId": "liquidity",
+            "reading": "A spread of 2.6 points on a 0.241 mid with 990 shares near each side matches normal venue conditions."
+          },
+          {
+            "signalId": "depth",
+            "reading": "Orders have a median TTL of 17 seconds and are fully withdrawable, indicating no locked depth."
+          },
+          {
+            "signalId": "volatility",
+            "reading": "The 17.2-point price step exceeds the typical ~10-point move, signaling heightened short-term volatility."
+          },
+          {
+            "signalId": "staleness",
+            "reading": "The last trade occurred 77 seconds ago, representing only 2 % of the hour window, so activity is recent."
+          },
+          {
+            "signalId": "window",
+            "reading": "There are 34 min left in the 60-minute window, with 43 % already elapsed."
+          },
+          {
+            "signalId": "manipulation",
+            "reading": "Eight recent fills were all aggressive buys, giving a skew of 1.00 and suggesting one-sided order flow."
+          }
+        ],
+        "source": "model",
+        "model": "groq:openai/gpt-oss-120b",
+        "usage": {
+          "inputTokens": 2400,
+          "outputTokens": 1632
+        }
+      },
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53631?view=graph",
+      "provenance": [
+        {
+          "field": "onchain",
+          "state": "ok",
+          "readAt": 1789064759612
+        },
+        {
+          "field": "book",
+          "state": "ok",
+          "readAt": 1789064759702
+        },
+        {
+          "field": "prices",
+          "state": "ok",
+          "readAt": 1789064760325
+        },
+        {
+          "field": "move",
+          "state": "ok",
+          "readAt": 1789064760325
+        },
+        {
+          "field": "flow",
+          "state": "ok",
+          "readAt": 1789064760681
+        },
+        {
+          "field": "freshness",
+          "state": "ok",
+          "readAt": 1789064760681
+        },
+        {
+          "field": "resolution",
+          "state": "ok",
+          "readAt": 1789064761039
+        }
+      ]
+    },
+    "0x0000000000000000000000000000000000000000000000000000000000019415": {
+      "marketId": "0x0000000000000000000000000000000000000000000000000000000000019415",
+      "symbol": "BTC-0-10SEP26-2000/tUSDC",
+      "assembledAt": 1789064758969,
+      "verdict": "RECHECK",
+      "confidence": 0.61,
+      "action": "do_not_execute",
+      "signals": [
+        {
+          "id": "venue",
+          "label": "Venue",
+          "severity": "ok",
+          "finding": "On the DreamDEX event-contracts venue.",
+          "evidence": {
+            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+            "question": "BTC closes at or above its opening price"
+          },
+          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
           "reading": ""
         },
         {
           "id": "resolution",
           "label": "Resolution",
           "severity": "ok",
-          "finding": "Bound to oracle question 53531, not voided or superseded; settlement is publicly auditable.",
+          "finding": "Bound to oracle question 53573, not voided or superseded; settlement is publicly auditable.",
           "evidence": {
-            "oracleQuestionId": "53531",
+            "oracleQuestionId": "53573",
             "supersededBy": null,
             "oracleVoided": null,
-            "reuseCount": 1,
+            "reuseCount": 0,
             "pastExpirySec": null,
             "settlementWindowSec": 300,
             "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53531?view=graph"
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53573?view=graph"
           },
           "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
           "reading": ""
@@ -423,142 +1141,121 @@
           "id": "liquidity",
           "label": "Liquidity",
           "severity": "ok",
-          "finding": "Spread is 2.1 points on a 0.956 mid with 990 shares near the touch, in line with this venue.",
+          "finding": "Spread is 2.7 points on a 0.258 mid with 990 shares near the touch, in line with this venue.",
           "evidence": {
-            "bid": 0.945,
-            "ask": 0.966,
-            "mid": 0.956,
-            "spreadPoints": 0.021,
-            "spreadOverMid": 0.022,
+            "bid": 0.244,
+            "ask": 0.271,
+            "mid": 0.258,
+            "spreadPoints": 0.027,
+            "spreadOverMid": 0.105,
             "nearBidShares": 990,
             "nearAskShares": 990,
             "thinnerSideShares": 990
           },
           "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": ""
+          "reading": "Spread is within the normal range for this venue."
         },
         {
           "id": "depth",
           "label": "Depth durability",
           "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 30s and nothing displayed is past expiry. 1994 shares across 8 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 25s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
           "evidence": {
-            "orders": 8,
-            "owners": 3,
-            "totalShares": 1994,
-            "topOwnerShare": 0.993,
-            "concentration": 0.986,
-            "medianTtlSec": 30.3,
-            "minTtlSec": 30.3,
+            "orders": 6,
+            "owners": 1,
+            "totalShares": 1980,
+            "topOwnerShare": 1,
+            "concentration": 1,
+            "medianTtlSec": 25,
+            "minTtlSec": 14,
             "firmShares": 0,
-            "pullableShares": 1994,
+            "pullableShares": 1980,
             "unverifiedShares": 0,
             "phantomShares": 0,
-            "topOwner": "0x2fcc964a56e4ebfda14fd00a99a9af5d7f73cb13",
+            "topOwner": "0x608f48b04417c0ef933490e9061086474825a61e",
             "topOwnerClass": "upgradeable"
           },
           "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": ""
+          "reading": "Orders are short-lived and fully withdrawable, indicating low commitment."
         },
         {
           "id": "volatility",
           "label": "Volatility",
-          "severity": "elevated",
-          "finding": "Implied probability moved 24.5 points in one step, above the venue's typical 10.",
+          "severity": "unknown",
+          "finding": "Only 1 price bucket exists, fewer than the 3 needed to judge a move.",
           "evidence": {
-            "maxStepPoints": 0.245,
-            "netChangePoints": 0.485,
-            "samples": 3,
-            "spanSec": 360,
-            "volumeShares": 23
+            "samples": 1,
+            "required": 3
           },
           "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "The sharp 24.5-point step indicates heightened price movement and uncertainty."
+          "reading": "Volatility could not be measured due to insufficient price data."
         },
         {
           "id": "staleness",
           "label": "Staleness",
           "severity": "ok",
-          "finding": "Last trade 2 min ago, 12% of the window.",
+          "finding": "Last trade 61 min ago, 26% of the window.",
           "evidence": {
-            "lastTradeAgeSec": 108,
-            "ageVsWindow": 0.12,
-            "windowSec": 900
+            "lastTradeAgeSec": 3676,
+            "ageVsWindow": 0.255,
+            "windowSec": 14400
           },
           "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": ""
+          "reading": "No trade has occurred for over an hour, but the market is still early in its window."
         },
         {
           "id": "window",
           "label": "Window",
-          "severity": "elevated",
-          "finding": "5 min of trading left, 67% of the window elapsed.",
+          "severity": "ok",
+          "finding": "94 min of trading left, 61% of the window elapsed.",
           "evidence": {
-            "secToExpiry": 300,
-            "windowElapsed": 0.667,
-            "windowSec": 900
+            "secToExpiry": 5642,
+            "windowElapsed": 0.608,
+            "windowSec": 14400
           },
           "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": "Only 5 min remain, with 67% of the window already elapsed, so trading time is running short."
+          "reading": "More than half of the 4-hour window has elapsed, leaving under two hours to trade."
         },
         {
           "id": "manipulation",
           "label": "Order flow",
-          "severity": "elevated",
-          "finding": "every recent fill is aggressive selling (skew -1.00) across 5 trades.",
+          "severity": "ok",
+          "finding": "Flow is roughly balanced (skew -0.55) over 3 trades. 119 shares came from opposite-side buyers minting a pair rather than a seller.",
           "evidence": {
-            "fills": 5,
-            "takerBuyShares": 0,
-            "takerSellShares": 23,
-            "skew": -1,
+            "fills": 3,
+            "takerBuyShares": 35,
+            "takerSellShares": 118.92,
+            "skew": -0.545,
             "depthImbalance": 0,
-            "mintedShares": 1,
-            "vwap": 0.4516
+            "mintedShares": 118.92,
+            "vwap": 0.4846
           },
           "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": "All five recent fills were aggressive sells, giving a skew of -1.00 and suggesting one-sided pressure."
+          "reading": "Order flow is roughly balanced with a slight buy-side skew across three trades."
         }
       ],
       "rules": [
         {
-          "rule": "elevated:volatility",
-          "because": "Implied probability moved 24.5 points in one step, above the venue's typical 10."
-        },
-        {
-          "rule": "elevated:window",
-          "because": "5 min of trading left, 67% of the window elapsed."
-        },
-        {
-          "rule": "elevated:manipulation",
-          "because": "every recent fill is aggressive selling (skew -1.00) across 5 trades."
+          "rule": "incomplete-observation",
+          "because": "1 signal could not be measured (volatility), so this cannot be cleared for execution."
         }
       ],
       "requiredChecks": [
-        "Wait for the next few trades to see whether the move holds or reverts",
-        "Re-check on-chain status immediately before acting; the window may lock first",
-        "Check whether one-sided flow is a single participant before following it"
+        "Wait for more trades to establish a price history before treating the move as known"
       ],
-      "unmeasured": [],
+      "unmeasured": [
+        "volatility"
+      ],
       "prices": [
         {
-          "t": 1789049820,
-          "close": 0.347,
-          "volume": 14
-        },
-        {
-          "t": 1789050060,
-          "close": 0.587,
-          "volume": 8
-        },
-        {
-          "t": 1789050180,
-          "close": 0.832,
-          "volume": 1
+          "t": 1789060800,
+          "close": 0.558,
+          "volume": 153.92
         }
       ],
       "explanation": {
-        "headline": "The market shows elevated volatility, limited time left, and one-sided selling pressure.",
-        "summary": "Volatility is elevated, with a 24.5-point move in a single step, far above the venue’s normal range. The window is almost two-thirds elapsed, leaving only 5 min of trading. Recent order flow has been entirely aggressive selling, with a skew -1.00 across five fills.",
+        "headline": "Liquidity is normal but no recent trades and volatility is unmeasured.",
+        "summary": "Liquidity shows a 2.7-point spread on a 0.258 mid with 990 shares near each side. Depth durability indicates a median order TTL of 25 seconds and all 1,980 shares are withdrawable. Staleness notes the last trade was 61 min ago, 26% of the window, while 61% of the 240-minute window has elapsed and 94 min remain, and volatility could not be measured.",
         "perSignal": [
           {
             "signalId": "venue",
@@ -570,81 +1267,81 @@
           },
           {
             "signalId": "liquidity",
-            "reading": ""
+            "reading": "Spread is within the normal range for this venue."
           },
           {
             "signalId": "depth",
-            "reading": ""
+            "reading": "Orders are short-lived and fully withdrawable, indicating low commitment."
           },
           {
             "signalId": "volatility",
-            "reading": "The sharp 24.5-point step indicates heightened price movement and uncertainty."
+            "reading": "Volatility could not be measured due to insufficient price data."
           },
           {
             "signalId": "staleness",
-            "reading": ""
+            "reading": "No trade has occurred for over an hour, but the market is still early in its window."
           },
           {
             "signalId": "window",
-            "reading": "Only 5 min remain, with 67% of the window already elapsed, so trading time is running short."
+            "reading": "More than half of the 4-hour window has elapsed, leaving under two hours to trade."
           },
           {
             "signalId": "manipulation",
-            "reading": "All five recent fills were aggressive sells, giving a skew of -1.00 and suggesting one-sided pressure."
+            "reading": "Order flow is roughly balanced with a slight buy-side skew across three trades."
           }
         ],
         "source": "model",
         "model": "groq:openai/gpt-oss-120b",
         "usage": {
-          "inputTokens": 2482,
-          "outputTokens": 951
+          "inputTokens": 2315,
+          "outputTokens": 1833
         }
       },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53531?view=graph",
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53573?view=graph",
       "provenance": [
         {
           "field": "onchain",
           "state": "ok",
-          "readAt": 1789050301506
+          "readAt": 1789064759558
         },
         {
           "field": "book",
           "state": "ok",
-          "readAt": 1789050301643
+          "readAt": 1789064759652
         },
         {
           "field": "prices",
           "state": "ok",
-          "readAt": 1789050303157
+          "readAt": 1789064760387
         },
         {
           "field": "move",
           "state": "ok",
-          "readAt": 1789050303157
+          "readAt": 1789064760387
         },
         {
           "field": "flow",
           "state": "ok",
-          "readAt": 1789050303825
+          "readAt": 1789064760885
         },
         {
           "field": "freshness",
           "state": "ok",
-          "readAt": 1789050303825
+          "readAt": 1789064760885
         },
         {
           "field": "resolution",
           "state": "ok",
-          "readAt": 1789050304353
+          "readAt": 1789064761277
         }
       ]
     },
-    "0x00000000000000000000000000000000000000000000000000000000000192b2": {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192b2",
-      "symbol": "ETH-0-10SEP26-1500/tUSDC",
-      "assembledAt": 1789050300719,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
+    "0x0000000000000000000000000000000000000000000000000000000000019416": {
+      "marketId": "0x0000000000000000000000000000000000000000000000000000000000019416",
+      "symbol": "ETH-0-10SEP26-2000/tUSDC",
+      "assembledAt": 1789064758970,
+      "verdict": "BLOCK",
+      "confidence": 0.85,
       "action": "do_not_execute",
       "signals": [
         {
@@ -657,38 +1354,36 @@
             "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
             "question": "ETH closes at or above its opening price"
           },
-          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
-          "reading": ""
+          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series."
         },
         {
           "id": "resolution",
           "label": "Resolution",
           "severity": "ok",
-          "finding": "Bound to oracle question 53522, not voided or superseded; settlement is publicly auditable.",
+          "finding": "Bound to oracle question 53574, not voided or superseded; settlement is publicly auditable.",
           "evidence": {
-            "oracleQuestionId": "53522",
+            "oracleQuestionId": "53574",
             "supersededBy": null,
             "oracleVoided": null,
             "reuseCount": 0,
             "pastExpirySec": null,
             "settlementWindowSec": 300,
             "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53522?view=graph"
+            "auditUrl": "https://prd.oracle.somnia.host/questions/53574?view=graph"
           },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
-          "reading": ""
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal."
         },
         {
           "id": "liquidity",
           "label": "Liquidity",
           "severity": "ok",
-          "finding": "Spread is 2.8 points on a 0.695 mid with 990 shares near the touch, in line with this venue.",
+          "finding": "Spread is 2.1 points on a 0.944 mid with 990 shares near the touch, in line with this venue.",
           "evidence": {
-            "bid": 0.681,
-            "ask": 0.709,
-            "mid": 0.695,
-            "spreadPoints": 0.028,
-            "spreadOverMid": 0.04,
+            "bid": 0.933,
+            "ask": 0.954,
+            "mid": 0.944,
+            "spreadPoints": 0.021,
+            "spreadOverMid": 0.022,
             "nearBidShares": 990,
             "nearAskShares": 990,
             "thinnerSideShares": 990
@@ -699,20 +1394,20 @@
           "id": "depth",
           "label": "Depth durability",
           "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 29s and nothing displayed is past expiry. 2011 shares across 7 orders, held by 2 owners, the largest 98%. 100% is withdrawable at will, none of it committed.",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 16s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
           "evidence": {
-            "orders": 7,
-            "owners": 2,
-            "totalShares": 2011,
-            "topOwnerShare": 0.985,
-            "concentration": 0.97,
-            "medianTtlSec": 29.3,
-            "minTtlSec": 29.3,
+            "orders": 6,
+            "owners": 1,
+            "totalShares": 1980,
+            "topOwnerShare": 1,
+            "concentration": 1,
+            "medianTtlSec": 16,
+            "minTtlSec": 16,
             "firmShares": 0,
-            "pullableShares": 2011,
+            "pullableShares": 1980,
             "unverifiedShares": 0,
             "phantomShares": 0,
-            "topOwner": "0x4da389eb1c363e0dd80e47471552deb450132a7d",
+            "topOwner": "0x6913941ff1f2d44aab74a001c4bb62aaa44b80ee",
             "topOwnerClass": "upgradeable"
           },
           "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations."
@@ -720,14 +1415,14 @@
         {
           "id": "volatility",
           "label": "Volatility",
-          "severity": "ok",
-          "finding": "Largest step between trades is 14.2 points, net 4.8 points across 13 buckets.",
+          "severity": "severe",
+          "finding": "Implied probability jumped 27.9 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
           "evidence": {
-            "maxStepPoints": 0.142,
-            "netChangePoints": 0.048,
-            "samples": 13,
-            "spanSec": 1320,
-            "volumeShares": 88.27
+            "maxStepPoints": 0.279,
+            "netChangePoints": 0.464,
+            "samples": 5,
+            "spanSec": 5700,
+            "volumeShares": 442.87
           },
           "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal."
         },
@@ -735,11 +1430,11 @@
           "id": "staleness",
           "label": "Staleness",
           "severity": "ok",
-          "finding": "Last trade 1 min ago, 2% of the window.",
+          "finding": "Last trade 44 min ago, 18% of the window.",
           "evidence": {
-            "lastTradeAgeSec": 66,
-            "ageVsWindow": 0.018,
-            "windowSec": 3600
+            "lastTradeAgeSec": 2641,
+            "ageVsWindow": 0.183,
+            "windowSec": 14400
           },
           "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series."
         },
@@ -747,310 +1442,35 @@
           "id": "window",
           "label": "Window",
           "severity": "ok",
-          "finding": "35 min of trading left, 42% of the window elapsed.",
+          "finding": "94 min of trading left, 61% of the window elapsed.",
           "evidence": {
-            "secToExpiry": 2100,
-            "windowElapsed": 0.417,
-            "windowSec": 3600
+            "secToExpiry": 5642,
+            "windowElapsed": 0.608,
+            "windowSec": 14400
           },
           "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action."
         },
         {
           "id": "manipulation",
           "label": "Order flow",
-          "severity": "elevated",
-          "finding": "every recent fill is aggressive buying (skew 0.91) across 23 trades.",
+          "severity": "ok",
+          "finding": "Flow is roughly balanced (skew 0.26) over 6 trades. 231 shares came from opposite-side buyers minting a pair rather than a seller.",
           "evidence": {
-            "fills": 23,
-            "takerBuyShares": 84.27,
-            "takerSellShares": 4,
-            "skew": 0.909,
+            "fills": 6,
+            "takerBuyShares": 279.1,
+            "takerSellShares": 163.77,
+            "skew": 0.26,
             "depthImbalance": 0,
-            "mintedShares": 4,
-            "vwap": 0.5072
+            "mintedShares": 230.77,
+            "vwap": 0.6591
           },
           "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric."
         }
       ],
       "rules": [
         {
-          "rule": "elevated:manipulation",
-          "because": "every recent fill is aggressive buying (skew 0.91) across 23 trades."
-        }
-      ],
-      "requiredChecks": [
-        "Check whether one-sided flow is a single participant before following it"
-      ],
-      "unmeasured": [],
-      "prices": [
-        {
-          "t": 1789048860,
-          "close": 0.602,
-          "volume": 1
-        },
-        {
-          "t": 1789048920,
-          "close": 0.581,
-          "volume": 3
-        },
-        {
-          "t": 1789048980,
-          "close": 0.512,
-          "volume": 2
-        },
-        {
-          "t": 1789049040,
-          "close": 0.504,
-          "volume": 1
-        },
-        {
-          "t": 1789049100,
-          "close": 0.503,
-          "volume": 66.27
-        },
-        {
-          "t": 1789049340,
-          "close": 0.379,
-          "volume": 1
-        },
-        {
-          "t": 1789049400,
-          "close": 0.437,
-          "volume": 2
-        },
-        {
-          "t": 1789049520,
-          "close": 0.48,
-          "volume": 3
-        },
-        {
-          "t": 1789049820,
-          "close": 0.338,
-          "volume": 1
-        },
-        {
-          "t": 1789049940,
-          "close": 0.386,
-          "volume": 1
-        },
-        {
-          "t": 1789050000,
-          "close": 0.482,
-          "volume": 1
-        },
-        {
-          "t": 1789050120,
-          "close": 0.546,
-          "volume": 2
-        },
-        {
-          "t": 1789050180,
-          "close": 0.65,
-          "volume": 4
-        }
-      ],
-      "explanation": {
-        "headline": "Aggressive buying skew observed; liquidity, depth, and volatility stay within normal ranges",
-        "summary": "Liquidity shows a spread of 2.8 points on a 0.695 mid with 990 shares near the touch, which is normal for DreamDEX. Depth orders have a median expiry of 29s and are fully withdrawable, while price moves have a max step of 14.2 points and a net change of 4.8 points across 13 samples, indicating typical volatility. Trading activity is recent (last trade 1 min ago, 2% of the window) and 35 min remain (42% elapsed), but order flow is heavily weighted to buying with a skew of 0.909 over 23 fills, flagged as elevated and requiring a check on participant concentration.",
-        "perSignal": [
-          {
-            "signalId": "venue",
-            "reading": ""
-          },
-          {
-            "signalId": "resolution",
-            "reading": ""
-          }
-        ],
-        "source": "model",
-        "model": "groq:openai/gpt-oss-120b",
-        "usage": {
-          "inputTokens": 2268,
-          "outputTokens": 2048
-        }
-      },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53522?view=graph",
-      "provenance": [
-        {
-          "field": "onchain",
-          "state": "ok",
-          "readAt": 1789050301395
-        },
-        {
-          "field": "book",
-          "state": "ok",
-          "readAt": 1789050301533
-        },
-        {
-          "field": "prices",
-          "state": "ok",
-          "readAt": 1789050303064
-        },
-        {
-          "field": "move",
-          "state": "ok",
-          "readAt": 1789050303064
-        },
-        {
-          "field": "flow",
-          "state": "ok",
-          "readAt": 1789050303580
-        },
-        {
-          "field": "freshness",
-          "state": "ok",
-          "readAt": 1789050303580
-        },
-        {
-          "field": "resolution",
-          "state": "ok",
-          "readAt": 1789050304102
-        }
-      ]
-    },
-    "0x00000000000000000000000000000000000000000000000000000000000192b1": {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000192b1",
-      "symbol": "BTC-0-10SEP26-1500/tUSDC",
-      "assembledAt": 1789050300719,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
-      "action": "do_not_execute",
-      "signals": [
-        {
-          "id": "venue",
-          "label": "Venue",
-          "severity": "ok",
-          "finding": "On the DreamDEX event-contracts venue.",
-          "evidence": {
-            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "question": "BTC closes at or above its opening price"
-          },
-          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
-          "reading": ""
-        },
-        {
-          "id": "resolution",
-          "label": "Resolution",
-          "severity": "ok",
-          "finding": "Bound to oracle question 53521, not voided or superseded; settlement is publicly auditable.",
-          "evidence": {
-            "oracleQuestionId": "53521",
-            "supersededBy": null,
-            "oracleVoided": null,
-            "reuseCount": 0,
-            "pastExpirySec": null,
-            "settlementWindowSec": 300,
-            "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53521?view=graph"
-          },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
-          "reading": ""
-        },
-        {
-          "id": "liquidity",
-          "label": "Liquidity",
-          "severity": "ok",
-          "finding": "Spread is 2.9 points on a 0.609 mid with 990 shares near the touch, in line with this venue.",
-          "evidence": {
-            "bid": 0.595,
-            "ask": 0.624,
-            "mid": 0.609,
-            "spreadPoints": 0.029,
-            "spreadOverMid": 0.048,
-            "nearBidShares": 990,
-            "nearAskShares": 990,
-            "thinnerSideShares": 990
-          },
-          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": "spread of 2.9 points on a 0.609 mid is typical for this venue, so liquidity is normal"
-        },
-        {
-          "id": "depth",
-          "label": "Depth durability",
-          "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 30s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
-          "evidence": {
-            "orders": 6,
-            "owners": 1,
-            "totalShares": 1980,
-            "topOwnerShare": 1,
-            "concentration": 1,
-            "medianTtlSec": 30.3,
-            "minTtlSec": 28.3,
-            "firmShares": 0,
-            "pullableShares": 1980,
-            "unverifiedShares": 0,
-            "phantomShares": 0,
-            "topOwner": "0xf89ebf4733d74ab388b4b7c69a532267974aadfb",
-            "topOwnerClass": "upgradeable"
-          },
-          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": "the order book is concentrated in a single address but fully withdrawable, meaning depth could vanish quickly"
-        },
-        {
-          "id": "volatility",
-          "label": "Volatility",
-          "severity": "elevated",
-          "finding": "Implied probability moved 19.8 points in one step, above the venue's typical 10.",
-          "evidence": {
-            "maxStepPoints": 0.198,
-            "netChangePoints": -0.165,
-            "samples": 15,
-            "spanSec": 1320,
-            "volumeShares": 292.22
-          },
-          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "the 19.8-point jump is well above the normal ~10-point range, indicating the market may be unsettled"
-        },
-        {
-          "id": "staleness",
-          "label": "Staleness",
-          "severity": "ok",
-          "finding": "Last trade 2 min ago, 3% of the window.",
-          "evidence": {
-            "lastTradeAgeSec": 111,
-            "ageVsWindow": 0.031,
-            "windowSec": 3600
-          },
-          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": "the most recent trade was 111 seconds ago, representing only 3% of the hour window, so activity is still frequent"
-        },
-        {
-          "id": "window",
-          "label": "Window",
-          "severity": "ok",
-          "finding": "35 min of trading left, 42% of the window elapsed.",
-          "evidence": {
-            "secToExpiry": 2100,
-            "windowElapsed": 0.417,
-            "windowSec": 3600
-          },
-          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": "35 minutes remain (42% elapsed), leaving ample time for further price movement"
-        },
-        {
-          "id": "manipulation",
-          "label": "Order flow",
-          "severity": "ok",
-          "finding": "Flow is roughly balanced (skew -0.11) over 38 trades. 162 shares came from opposite-side buyers minting a pair rather than a seller.",
-          "evidence": {
-            "fills": 38,
-            "takerBuyShares": 130.38,
-            "takerSellShares": 161.84,
-            "skew": -0.108,
-            "depthImbalance": 0,
-            "mintedShares": 161.84,
-            "vwap": 0.4583
-          },
-          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": "order flow is roughly balanced with a slight sell skew (-0.11), indicating no strong directional pressure"
-        }
-      ],
-      "rules": [
-        {
-          "rule": "elevated:volatility",
-          "because": "Implied probability moved 19.8 points in one step, above the venue's typical 10."
+          "rule": "severe:volatility",
+          "because": "Implied probability jumped 27.9 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue."
         }
       ],
       "requiredChecks": [
@@ -1059,168 +1479,81 @@
       "unmeasured": [],
       "prices": [
         {
-          "t": 1789048860,
-          "close": 0.614,
-          "volume": 1
+          "t": 1789056300,
+          "close": 0.413,
+          "volume": 79.1
         },
         {
-          "t": 1789048920,
-          "close": 0.605,
-          "volume": 42.46
+          "t": 1789058400,
+          "close": 0.474,
+          "volume": 60.52
         },
         {
-          "t": 1789048980,
-          "close": 0.534,
-          "volume": 79.92
+          "t": 1789058700,
+          "close": 0.535,
+          "volume": 70.25
         },
         {
-          "t": 1789049040,
-          "close": 0.525,
-          "volume": 40.46
+          "t": 1789059000,
+          "close": 0.598,
+          "volume": 33
         },
         {
-          "t": 1789049100,
-          "close": 0.5,
-          "volume": 2
-        },
-        {
-          "t": 1789049340,
-          "close": 0.302,
-          "volume": 1
-        },
-        {
-          "t": 1789049400,
-          "close": 0.318,
-          "volume": 2
-        },
-        {
-          "t": 1789049520,
-          "close": 0.45,
-          "volume": 3
-        },
-        {
-          "t": 1789049640,
-          "close": 0.445,
-          "volume": 0
-        },
-        {
-          "t": 1789049760,
-          "close": 0.304,
-          "volume": 96.15
-        },
-        {
-          "t": 1789049820,
-          "close": 0.298,
-          "volume": 19.23
-        },
-        {
-          "t": 1789049940,
-          "close": 0.251,
-          "volume": 1
-        },
-        {
-          "t": 1789050000,
-          "close": 0.346,
-          "volume": 1
-        },
-        {
-          "t": 1789050120,
-          "close": 0.464,
-          "volume": 2
-        },
-        {
-          "t": 1789050180,
-          "close": 0.449,
-          "volume": 1
+          "t": 1789062000,
+          "close": 0.877,
+          "volume": 200
         }
       ],
       "explanation": {
-        "headline": "Volatility spike of 19.8 points exceeds typical range",
-        "summary": "Liquidity and spread are normal (2.9-point spread on a 0.609 mid). Trading activity remains healthy with the last trade 111 seconds ago and 35 minutes left in the window. However, the volatility signal showed a 19.8-point step, which is elevated and warrants watching the next trades.",
-        "perSignal": [
-          {
-            "signalId": "venue",
-            "reading": ""
-          },
-          {
-            "signalId": "resolution",
-            "reading": ""
-          },
-          {
-            "signalId": "liquidity",
-            "reading": "spread of 2.9 points on a 0.609 mid is typical for this venue, so liquidity is normal"
-          },
-          {
-            "signalId": "depth",
-            "reading": "the order book is concentrated in a single address but fully withdrawable, meaning depth could vanish quickly"
-          },
-          {
-            "signalId": "volatility",
-            "reading": "the 19.8-point jump is well above the normal ~10-point range, indicating the market may be unsettled"
-          },
-          {
-            "signalId": "staleness",
-            "reading": "the most recent trade was 111 seconds ago, representing only 3% of the hour window, so activity is still frequent"
-          },
-          {
-            "signalId": "window",
-            "reading": "35 minutes remain (42% elapsed), leaving ample time for further price movement"
-          },
-          {
-            "signalId": "manipulation",
-            "reading": "order flow is roughly balanced with a slight sell skew (-0.11), indicating no strong directional pressure"
-          }
-        ],
-        "source": "model",
-        "model": "groq:openai/gpt-oss-120b",
-        "usage": {
-          "inputTokens": 2335,
-          "outputTokens": 1530
-        }
+        "headline": "Implied probability jumped 27.9 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
+        "summary": "One signal is blocking: volatility. Confidence 0.85 reflects how much of the market could be observed, not any view on its outcome.",
+        "perSignal": [],
+        "source": "fallback",
+        "fallbackReason": "groq:openai/gpt-oss-120b: Error: HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kvjbakngemv8j9gapm92q37j` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199575, Requested 4172. Please try again in 26m58.704s. Need more tokens? Upgrade to Dev Tier today at https:/"
       },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53521?view=graph",
+      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53574?view=graph",
       "provenance": [
         {
           "field": "onchain",
           "state": "ok",
-          "readAt": 1789050301520
+          "readAt": 1789064759616
         },
         {
           "field": "book",
           "state": "ok",
-          "readAt": 1789050301656
+          "readAt": 1789064759707
         },
         {
           "field": "prices",
           "state": "ok",
-          "readAt": 1789050302803
+          "readAt": 1789064760585
         },
         {
           "field": "move",
           "state": "ok",
-          "readAt": 1789050302803
+          "readAt": 1789064760585
         },
         {
           "field": "flow",
           "state": "ok",
-          "readAt": 1789050303315
+          "readAt": 1789064760949
         },
         {
           "field": "freshness",
           "state": "ok",
-          "readAt": 1789050303315
+          "readAt": 1789064760949
         },
         {
           "field": "resolution",
           "state": "ok",
-          "readAt": 1789050303818
+          "readAt": 1789064761047
         }
       ]
     },
-    "0x000000000000000000000000000000000000000000000000000000000001914b": {
-      "marketId": "0x000000000000000000000000000000000000000000000000000000000001914b",
-      "symbol": "BTC-0-10SEP26-1600/tUSDC",
-      "assembledAt": 1789050300719,
+    "0x00000000000000000000000000000000000000000000000000000000000188eb": {
+      "marketId": "0x00000000000000000000000000000000000000000000000000000000000188eb",
+      "symbol": "BTC-0-11SEP26/tUSDC",
+      "assembledAt": 1789064758970,
       "verdict": "BLOCK",
       "confidence": 0.85,
       "action": "do_not_execute",
@@ -1241,491 +1574,6 @@
           "id": "resolution",
           "label": "Resolution",
           "severity": "ok",
-          "finding": "Bound to oracle question 53464, not voided or superseded; settlement is publicly auditable.",
-          "evidence": {
-            "oracleQuestionId": "53464",
-            "supersededBy": null,
-            "oracleVoided": null,
-            "reuseCount": 0,
-            "pastExpirySec": null,
-            "settlementWindowSec": 300,
-            "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53464?view=graph"
-          },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal."
-        },
-        {
-          "id": "liquidity",
-          "label": "Liquidity",
-          "severity": "ok",
-          "finding": "Spread is 2.4 points on a 0.142 mid with 990 shares near the touch, in line with this venue.",
-          "evidence": {
-            "bid": 0.13,
-            "ask": 0.154,
-            "mid": 0.142,
-            "spreadPoints": 0.024,
-            "spreadOverMid": 0.169,
-            "nearBidShares": 990,
-            "nearAskShares": 990,
-            "thinnerSideShares": 990
-          },
-          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail."
-        },
-        {
-          "id": "depth",
-          "label": "Depth durability",
-          "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 26s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
-          "evidence": {
-            "orders": 6,
-            "owners": 1,
-            "totalShares": 1980,
-            "topOwnerShare": 1,
-            "concentration": 1,
-            "medianTtlSec": 25.8,
-            "minTtlSec": 18.3,
-            "firmShares": 0,
-            "pullableShares": 1980,
-            "unverifiedShares": 0,
-            "phantomShares": 0,
-            "topOwner": "0x6ce44c281063a09e244095e589441a4c5f9c4e76",
-            "topOwnerClass": "upgradeable"
-          },
-          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations."
-        },
-        {
-          "id": "volatility",
-          "label": "Volatility",
-          "severity": "severe",
-          "finding": "Implied probability jumped 27.6 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
-          "evidence": {
-            "maxStepPoints": 0.276,
-            "netChangePoints": -0.333,
-            "samples": 10,
-            "spanSec": 6600,
-            "volumeShares": 540.38
-          },
-          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal."
-        },
-        {
-          "id": "staleness",
-          "label": "Staleness",
-          "severity": "ok",
-          "finding": "Last trade 8 min ago, 3% of the window.",
-          "evidence": {
-            "lastTradeAgeSec": 497,
-            "ageVsWindow": 0.035,
-            "windowSec": 14400
-          },
-          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series."
-        },
-        {
-          "id": "window",
-          "label": "Window",
-          "severity": "ok",
-          "finding": "95 min of trading left, 60% of the window elapsed.",
-          "evidence": {
-            "secToExpiry": 5700,
-            "windowElapsed": 0.604,
-            "windowSec": 14400
-          },
-          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action."
-        },
-        {
-          "id": "manipulation",
-          "label": "Order flow",
-          "severity": "ok",
-          "finding": "Flow is roughly balanced (skew -0.11) over 18 trades. 200 shares came from opposite-side buyers minting a pair rather than a seller.",
-          "evidence": {
-            "fills": 18,
-            "takerBuyShares": 240.38,
-            "takerSellShares": 300,
-            "skew": -0.11,
-            "depthImbalance": 0,
-            "mintedShares": 200,
-            "vwap": 0.1716
-          },
-          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric."
-        }
-      ],
-      "rules": [
-        {
-          "rule": "severe:volatility",
-          "because": "Implied probability jumped 27.6 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue."
-        }
-      ],
-      "requiredChecks": [
-        "Wait for the next few trades to see whether the move holds or reverts"
-      ],
-      "unmeasured": [],
-      "prices": [
-        {
-          "t": 1789043100,
-          "close": 0.384,
-          "volume": 115.38
-        },
-        {
-          "t": 1789043400,
-          "close": 0.453,
-          "volume": 1
-        },
-        {
-          "t": 1789044900,
-          "close": 0.177,
-          "volume": 0
-        },
-        {
-          "t": 1789045200,
-          "close": 0.183,
-          "volume": 5
-        },
-        {
-          "t": 1789045800,
-          "close": 0.119,
-          "volume": 100
-        },
-        {
-          "t": 1789046700,
-          "close": 0.072,
-          "volume": 100
-        },
-        {
-          "t": 1789048500,
-          "close": 0.122,
-          "volume": 4
-        },
-        {
-          "t": 1789048800,
-          "close": 0.138,
-          "volume": 105
-        },
-        {
-          "t": 1789049100,
-          "close": 0.118,
-          "volume": 100
-        },
-        {
-          "t": 1789049700,
-          "close": 0.051,
-          "volume": 10
-        }
-      ],
-      "explanation": {
-        "headline": "Implied probability jumped 27.6 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
-        "summary": "One signal is blocking: volatility. Confidence 0.85 reflects how much of the market could be observed, not any view on its outcome.",
-        "perSignal": [],
-        "source": "fallback",
-        "fallbackReason": "model output rejected: machine-syntax (prose contains the field reference \"spreadPoints=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"totalShares=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"lastTradeAgeSec=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"windowElapsed=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"secToExpiry=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"maxStepPoints=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"maxStepPoints=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"windowElapsed=\"; readers have not seen our schema); machine-syntax (prose contains the field reference \"secToExpiry=\"; readers have not seen our schema)"
-      },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53464?view=graph",
-      "provenance": [
-        {
-          "field": "onchain",
-          "state": "ok",
-          "readAt": 1789050301507
-        },
-        {
-          "field": "book",
-          "state": "ok",
-          "readAt": 1789050301645
-        },
-        {
-          "field": "prices",
-          "state": "ok",
-          "readAt": 1789050302917
-        },
-        {
-          "field": "move",
-          "state": "ok",
-          "readAt": 1789050302917
-        },
-        {
-          "field": "flow",
-          "state": "ok",
-          "readAt": 1789050303431
-        },
-        {
-          "field": "freshness",
-          "state": "ok",
-          "readAt": 1789050303431
-        },
-        {
-          "field": "resolution",
-          "state": "ok",
-          "readAt": 1789050303940
-        }
-      ]
-    },
-    "0x000000000000000000000000000000000000000000000000000000000001914c": {
-      "marketId": "0x000000000000000000000000000000000000000000000000000000000001914c",
-      "symbol": "ETH-0-10SEP26-1600/tUSDC",
-      "assembledAt": 1789050300719,
-      "verdict": "RECHECK",
-      "confidence": 0.52,
-      "action": "do_not_execute",
-      "signals": [
-        {
-          "id": "venue",
-          "label": "Venue",
-          "severity": "ok",
-          "finding": "On the DreamDEX event-contracts venue.",
-          "evidence": {
-            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "question": "ETH closes at or above its opening price"
-          },
-          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
-          "reading": "The market operates on DreamDEX’s event-contracts venue."
-        },
-        {
-          "id": "resolution",
-          "label": "Resolution",
-          "severity": "ok",
-          "finding": "Bound to oracle question 53465, not voided or superseded; settlement is publicly auditable.",
-          "evidence": {
-            "oracleQuestionId": "53465",
-            "supersededBy": null,
-            "oracleVoided": null,
-            "reuseCount": 0,
-            "pastExpirySec": null,
-            "settlementWindowSec": 300,
-            "lapsedSec": null,
-            "auditUrl": "https://prd.oracle.somnia.host/questions/53465?view=graph"
-          },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
-          "reading": "Settlement will be based on a publicly auditable oracle and the contract has not been voided."
-        },
-        {
-          "id": "liquidity",
-          "label": "Liquidity",
-          "severity": "ok",
-          "finding": "Spread is 2.4 points on a 0.155 mid with 990 shares near the touch, in line with this venue.",
-          "evidence": {
-            "bid": 0.143,
-            "ask": 0.167,
-            "mid": 0.155,
-            "spreadPoints": 0.024,
-            "spreadOverMid": 0.155,
-            "nearBidShares": 990,
-            "nearAskShares": 990,
-            "thinnerSideShares": 990
-          },
-          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": "Liquidity shows a 2.4-point spread on a 0.155 mid, which is normal for this venue."
-        },
-        {
-          "id": "depth",
-          "label": "Depth durability",
-          "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 29s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
-          "evidence": {
-            "orders": 6,
-            "owners": 1,
-            "totalShares": 1980,
-            "topOwnerShare": 1,
-            "concentration": 1,
-            "medianTtlSec": 29.3,
-            "minTtlSec": 14.3,
-            "firmShares": 0,
-            "pullableShares": 1980,
-            "unverifiedShares": 0,
-            "phantomShares": 0,
-            "topOwner": "0x16f4cdb5f9e14cf95b115a746797ce8412959960",
-            "topOwnerClass": "upgradeable"
-          },
-          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": "Orders have a median lifetime of about 30 seconds, all 1,980 shares are withdrawable at will."
-        },
-        {
-          "id": "volatility",
-          "label": "Volatility",
-          "severity": "unknown",
-          "finding": "Only 2 price buckets exist, fewer than the 3 needed to judge a move.",
-          "evidence": {
-            "samples": 2,
-            "required": 3
-          },
-          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "Only two price buckets were observed, so volatility cannot be assessed."
-        },
-        {
-          "id": "staleness",
-          "label": "Staleness",
-          "severity": "ok",
-          "finding": "Last trade 58 min ago, 24% of the window.",
-          "evidence": {
-            "lastTradeAgeSec": 3466,
-            "ageVsWindow": 0.241,
-            "windowSec": 14400
-          },
-          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": "The last trade occurred 58 minutes ago, about 24 % of the total window."
-        },
-        {
-          "id": "window",
-          "label": "Window",
-          "severity": "ok",
-          "finding": "95 min of trading left, 60% of the window elapsed.",
-          "evidence": {
-            "secToExpiry": 5700,
-            "windowElapsed": 0.604,
-            "windowSec": 14400
-          },
-          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": "Approximately 60 % of the 4-hour window has elapsed, leaving 95 minutes of trading time."
-        },
-        {
-          "id": "manipulation",
-          "label": "Order flow",
-          "severity": "unknown",
-          "finding": "Only 2 fills recorded, too few to read direction from (any single-sided pair scores as total one-sidedness).",
-          "evidence": {
-            "fills": 2,
-            "takerBuyShares": 0,
-            "takerSellShares": 200,
-            "skew": -1,
-            "depthImbalance": 0,
-            "mintedShares": 100,
-            "vwap": 0.0885
-          },
-          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": "With only two fills recorded, order-flow direction is indeterminate."
-        }
-      ],
-      "rules": [
-        {
-          "rule": "incomplete-observation",
-          "because": "2 signals could not be measured (volatility, manipulation), so this cannot be cleared for execution."
-        }
-      ],
-      "requiredChecks": [
-        "Wait for more trades to establish a price history before treating the move as known",
-        "Wait for more fills before reading flow direction"
-      ],
-      "unmeasured": [
-        "volatility",
-        "manipulation"
-      ],
-      "prices": [
-        {
-          "t": 1789045800,
-          "close": 0.103,
-          "volume": 100
-        },
-        {
-          "t": 1789046700,
-          "close": 0.074,
-          "volume": 100
-        }
-      ],
-      "explanation": {
-        "headline": "Observation incomplete: volatility and order-flow signals lack data",
-        "summary": "Liquidity and depth are typical for DreamDEX, with a 2.4-point spread on a 0.155 mid and short-lived orders that are fully withdrawable. Trade activity is thin, last trade 58 minutes ago and only two fills recorded, leaving volatility and flow direction unmeasured, so the engine flags incomplete observation.",
-        "perSignal": [
-          {
-            "signalId": "venue",
-            "reading": "The market operates on DreamDEX’s event-contracts venue."
-          },
-          {
-            "signalId": "resolution",
-            "reading": "Settlement will be based on a publicly auditable oracle and the contract has not been voided."
-          },
-          {
-            "signalId": "liquidity",
-            "reading": "Liquidity shows a 2.4-point spread on a 0.155 mid, which is normal for this venue."
-          },
-          {
-            "signalId": "depth",
-            "reading": "Orders have a median lifetime of about 30 seconds, all 1,980 shares are withdrawable at will."
-          },
-          {
-            "signalId": "volatility",
-            "reading": "Only two price buckets were observed, so volatility cannot be assessed."
-          },
-          {
-            "signalId": "staleness",
-            "reading": "The last trade occurred 58 minutes ago, about 24 % of the total window."
-          },
-          {
-            "signalId": "window",
-            "reading": "Approximately 60 % of the 4-hour window has elapsed, leaving 95 minutes of trading time."
-          },
-          {
-            "signalId": "manipulation",
-            "reading": "With only two fills recorded, order-flow direction is indeterminate."
-          }
-        ],
-        "source": "model",
-        "model": "groq:openai/gpt-oss-120b",
-        "usage": {
-          "inputTokens": 2371,
-          "outputTokens": 1445
-        }
-      },
-      "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53465?view=graph",
-      "provenance": [
-        {
-          "field": "onchain",
-          "state": "ok",
-          "readAt": 1789050301396
-        },
-        {
-          "field": "book",
-          "state": "ok",
-          "readAt": 1789050301537
-        },
-        {
-          "field": "prices",
-          "state": "ok",
-          "readAt": 1789050302605
-        },
-        {
-          "field": "move",
-          "state": "ok",
-          "readAt": 1789050302605
-        },
-        {
-          "field": "flow",
-          "state": "ok",
-          "readAt": 1789050303277
-        },
-        {
-          "field": "freshness",
-          "state": "ok",
-          "readAt": 1789050303277
-        },
-        {
-          "field": "resolution",
-          "state": "ok",
-          "readAt": 1789050303790
-        }
-      ]
-    },
-    "0x00000000000000000000000000000000000000000000000000000000000188eb": {
-      "marketId": "0x00000000000000000000000000000000000000000000000000000000000188eb",
-      "symbol": "BTC-0-11SEP26/tUSDC",
-      "assembledAt": 1789050300720,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
-      "action": "do_not_execute",
-      "signals": [
-        {
-          "id": "venue",
-          "label": "Venue",
-          "severity": "ok",
-          "finding": "On the DreamDEX event-contracts venue.",
-          "evidence": {
-            "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
-            "question": "BTC closes at or above its opening price"
-          },
-          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
-          "reading": "The market runs on the DreamDEX event-contracts venue, the standard platform for these contracts."
-        },
-        {
-          "id": "resolution",
-          "label": "Resolution",
-          "severity": "ok",
           "finding": "Bound to oracle question 53135, not voided or superseded; settlement is publicly auditable.",
           "evidence": {
             "oracleQuestionId": "53135",
@@ -1737,116 +1585,105 @@
             "lapsedSec": null,
             "auditUrl": "https://prd.oracle.somnia.host/questions/53135?view=graph"
           },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
-          "reading": "Settlement ties to oracle question 53135 and is publicly auditable, so the outcome reference is secure."
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal."
         },
         {
           "id": "liquidity",
           "label": "Liquidity",
-          "severity": "ok",
-          "finding": "Spread is 2.6 points on a 0.208 mid with 990 shares near the touch, in line with this venue.",
+          "severity": "severe",
+          "finding": "Only one side of the book is quoted (no bid), so a position could be opened but not closed.",
           "evidence": {
-            "bid": 0.195,
-            "ask": 0.221,
-            "mid": 0.208,
-            "spreadPoints": 0.026,
-            "spreadOverMid": 0.125,
-            "nearBidShares": 990,
-            "nearAskShares": 990,
-            "thinnerSideShares": 990
+            "bidLevels": 0,
+            "askLevels": 3,
+            "missing": "bid"
           },
-          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": "A 2.6-point spread on a 0.208 mid and 990 shares near each side match venue norms, showing normal liquidity."
+          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail."
         },
         {
           "id": "depth",
           "label": "Depth durability",
           "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 22s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 23s and nothing displayed is past expiry. 990 shares across 3 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
           "evidence": {
-            "orders": 6,
+            "orders": 3,
             "owners": 1,
-            "totalShares": 1980,
+            "totalShares": 990,
             "topOwnerShare": 1,
             "concentration": 1,
-            "medianTtlSec": 22.3,
-            "minTtlSec": 19.3,
+            "medianTtlSec": 23,
+            "minTtlSec": 16,
             "firmShares": 0,
-            "pullableShares": 1980,
+            "pullableShares": 990,
             "unverifiedShares": 0,
             "phantomShares": 0,
             "topOwner": "0xc861518d8baea01018fccfc2beb7db16da5a30b1",
             "topOwnerClass": "upgradeable"
           },
-          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": "Quotes expire quickly (median 22 s) but all 1,980 shares are withdrawable, so depth is not locked down."
+          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations."
         },
         {
           "id": "volatility",
           "label": "Volatility",
           "severity": "elevated",
-          "finding": "Implied probability moved 15.6 points in one step, above the venue's typical 10.",
+          "finding": "Implied probability moved 16.3 points in one step, above the venue's typical 10.",
           "evidence": {
-            "maxStepPoints": 0.156,
-            "netChangePoints": -0.208,
-            "samples": 12,
-            "spanSec": 43200,
-            "volumeShares": 2775.53
+            "maxStepPoints": 0.163,
+            "netChangePoints": -0.371,
+            "samples": 13,
+            "spanSec": 54000,
+            "volumeShares": 2936.53
           },
-          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "The 15.6-point step exceeds the typical 10-point range, signalling heightened short-term price movement."
+          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal."
         },
         {
           "id": "staleness",
           "label": "Staleness",
           "severity": "ok",
-          "finding": "Last trade 145 min ago, 10% of the window.",
+          "finding": "Last trade 196 min ago, 14% of the window.",
           "evidence": {
-            "lastTradeAgeSec": 8693,
-            "ageVsWindow": 0.101,
+            "lastTradeAgeSec": 11740,
+            "ageVsWindow": 0.136,
             "windowSec": 86400
           },
-          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": "The last trade occurred 145 min ago, representing 10% of the 24-hour window, which is ordinary."
+          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series."
         },
         {
           "id": "window",
           "label": "Window",
           "severity": "ok",
-          "finding": "575 min of trading left, 60% of the window elapsed.",
+          "finding": "334 min of trading left, 77% of the window elapsed.",
           "evidence": {
-            "secToExpiry": 34500,
-            "windowElapsed": 0.601,
+            "secToExpiry": 20042,
+            "windowElapsed": 0.768,
             "windowSec": 86400
           },
-          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": "575 min of trading remain, roughly 60% of the window elapsed, leaving ample time for activity."
+          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action."
         },
         {
           "id": "manipulation",
           "label": "Order flow",
           "severity": "ok",
-          "finding": "Flow is roughly balanced (skew -0.27) over 100 trades.",
+          "finding": "Flow is roughly balanced (skew 0.05) over 100 trades.",
           "evidence": {
             "fills": 100,
-            "takerBuyShares": 387.82,
-            "takerSellShares": 680,
-            "skew": -0.274,
-            "depthImbalance": 0,
+            "takerBuyShares": 548.82,
+            "takerSellShares": 500,
+            "skew": 0.047,
+            "depthImbalance": null,
             "mintedShares": 0,
-            "vwap": 0.2901
+            "vwap": 0.256
           },
-          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": "Order flow is roughly balanced with a slight sell skew of -0.27 across 100 trades, indicating no strong directional pressure."
+          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric."
         }
       ],
       "rules": [
         {
-          "rule": "elevated:volatility",
-          "because": "Implied probability moved 15.6 points in one step, above the venue's typical 10."
+          "rule": "severe:liquidity",
+          "because": "Only one side of the book is quoted (no bid), so a position could be opened but not closed."
         }
       ],
       "requiredChecks": [
+        "Confirm you can exit at a price close to entry before sizing a position",
         "Wait for the next few trades to see whether the move holds or reverts"
       ],
       "unmeasured": [],
@@ -1910,97 +1747,65 @@
           "t": 1789041600,
           "close": 0.257,
           "volume": 77.82
+        },
+        {
+          "t": 1789052400,
+          "close": 0.094,
+          "volume": 161
         }
       ],
       "explanation": {
-        "headline": "Implied probability jumped 15.6 points in one step, exceeding the venue’s typical 10-point move",
-        "summary": "All signals except volatility are within normal ranges: the DreamDEX venue, a clear oracle settlement, a 2.6-point spread on a 0.208 mid, short-lived depth that is fully withdrawable, a last trade 145 min ago (10% of the window), and balanced order flow with skew -0.27. However, volatility showed an elevated step of 15.6 points, above the venue’s usual 10-point move, indicating a temporary spike in price dynamics. The window still has 575 min left, about 60% elapsed, giving ample time for further activity.",
-        "perSignal": [
-          {
-            "signalId": "venue",
-            "reading": "The market runs on the DreamDEX event-contracts venue, the standard platform for these contracts."
-          },
-          {
-            "signalId": "resolution",
-            "reading": "Settlement ties to oracle question 53135 and is publicly auditable, so the outcome reference is secure."
-          },
-          {
-            "signalId": "liquidity",
-            "reading": "A 2.6-point spread on a 0.208 mid and 990 shares near each side match venue norms, showing normal liquidity."
-          },
-          {
-            "signalId": "depth",
-            "reading": "Quotes expire quickly (median 22 s) but all 1,980 shares are withdrawable, so depth is not locked down."
-          },
-          {
-            "signalId": "volatility",
-            "reading": "The 15.6-point step exceeds the typical 10-point range, signalling heightened short-term price movement."
-          },
-          {
-            "signalId": "staleness",
-            "reading": "The last trade occurred 145 min ago, representing 10% of the 24-hour window, which is ordinary."
-          },
-          {
-            "signalId": "window",
-            "reading": "575 min of trading remain, roughly 60% of the window elapsed, leaving ample time for activity."
-          },
-          {
-            "signalId": "manipulation",
-            "reading": "Order flow is roughly balanced with a slight sell skew of -0.27 across 100 trades, indicating no strong directional pressure."
-          }
-        ],
-        "source": "model",
-        "model": "groq:openai/gpt-oss-120b",
-        "usage": {
-          "inputTokens": 2314,
-          "outputTokens": 1401
-        }
+        "headline": "Only one side of the book is quoted (no bid), so a position could be opened but not closed.",
+        "summary": "One signal is blocking: liquidity. volatility warrants a closer look before acting. Confidence 0.85 reflects how much of the market could be observed, not any view on its outcome.",
+        "perSignal": [],
+        "source": "fallback",
+        "fallbackReason": "groq:openai/gpt-oss-120b: Error: HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kvjbakngemv8j9gapm92q37j` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199575, Requested 2665. Please try again in 16m7.68s. Need more tokens? Upgrade to Dev Tier today at https://c"
       },
       "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53135?view=graph",
       "provenance": [
         {
           "field": "onchain",
           "state": "ok",
-          "readAt": 1789050301504
+          "readAt": 1789064759613
         },
         {
           "field": "book",
           "state": "ok",
-          "readAt": 1789050301640
+          "readAt": 1789064759705
         },
         {
           "field": "prices",
           "state": "ok",
-          "readAt": 1789050302804
+          "readAt": 1789064760262
         },
         {
           "field": "move",
           "state": "ok",
-          "readAt": 1789050302804
+          "readAt": 1789064760262
         },
         {
           "field": "flow",
           "state": "ok",
-          "readAt": 1789050302954
+          "readAt": 1789064760632
         },
         {
           "field": "freshness",
           "state": "ok",
-          "readAt": 1789050302954
+          "readAt": 1789064760632
         },
         {
           "field": "resolution",
           "state": "ok",
-          "readAt": 1789050303463
+          "readAt": 1789064760988
         }
       ]
     },
     "0x00000000000000000000000000000000000000000000000000000000000188ec": {
       "marketId": "0x00000000000000000000000000000000000000000000000000000000000188ec",
       "symbol": "ETH-0-11SEP26/tUSDC",
-      "assembledAt": 1789050300720,
-      "verdict": "RECHECK",
-      "confidence": 0.7,
+      "assembledAt": 1789064758970,
+      "verdict": "BLOCK",
+      "confidence": 0.85,
       "action": "do_not_execute",
       "signals": [
         {
@@ -2013,8 +1818,7 @@
             "expected": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
             "question": "ETH closes at or above its opening price"
           },
-          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series.",
-          "reading": ""
+          "basis": "Six venues carry binary rows on testnet; only one hosts real DreamDEX event contracts. The others include a zero-volume pricefeed-test series."
         },
         {
           "id": "resolution",
@@ -2031,113 +1835,106 @@
             "lapsedSec": null,
             "auditUrl": "https://prd.oracle.somnia.host/questions/53136?view=graph"
           },
-          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal.",
-          "reading": ""
+          "basis": "Oracle binding, supersession, void state and settlement-window lapse, measured from `expiry + settlementWindow` (the instant `voidExpired()` becomes callable) rather than from expiry. Question wording is templated and identical across markets, and the docs warn against parsing it, so it carries no signal."
         },
         {
           "id": "liquidity",
           "label": "Liquidity",
           "severity": "ok",
-          "finding": "Spread is 2.6 points on a 0.298 mid with 990 shares near the touch, in line with this venue.",
+          "finding": "Spread is 2.8 points on a 0.365 mid with 530 shares near the touch, in line with this venue.",
           "evidence": {
-            "bid": 0.285,
-            "ask": 0.311,
-            "mid": 0.298,
-            "spreadPoints": 0.026,
-            "spreadOverMid": 0.087,
+            "bid": 0.351,
+            "ask": 0.379,
+            "mid": 0.365,
+            "spreadPoints": 0.028,
+            "spreadOverMid": 0.077,
             "nearBidShares": 990,
-            "nearAskShares": 990,
-            "thinnerSideShares": 990
+            "nearAskShares": 530,
+            "thinnerSideShares": 530
           },
-          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail.",
-          "reading": ""
+          "basis": "Venue spreads measured 0.021-0.029 points (median 0.026), executable depth median 990 shares. Absolute points lead because a binary payoff is fixed at 0/1; the mid-ratio only catches the unplayable tail."
         },
         {
           "id": "depth",
           "label": "Depth durability",
           "severity": "ok",
-          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 19s and nothing displayed is past expiry. 1980 shares across 6 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
+          "finding": "Quotes are short-lived but in line with this venue: the median resting order expires in 24s and nothing displayed is past expiry. 1520 shares across 5 orders, all of it owned by one address (proxy delegating to 0x8635C413B666eA8fcCf3BB302f7a7cE3988892a4, so the code deciding whether it can cancel is replaceable by whoever controls the target). 100% is withdrawable at will, none of it committed.",
           "evidence": {
-            "orders": 6,
+            "orders": 5,
             "owners": 1,
-            "totalShares": 1980,
+            "totalShares": 1520,
             "topOwnerShare": 1,
             "concentration": 1,
-            "medianTtlSec": 19.3,
-            "minTtlSec": 17.3,
+            "medianTtlSec": 24,
+            "minTtlSec": 17,
             "firmShares": 0,
-            "pullableShares": 1980,
+            "pullableShares": 1520,
             "unverifiedShares": 0,
             "phantomShares": 0,
             "topOwner": "0x5e0f768dafa3cc9d38f6023f05c624a3b3c6e390",
             "topOwnerClass": "upgradeable"
           },
-          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations.",
-          "reading": ""
+          "basis": "Per-order `owner` and `expireTimestampNs` from getAllOpenOrdersOffChain: fields every aggregated view sums away. Measured on all 10 live markets, twice: 1 owner holding 100% of both sides, 6 orders, TTL 11-28s, 0 shares past expiry. So a ~20s quote and a sole owner are this venue's normal and cannot be the alarm; phantom depth and a sub-8s TTL are the deviations."
         },
         {
           "id": "volatility",
           "label": "Volatility",
-          "severity": "elevated",
-          "finding": "Implied probability moved 15.3 points in one step, above the venue's typical 10.",
+          "severity": "severe",
+          "finding": "Implied probability jumped 27.0 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
           "evidence": {
-            "maxStepPoints": 0.153,
-            "netChangePoints": -0.085,
-            "samples": 9,
-            "spanSec": 43200,
-            "volumeShares": 2497.11
+            "maxStepPoints": 0.27,
+            "netChangePoints": -0.122,
+            "samples": 12,
+            "spanSec": 64800,
+            "volumeShares": 2808.98
           },
-          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal.",
-          "reading": "The price moved in a single step larger than the venue’s typical range, indicating heightened short-term volatility."
+          "basis": "Close-to-close between consecutive candles (buckets are per-trade, so intra-candle range is structurally zero). Measured max step 0.096-0.130 across markets with enough samples, so ~10 points is this venue's normal."
         },
         {
           "id": "staleness",
           "label": "Staleness",
           "severity": "ok",
-          "finding": "Last trade 143 min ago, 10% of the window.",
+          "finding": "Last trade 18 min ago, 1% of the window.",
           "evidence": {
-            "lastTradeAgeSec": 8608,
-            "ageVsWindow": 0.1,
+            "lastTradeAgeSec": 1072,
+            "ageVsWindow": 0.012,
             "windowSec": 86400
           },
-          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series.",
-          "reading": ""
+          "basis": "Last-trade age as a fraction of the market's own window. Measured median 0.040, p75 0.282, max 0.557. absolute age is meaningless across a venue running 5m to 24h series."
         },
         {
           "id": "window",
           "label": "Window",
           "severity": "ok",
-          "finding": "575 min of trading left, 60% of the window elapsed.",
+          "finding": "334 min of trading left, 77% of the window elapsed.",
           "evidence": {
-            "secToExpiry": 34500,
-            "windowElapsed": 0.601,
+            "secToExpiry": 20042,
+            "windowElapsed": 0.768,
             "windowSec": 86400
           },
-          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action.",
-          "reading": ""
+          "basis": "Time to expiry, absolute and as a fraction of the window. Only `Trading` accepts orders and the transition is time-derived on-chain, so a market can lock between snapshot and action."
         },
         {
           "id": "manipulation",
           "label": "Order flow",
           "severity": "ok",
-          "finding": "Flow is roughly balanced (skew -0.27) over 100 trades.",
+          "finding": "Flow is roughly balanced (skew 0.17) over 100 trades. 7 shares came from opposite-side buyers minting a pair rather than a seller.",
           "evidence": {
             "fills": 100,
-            "takerBuyShares": 364.58,
-            "takerSellShares": 639.8,
-            "skew": -0.274,
-            "depthImbalance": 0,
-            "mintedShares": 0,
-            "vwap": 0.4356
+            "takerBuyShares": 629.45,
+            "takerSellShares": 446.8,
+            "skew": 0.17,
+            "depthImbalance": 0.303,
+            "mintedShares": 7,
+            "vwap": 0.3852
           },
-          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric.",
-          "reading": ""
+          "basis": "Taker-side skew leads because depth imbalance measured 0.000 on every symmetrically-quoted market, so it cannot discriminate here. Skew ranged -1.00 to +1.00 across the venue, the widest of any metric."
         }
       ],
       "rules": [
         {
-          "rule": "elevated:volatility",
-          "because": "Implied probability moved 15.3 points in one step, above the venue's typical 10."
+          "rule": "severe:volatility",
+          "because": "Implied probability jumped 27.0 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue."
         }
       ],
       "requiredChecks": [
@@ -2189,93 +1986,71 @@
           "t": 1789041600,
           "close": 0.419,
           "volume": 35.8
+        },
+        {
+          "t": 1789052400,
+          "close": 0.174,
+          "volume": 143
+        },
+        {
+          "t": 1789059600,
+          "close": 0.444,
+          "volume": 1
+        },
+        {
+          "t": 1789063200,
+          "close": 0.382,
+          "volume": 167.87
         }
       ],
       "explanation": {
-        "headline": "Volatility spike exceeds normal range while other market conditions remain typical",
-        "summary": "Liquidity, depth durability, and order flow are all within expected levels for this venue. Staleness is low and the window is well underway. The only notable deviation is the elevated volatility step, prompting a wait for further trades before acting.",
-        "perSignal": [
-          {
-            "signalId": "venue",
-            "reading": ""
-          },
-          {
-            "signalId": "resolution",
-            "reading": ""
-          },
-          {
-            "signalId": "liquidity",
-            "reading": ""
-          },
-          {
-            "signalId": "depth",
-            "reading": ""
-          },
-          {
-            "signalId": "volatility",
-            "reading": "The price moved in a single step larger than the venue’s typical range, indicating heightened short-term volatility."
-          },
-          {
-            "signalId": "staleness",
-            "reading": ""
-          },
-          {
-            "signalId": "window",
-            "reading": ""
-          },
-          {
-            "signalId": "manipulation",
-            "reading": ""
-          }
-        ],
-        "source": "model",
-        "model": "groq:openai/gpt-oss-120b",
-        "usage": {
-          "inputTokens": 2316,
-          "outputTokens": 1070
-        }
+        "headline": "Implied probability jumped 27.0 points between consecutive trades, well beyond the ~13 points seen elsewhere on this venue.",
+        "summary": "One signal is blocking: volatility. Confidence 0.85 reflects how much of the market could be observed, not any view on its outcome.",
+        "perSignal": [],
+        "source": "fallback",
+        "fallbackReason": "groq:openai/gpt-oss-120b: Error: HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kvjbakngemv8j9gapm92q37j` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199575, Requested 4171. Please try again in 26m58.272s. Need more tokens? Upgrade to Dev Tier today at https:/"
       },
       "oracleAuditUrl": "https://prd.oracle.somnia.host/questions/53136?view=graph",
       "provenance": [
         {
           "field": "onchain",
           "state": "ok",
-          "readAt": 1789050301393
+          "readAt": 1789064759556
         },
         {
           "field": "book",
           "state": "ok",
-          "readAt": 1789050301531
+          "readAt": 1789064759647
         },
         {
           "field": "prices",
           "state": "ok",
-          "readAt": 1789050302652
+          "readAt": 1789064760270
         },
         {
           "field": "move",
           "state": "ok",
-          "readAt": 1789050302652
+          "readAt": 1789064760270
         },
         {
           "field": "flow",
           "state": "ok",
-          "readAt": 1789050303162
+          "readAt": 1789064760630
         },
         {
           "field": "freshness",
           "state": "ok",
-          "readAt": 1789050303162
+          "readAt": 1789064760630
         },
         {
           "field": "resolution",
           "state": "ok",
-          "readAt": 1789050303666
+          "readAt": 1789064760986
         }
       ]
     }
   },
-  "assembledAt": 1789050299200,
+  "assembledAt": 1789064758149,
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
   "failures": [],
   "usable": true,
